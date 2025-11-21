@@ -116,6 +116,22 @@ To use Google Sheets API:
 }
 ```
 
+## GitHub Pages Deployment
+
+The app is configured for GitHub Pages deployment. To enable:
+
+1. Go to repository **Settings** > **Pages**
+2. Under **Source**, select:
+   - Branch: `main`
+   - Folder: `/ (root)`
+3. Click **Save**
+4. Wait a few minutes for deployment
+5. Access your app at: `https://tsubasagit.github.io/appnavi/`
+
+**Note**: The `.nojekyll` file is included to disable Jekyll processing, and GitHub Actions workflow is configured for automatic deployment on every push.
+
+See `GITHUB_PAGES_SETUP.md` for detailed instructions.
+
 ## Development
 
 ### Local Development
