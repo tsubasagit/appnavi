@@ -4,6 +4,29 @@ A tool to instantly create web applications from your Excel-managed data.
 
 🔗 **Live Demo**: [View on GitHub Pages](https://tsubasagit.github.io/appnavi/)
 
+## Architecture Philosophy
+
+**Serverless Architecture - Zero Infrastructure Management**
+
+AppNavi is built on a completely serverless architecture, where all infrastructure is managed by external services:
+
+- **Hosting**: GitHub Pages (Free)
+- **Database**: Firebase Firestore (Free tier available)
+- **Authentication**: Firebase Authentication (Google Sign-In ready)
+- **Storage**: Firebase Storage (Free tier available)
+- **Integration**: Google Sheets API (Free)
+
+**Benefits for Small Business Owners:**
+- 💰 **Zero monthly cost** (free tier sufficient for small businesses)
+- 🚀 **Zero server management** (fully managed by Google/GitHub)
+- 🔒 **Enterprise-grade security** (automatic updates and monitoring)
+- 📈 **Automatic scaling** (grows with your business)
+- ⏰ **Zero maintenance time** (focus on your business, not IT)
+
+This approach allows small business owners to focus on their core business without worrying about IT infrastructure management.
+
+See `ARCHITECTURE_STRATEGY.md` for detailed architecture and cost comparison.
+
 ## Features
 
 - 📊 **Instant App Creation from Excel/CSV**: Upload a file and automatically generate a data management app

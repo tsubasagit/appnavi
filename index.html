@@ -80,18 +80,115 @@
         </aside>
 
         <main class="flex-1 overflow-auto px-10 py-10">
-            <div class="flex items-start justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold text-slate-900">ダッシュボード</h1>
-                    <p class="mt-1 text-sm text-slate-500">自治体内の業務アプリをまとめて管理します。必要なアプリを開いて作業を開始しましょう。</p>
+            <!-- ヒーローセクション -->
+            <div class="mb-10 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 p-8 text-white shadow-xl">
+                <div class="max-w-3xl">
+                    <h1 class="text-3xl font-bold">AppNaviへようこそ</h1>
+                    <p class="mt-3 text-lg text-blue-100">Excelで管理しているデータから、すぐに使えるWebアプリを作成できます</p>
+                    <div class="mt-6 flex flex-wrap items-center gap-4">
+                        <div class="flex items-center space-x-2 rounded-lg bg-white/20 px-4 py-2 backdrop-blur-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            <span class="text-sm font-semibold">5分でアプリ作成</span>
                 </div>
-                <button id="create-app-btn" class="inline-flex items-center rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mr-2 h-4 w-4">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
+                        <div class="flex items-center space-x-2 rounded-lg bg-white/20 px-4 py-2 backdrop-blur-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
                     </svg>
-                    アプリを新規作成
-                </button>
+                            <span class="text-sm font-semibold">完全無料で始められる</span>
                             </div>
+                        <div class="flex items-center space-x-2 rounded-lg bg-white/20 px-4 py-2 backdrop-blur-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                            <span class="text-sm font-semibold">サーバー管理不要</span>
+                        </div>
+                    </div>
+                                </div>
+                                </div>
+
+            <!-- クイックスタートセクション -->
+            <div class="mb-10">
+                <h2 class="mb-6 text-xl font-bold text-slate-900">すぐに始める</h2>
+                <div class="grid gap-6 md:grid-cols-2">
+                    <!-- Excel/CSVから作成 -->
+                    <section class="rounded-2xl border border-blue-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600 font-bold">1</div>
+                                    <h3 class="text-lg font-semibold text-slate-900">Excel/CSVからアプリを作成</h3>
+                            </div>
+                                <p class="mt-2 text-sm text-slate-600">管理台帳や日報のExcelファイルをアップロードするだけで、即座にWebアプリを自動生成します。</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2 mb-4">
+                            <button id="download-sample-btn" class="inline-flex items-center rounded-lg border border-blue-300 bg-white px-3 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-50">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mr-1.5 h-4 w-4">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                        </svg>
+                                サンプルをダウンロード
+                            </button>
+                            <button id="create-app-btn" class="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow hover:bg-blue-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mr-1.5 h-4 w-4">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
+                                </svg>
+                                アプリを作成
+                                    </button>
+                                </div>
+                        <div id="file-drop-zone" class="rounded-xl border-2 border-dashed border-blue-300 bg-blue-50/50 p-6 text-center transition-colors hover:border-blue-400 hover:bg-blue-50 cursor-pointer">
+                            <input type="file" id="file-input" accept=".xlsx,.xls,.csv" class="hidden">
+                            <div id="drop-zone-content" class="flex flex-col items-center justify-center space-y-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-8 w-8 text-blue-400">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                                </svg>
+                                <p class="text-sm font-medium text-blue-700">ExcelまたはCSVファイルをドラッグ＆ドロップ</p>
+                                <p class="text-xs text-blue-500">または</p>
+                                <button id="file-select-btn" class="rounded-lg border border-blue-300 bg-white px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50">ファイルを選択</button>
+                            </div>
+                            <div id="file-loading" class="hidden items-center justify-center space-x-3">
+                                <svg class="animate-spin h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <p class="text-sm font-medium text-blue-700">ファイルを解析中...</p>
+                            </div>
+                        </div>
+                        <div id="file-error" class="hidden mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+                            <div class="flex items-start space-x-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                                        </svg>
+                                <div class="flex-1">
+                                    <p id="file-error-message" class="text-sm font-semibold text-red-800"></p>
+                                    <p class="mt-1 text-xs text-red-600">対応形式: Excel (.xlsx, .xls) または CSV (.csv)</p>
+                                </div>
+                            </div>
+                            </div>
+                    </section>
+
+                    <!-- Google Sheets連携 -->
+                    <section class="rounded-2xl border border-green-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-green-100 text-green-600 font-bold">2</div>
+                                    <h3 class="text-lg font-semibold text-slate-900">Googleスプレッドシートと連携</h3>
+                        </div>
+                                <p class="mt-2 text-sm text-slate-600">既存のGoogleスプレッドシートと連携して、リアルタイムでデータを同期し、自動的にグラフ化・可視化します。</p>
+                    </div>
+                </div>
+                        <div class="rounded-xl border-2 border-dashed border-green-300 bg-green-50/50 p-6 text-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto h-12 w-12 text-green-400 mb-3">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 0 0 2.25-2.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v2.25A2.25 2.25 0 0 0 6 10.5Zm0 9.75h2.25A2.25 2.25 0 0 0 10.5 18v-2.25a2.25 2.25 0 0 0-2.25-2.25H6a2.25 2.25 0 0 0-2.25 2.25V18A2.25 2.25 0 0 0 6 20.25Zm9.75-9.75H18a2.25 2.25 0 0 0 2.25-2.25V6A2.25 2.25 0 0 0 18 3.75h-2.25A2.25 2.25 0 0 0 13.5 6v2.25a2.25 2.25 0 0 0 2.25 2.25Z" />
+                            </svg>
+                            <p class="text-sm font-medium text-green-700 mb-2">スプレッドシートのURLを入力</p>
+                            <button id="connect-google-sheets" class="rounded-lg border border-green-300 bg-white px-4 py-2 text-xs font-semibold text-green-600 hover:bg-green-50">連携を開始する</button>
+            </div>
+        </section>
+            </div>
+            </div>
 
             <div class="mt-8 grid gap-6 md:grid-cols-2">
                 <section class="rounded-2xl border border-blue-200 bg-blue-50 p-6 shadow-sm">
@@ -102,28 +199,28 @@
                                 <button class="help-tooltip relative group" data-help="ExcelやCSVファイルをアップロードするだけで、データ管理アプリが自動生成されます。日報や顧客管理などの台帳をそのまま活用できます。">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4 text-blue-500">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
-                                    </svg>
-                                </button>
-                            </div>
+                    </svg>
+                </button>
+        </div>
                             <p class="mt-2 text-sm text-blue-600">管理台帳や日報のExcelファイルをアップロードするだけで、即座にWeb/モバイルアプリを自動生成します。</p>
-                        </div>
+                    </div>
                     </div>
                     <div class="mt-4 flex items-center space-x-2">
                         <button id="download-sample-btn" class="inline-flex items-center rounded-lg border border-blue-300 bg-white px-3 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-50">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mr-1.5 h-4 w-4">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                            </svg>
+                        </svg>
                             サンプルExcelをダウンロード
-                        </button>
+                    </button>
                         <span class="text-xs text-blue-500">まずはサンプルで試してみましょう</span>
-                    </div>
+                </div>
                     <div id="file-drop-zone" class="mt-6 rounded-2xl border-2 border-dashed border-blue-300 bg-white/70 p-8 text-center transition-colors hover:border-blue-400 hover:bg-blue-50/50 cursor-pointer">
                         <input type="file" id="file-input" accept=".xlsx,.xls,.csv" class="hidden">
                         <div id="drop-zone-content" class="mx-auto flex h-24 w-full max-w-xl flex-col items-center justify-center space-y-3">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-10 w-10 text-blue-400">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75 9 17.25 20.25 6" />
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5 4.5 12 12 19.5" />
-                            </svg>
+                                </svg>
                             <p class="text-sm font-medium text-blue-700">ExcelまたはCSVファイルをドラッグ＆ドロップ</p>
                             <p class="text-xs text-blue-500">または</p>
                             <button id="file-select-btn" class="rounded-full border border-blue-300 px-4 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-100">ファイルを選択する</button>
@@ -132,7 +229,7 @@
                             <svg class="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
+                                </svg>
                             <p class="text-sm font-medium text-blue-700">ファイルを解析中...</p>
                         </div>
                     </div>
@@ -140,14 +237,14 @@
                         <div class="flex items-start space-x-2">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5 text-red-600 mt-0.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
-                            </svg>
+                                </svg>
                             <div class="flex-1">
                                 <p id="file-error-message" class="text-sm font-semibold text-red-800"></p>
                                 <p class="mt-1 text-xs text-red-600">対応ファイル形式: Excel (.xlsx, .xls) または CSV (.csv)</p>
-                            </div>
                         </div>
                     </div>
-                </section>
+                </div>
+            </section>
                 <section class="rounded-2xl border border-green-200 bg-green-50 p-6 shadow-sm">
                     <h2 class="text-lg font-semibold text-green-700">Googleスプレッドシートと同期</h2>
                     <p class="mt-2 text-sm text-green-600">Googleスプレッドシートを連携して、リアルタイムでデータを同期し、自動的にグラフ化・可視化します。</p>
@@ -159,20 +256,25 @@
                             <p class="text-sm font-medium text-green-700">Googleスプレッドシートと連携</p>
                             <p class="text-xs text-green-500">スプレッドシートのURLを入力</p>
                             <button id="connect-google-sheets" class="rounded-full border border-green-300 px-4 py-2 text-xs font-semibold text-green-600 hover:bg-green-100">連携を開始する</button>
-                                </div>
                             </div>
+                        </div>
         </section>
-                            </div>
+                        </div>
 
+            <!-- マイ・アプリセクション -->
             <section class="mt-10">
-                <h3 class="text-lg font-semibold text-slate-800">マイ・アプリ</h3>
-                <p class="mt-1 text-sm text-slate-500">あなたが管理・利用しているアプリの一覧です。</p>
-                <div id="app-list" class="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="mb-6 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">マイ・アプリ</h2>
+                        <p class="mt-1 text-sm text-slate-500">作成したアプリの一覧です。アプリをクリックして編集や管理を行います。</p>
+                    </div>
+                </div>
+                <div id="app-list" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     <!-- アプリカードがここに動的に追加されます -->
-            </div>
-        </section>
+                </div>
+            </section>
         </main>
-            </div>
+                                </div>
 
     <!-- オンボーディングモーダル -->
     <div id="onboarding-modal" class="pointer-events-none fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 px-4 py-8">
@@ -183,10 +285,10 @@
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-8 w-8 text-blue-600">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h4.125M8.25 8.25l13.5 0M8.25 8.25v6.375m0 6.375V16.5m0 0h5.25m-5.25 0v-1.125c0-.621.504-1.125 1.125-1.125h1.5c.621 0 1.125.504 1.125 1.125v1.125M15 19.5h-3.75m3.75 0v-1.125c0-.621.504-1.125 1.125-1.125h1.5c.621 0 1.125.504 1.125 1.125v1.125M15 19.5h3.75m-3.75 0h-3.75m0 0v-1.125c0-.621-.504-1.125-1.125-1.125h-1.5c-.621 0-1.125.504-1.125 1.125v1.125m0 0H8.25" />
                     </svg>
-                        </div>
+                                    </div>
                     <h2 class="mt-4 text-2xl font-bold text-slate-900">AppNaviへようこそ</h2>
                     <p class="mt-2 text-sm text-slate-600">Excelで管理しているデータから、すぐに使えるWebアプリを作成できます</p>
-        </div>
+                                        </div>
 
                 <div class="mt-8 space-y-4">
                     <div class="flex items-start space-x-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
@@ -194,23 +296,23 @@
                         <div class="flex-1">
                             <h3 class="text-sm font-semibold text-blue-900">Excelファイルをアップロード</h3>
                             <p class="mt-1 text-xs text-blue-700">日報、在庫管理、顧客リストなどのExcelファイルをドラッグ&ドロップするだけ</p>
-                    </div>
-                </div>
+                                    </div>
+                                </div>
                     <div class="flex items-start space-x-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
                         <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white">2</div>
                         <div class="flex-1">
                             <h3 class="text-sm font-semibold text-blue-900">データを確認・調整</h3>
                             <p class="mt-1 text-xs text-blue-700">自動的に列の型（日付、数値、選択肢など）を判定。必要に応じて修正できます</p>
-                        </div>
-                    </div>
+                            </div>
+                                </div>
                     <div class="flex items-start space-x-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
                         <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white">3</div>
                         <div class="flex-1">
                             <h3 class="text-sm font-semibold text-blue-900">アプリが完成</h3>
                             <p class="mt-1 text-xs text-blue-700">入力フォーム、データ表示、グラフ化などが自動生成されます</p>
-                        </div>
-                    </div>
-                        </div>
+                                </div>
+                            </div>
+                                    </div>
 
                 <div class="mt-8 flex items-center justify-between space-x-3 border-t border-slate-200 pt-6">
                     <label class="flex items-center space-x-2 text-sm text-slate-600">
@@ -220,10 +322,10 @@
                     <div class="space-x-2">
                         <button id="onboarding-sample" class="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-100">サンプルで試す</button>
                         <button id="onboarding-start" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700">始める</button>
-                            </div>
-                        </div>
-                        </div>
-                        </div>
+                                            </div>
+                                            </div>
+                                            </div>
+                                            </div>
                                             </div>
 
     <!-- Excel解析ウィザードモーダル -->
@@ -234,17 +336,17 @@
                                                     <div>
                     <h3 class="text-lg font-semibold text-slate-900">アプリ作成ウィザード</h3>
                     <p class="text-xs text-slate-500" id="wizard-step-text">ステップ 1/3: ファイルをアップロード</p>
-                                    </div>
+                                                    </div>
                 <button id="wizard-close" class="rounded-full border border-slate-200 p-2 text-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                                     </svg>
                                 </button>
-                            </div>
+                                    </div>
 
             <!-- プログレスバー -->
             <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
-                                        <div class="flex items-center space-x-2">
+                                            <div class="flex items-center space-x-2">
                     <div id="step-1-indicator" class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white">1</div>
                     <div class="h-1 w-16 bg-slate-200">
                         <div id="progress-bar-1" class="h-full bg-blue-600 transition-all"></div>
@@ -252,15 +354,15 @@
                     <div id="step-2-indicator" class="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-xs font-semibold text-slate-600">2</div>
                     <div class="h-1 w-16 bg-slate-200">
                         <div id="progress-bar-2" class="h-full bg-slate-200 transition-all"></div>
-                                        </div>
+                                            </div>
                     <div id="step-3-indicator" class="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-xs font-semibold text-slate-600">3</div>
-                                    </div>
+                                        </div>
                 <div class="mt-2 flex items-center justify-between text-xs text-slate-500">
                     <span>データ確認</span>
                     <span>構造分析</span>
                     <span>完了</span>
-                                        </div>
-                                    </div>
+                                            </div>
+                                            </div>
 
             <!-- コンテンツエリア -->
             <div class="flex-1 overflow-auto px-6 py-6">
@@ -282,8 +384,8 @@
                         <p class="text-xs text-amber-700">
                             <strong>確認事項:</strong> データが正しく表示されているか確認してください。次のステップで項目の種類（日付、数値、テキストなど）を自動判定します。
                         </p>
-                                        </div>
-                                    </div>
+                                            </div>
+                                            </div>
 
                 <!-- ステップ2: 項目の種類設定 -->
                 <div id="wizard-step-2" class="hidden space-y-4">
@@ -292,26 +394,26 @@
                         <p class="mt-1 text-xs text-blue-700">必要に応じて種類を修正してください（例：日付、数値、テキスト、選択肢）</p>
                                             </div>
                     <div id="column-settings" class="space-y-3"></div>
-                                            </div>
+                                    </div>
 
                 <!-- ステップ3: 確認と完了 -->
                 <div id="wizard-step-3" class="hidden space-y-4">
                     <div class="rounded-xl border border-green-100 bg-green-50 px-4 py-3">
                         <p class="text-sm font-semibold text-green-900">アプリの準備が完了しました</p>
                         <p class="mt-1 text-xs text-green-700">以下の設定でアプリを作成します</p>
-                                </div>
+                                            </div>
                     <div class="space-y-4">
                                 <div>
                             <label class="text-xs font-semibold text-slate-500">アプリ名</label>
                             <input type="text" id="app-name-input" value="新しいアプリ" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="例: 営業日報管理">
-                                </div>
+                                            </div>
                         <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
                             <p class="text-xs font-semibold text-slate-700 mb-2">生成される機能</p>
                             <ul id="app-features" class="space-y-1 text-xs text-slate-600"></ul>
-                                </div>
-                            </div>
-                                    </div>
-                            </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                                </div>
 
             <!-- フッター -->
             <div class="flex items-center justify-between border-t border-slate-200 px-6 py-4 bg-slate-50">
@@ -320,10 +422,10 @@
                     <button id="wizard-prev" class="hidden rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-100">戻る</button>
                     <button id="wizard-next" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700">次へ</button>
                     <button id="wizard-create" class="hidden rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-green-700">アプリを作成</button>
+                                </div>
                             </div>
                         </div>
-                </div>
-    </div>
+                    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -575,7 +677,7 @@
                     if (updatedApp) {
                         closeEditAppModal();
                         showNotification('アプリ名を更新しました');
-                    } else {
+                } else {
                         alert('アプリの更新に失敗しました。ページを再読み込みして再度お試しください。');
                     }
                 }).catch(error => {
