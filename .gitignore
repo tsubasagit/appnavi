@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+dist/
+build/
+*.min.js.map
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Firebase config (keep template, ignore actual config with secrets)
+# firebase-config.js should be customized but not committed with real keys
+# Note: We'll keep firebase-config.js as a template
+

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navi 2.0 ダッシュボード</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 text-slate-900">
+    <div class="flex min-h-screen">
+        <aside class="flex w-64 flex-col border-r border-slate-200 bg-white">
+            <div class="flex items-center space-x-2 px-6 py-5 text-slate-700">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 21h7.5m-7.5 0a3 3 0 0 1-3-3V8.25m3 12.75h-3a3 3 0 0 1-3-3V8.25a3 3 0 0 1 .879-2.121l3.75-3.75A3 3 0 0 1 10.5 1.5h3a3 3 0 0 1 2.121.879l3.75 3.75A3 3 0 0 1 21.25 8.25V18a3 3 0 0 1-3 3h-3m-7.5 0V11.25A2.25 2.25 0 0 1 9 9h6a2.25 2.25 0 0 1 2.25 2.25V21" />
+                </svg>
+                <span class="text-lg font-semibold tracking-wide">Navi 2.0</span>
+            </div>
+            <nav class="flex-1 space-y-1 px-4 text-sm">
+                <button class="flex w-full items-center space-x-3 rounded-lg bg-blue-50 px-3 py-2 text-blue-700 shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9l7.5 6 7.5-6" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5h15a.75.75 0 0 0 .75-.75V6.125a.75.75 0 0 0-.285-.585l-7.5-5.625a.75.75 0 0 0-.93 0L4.035 5.54a.75.75 0 0 0-.285.585V18.75a.75.75 0 0 0 .75.75Z" />
+                    </svg>
+                    <span class="font-semibold">ダッシュボード</span>
+                </button>
+                <button class="flex w-full items-center space-x-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 5.25h16.5M3.75 12h16.5m-16.5 6.75h16.5" />
+                    </svg>
+                    <span>備品管理アプリ</span>
+                </button>
+                <button class="flex w-full items-center space-x-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h3m-4.5 4.5h6m-3 9.75a8.25 8.25 0 1 0 0-16.5 8.25 8.25 0 0 0 0 16.5Z" />
+                    </svg>
+                    <span>施設予約システム</span>
+                </button>
+                <button class="flex w-full items-center space-x-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M18 15.75V18a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 18V8.25A2.25 2.25 0 0 1 6.75 6H9" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3h6a1.5 1.5 0 0 1 1.5 1.5v6" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3 21 12" />
+                    </svg>
+                    <span>API・連携設定</span>
+                </button>
+            </nav>
+            <div class="border-t border-slate-200 px-4 py-4">
+                <button class="flex w-full items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-500 hover:bg-slate-100">
+                    <span>ヘルプセンター</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75a2.25 2.25 0 1 1 4.5 0c0 1.125-.75 1.522-1.5 2.022-.75.5-1.5.897-1.5 2.228M12 17.25h.008v.008H12v-.008Z" />
+                    </svg>
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-auto px-10 py-10">
+            <div class="flex items-start justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-900">ダッシュボード</h1>
+                    <p class="mt-1 text-sm text-slate-500">自治体内の業務アプリをまとめて管理します。必要なアプリを開いて作業を開始しましょう。</p>
+                </div>
+                <button class="inline-flex items-center rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mr-2 h-4 w-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
+                    </svg>
+                    アプリを新規作成
+                </button>
+            </div>
+
+            <section class="mt-8 rounded-2xl border border-blue-200 bg-blue-50 p-6 shadow-sm">
+                <h2 class="text-lg font-semibold text-blue-700">Excel/CSVからアプリを即時作成</h2>
+                <p class="mt-2 text-sm text-blue-600">管理台帳や日報のExcelファイルをアップロードするだけで、即座にWeb/モバイルアプリを自動生成します。</p>
+                <div class="mt-6 rounded-2xl border-2 border-dashed border-blue-300 bg-white/70 p-8 text-center">
+                    <div class="mx-auto flex h-24 w-full max-w-xl flex-col items-center justify-center space-y-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-10 w-10 text-blue-400">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75 9 17.25 20.25 6" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5 4.5 12 12 19.5" />
+                        </svg>
+                        <p class="text-sm font-medium text-blue-700">ExcelまたはCSVファイルをドラッグ＆ドロップ</p>
+                        <p class="text-xs text-blue-500">または</p>
+                        <button class="rounded-full border border-blue-300 px-4 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-100">ファイルを選択する</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mt-10">
+                <h3 class="text-lg font-semibold text-slate-800">マイ・アプリ</h3>
+                <p class="mt-1 text-sm text-slate-500">あなたが管理・利用しているアプリの一覧です。</p>
+                <div class="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                    <article class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:border-blue-300 hover:shadow-md">
+                        <div class="flex items-center space-x-3">
+                            <span class="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 6.75h15m-13.5 0v10.5a2.25 2.25 0 0 0 2.25 2.25h6a2.25 2.25 0 0 0 2.25-2.25V6.75" />
+                                </svg>
+                            </span>
+                            <div>
+                                <h4 class="text-sm font-semibold text-slate-800">備品管理アプリ</h4>
+                                <p class="text-xs text-slate-500">総務課のPCやデスクの台帳を管理します。</p>
+                            </div>
+                        </div>
+                        <button class="mt-4 text-sm font-semibold text-blue-600 group-hover:underline">アプリを開く</button>
+                    </article>
+                    <article class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:border-blue-300 hover:shadow-md">
+                        <div class="flex items-center space-x-3">
+                            <span class="flex h-9 w-9 items-center justify-center rounded-full bg-violet-100 text-violet-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h3m-6 4.5h9m-9 4.5h9M5.25 6v12a2.25 2.25 0 0 0 2.25 2.25h9a2.25 2.25 0 0 0 2.25-2.25V6" />
+                                </svg>
+                            </span>
+                            <div>
+                                <h4 class="text-sm font-semibold text-slate-800">施設予約システム</h4>
+                                <p class="text-xs text-slate-500">会議室や公用車の予約状況を管理します。</p>
+                            </div>
+                        </div>
+                        <button class="mt-4 text-sm font-semibold text-blue-600 group-hover:underline">アプリを開く</button>
+                    </article>
+                    <article class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:border-blue-300 hover:shadow-md">
+                        <div class="flex items-center space-x-3">
+                            <span class="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 9l2.25 2.25L15 7.5" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12a7.5 7.5 0 1 1-7.5-7.5" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18" />
+                                </svg>
+                            </span>
+                            <div>
+                                <h4 class="text-sm font-semibold text-slate-800">日報入力フォーム</h4>
+                                <p class="text-xs text-slate-500">現場職員からの毎日の業務報告を回収します。</p>
+                            </div>
+                        </div>
+                        <button class="mt-4 text-sm font-semibold text-blue-600 group-hover:underline">アプリを開く</button>
+                    </article>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

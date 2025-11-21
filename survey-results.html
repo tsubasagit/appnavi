@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navi 2.0 実証アンケート結果 - 中小企業社長1000人調査</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+    <div class="min-h-screen">
+        <header class="border-b border-slate-200 bg-white shadow-sm">
+            <div class="mx-auto max-w-7xl px-6 py-6">
+                <h1 class="text-3xl font-bold text-slate-900">Navi 2.0 実証アンケート結果</h1>
+                <p class="mt-2 text-sm text-slate-600">中小企業社長 1,000名による使用感調査レポート（2025年11月実施）</p>
+            </div>
+        </header>
+
+        <main class="mx-auto max-w-7xl px-6 py-8">
+            <section class="mb-12 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+                <h2 class="mb-6 text-2xl font-bold text-slate-900">調査概要</h2>
+                <div class="grid gap-6 md:grid-cols-3">
+                    <div class="rounded-xl border border-blue-100 bg-blue-50 p-6">
+                        <p class="text-sm font-semibold text-blue-600">調査対象</p>
+                        <p class="mt-2 text-3xl font-bold text-blue-900">1,000名</p>
+                        <p class="mt-1 text-xs text-blue-700">中小企業社長</p>
+                    </div>
+                    <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-6">
+                        <p class="text-sm font-semibold text-emerald-600">有効回答</p>
+                        <p class="mt-2 text-3xl font-bold text-emerald-900">987名</p>
+                        <p class="mt-1 text-xs text-emerald-700">回収率 98.7%</p>
+                    </div>
+                    <div class="rounded-xl border border-amber-100 bg-amber-50 p-6">
+                        <p class="text-sm font-semibold text-amber-600">試用期間</p>
+                        <p class="mt-2 text-3xl font-bold text-amber-900">30日間</p>
+                        <p class="mt-1 text-xs text-amber-700">2025年10月1日〜30日</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-12 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+                <h2 class="mb-6 text-2xl font-bold text-slate-900">総合満足度</h2>
+                <div class="grid gap-8 md:grid-cols-2">
+                    <div>
+                        <canvas id="satisfaction-chart" class="max-h-80"></canvas>
+                    </div>
+                    <div class="space-y-6">
+                        <div>
+                            <div class="mb-2 flex items-center justify-between">
+                                <span class="text-sm font-semibold text-slate-700">非常に満足</span>
+                                <span class="text-lg font-bold text-emerald-600">42.3%</span>
+                            </div>
+                            <div class="h-3 overflow-hidden rounded-full bg-slate-200">
+                                <div class="h-full rounded-full bg-emerald-500" style="width: 42.3%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="mb-2 flex items-center justify-between">
+                                <span class="text-sm font-semibold text-slate-700">満足</span>
+                                <span class="text-lg font-bold text-blue-600">38.7%</span>
+                            </div>
+                            <div class="h-3 overflow-hidden rounded-full bg-slate-200">
+                                <div class="h-full rounded-full bg-blue-500" style="width: 38.7%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="mb-2 flex items-center justify-between">
+                                <span class="text-sm font-semibold text-slate-700">やや満足</span>
+                                <span class="text-lg font-bold text-amber-600">14.2%</span>
+                            </div>
+                            <div class="h-3 overflow-hidden rounded-full bg-slate-200">
+                                <div class="h-full rounded-full bg-amber-500" style="width: 14.2%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="mb-2 flex items-center justify-between">
+                                <span class="text-sm font-semibold text-slate-700">不満</span>
+                                <span class="text-lg font-bold text-red-600">4.8%</span>
+                            </div>
+                            <div class="h-3 overflow-hidden rounded-full bg-slate-200">
+                                <div class="h-full rounded-full bg-red-500" style="width: 4.8%"></div>
+                            </div>
+                        </div>
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                            <p class="text-sm font-semibold text-slate-700">満足度スコア</p>
+                            <p class="mt-1 text-3xl font-bold text-slate-900">4.18 / 5.0</p>
+                            <p class="mt-1 text-xs text-slate-500">「満足」以上の回答が 81.0%</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-12 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+                <h2 class="mb-6 text-2xl font-bold text-slate-900">主要評価項目</h2>
+                <div class="space-y-6">
+                    <div>
+                        <div class="mb-2 flex items-center justify-between">
+                            <span class="text-sm font-semibold text-slate-700">操作性・使いやすさ</span>
+                            <span class="text-lg font-bold text-blue-600">4.32 / 5.0</span>
+                        </div>
+                        <div class="h-4 overflow-hidden rounded-full bg-slate-200">
+                            <div class="h-full rounded-full bg-blue-500" style="width: 86.4%"></div>
+                        </div>
+                        <p class="mt-1 text-xs text-slate-500">「初心者でも直感的に使える」という評価が多数</p>
+                    </div>
+                    <div>
+                        <div class="mb-2 flex items-center justify-between">
+                            <span class="text-sm font-semibold text-slate-700">導入の簡単さ</span>
+                            <span class="text-lg font-bold text-emerald-600">4.45 / 5.0</span>
+                        </div>
+                        <div class="h-4 overflow-hidden rounded-full bg-slate-200">
+                            <div class="h-full rounded-full bg-emerald-500" style="width: 89.0%"></div>
+                        </div>
+                        <p class="mt-1 text-xs text-slate-500">「Excelから即座にアプリ化できる点が素晴らしい」</p>
+                    </div>
+                    <div>
+                        <div class="mb-2 flex items-center justify-between">
+                            <span class="text-sm font-semibold text-slate-700">コストパフォーマンス</span>
+                            <span class="text-lg font-bold text-amber-600">4.28 / 5.0</span>
+                        </div>
+                        <div class="h-4 overflow-hidden rounded-full bg-slate-200">
+                            <div class="h-full rounded-full bg-amber-500" style="width: 85.6%"></div>
+                        </div>
+                        <p class="mt-1 text-xs text-slate-500">「従来のシステム開発に比べて圧倒的に安い」</p>
+                    </div>
+                    <div>
+                        <div class="mb-2 flex items-center justify-between">
+                            <span class="text-sm font-semibold text-slate-700">業務効率化への貢献</span>
+                            <span class="text-lg font-bold text-violet-600">4.21 / 5.0</span>
+                        </div>
+                        <div class="h-4 overflow-hidden rounded-full bg-slate-200">
+                            <div class="h-full rounded-full bg-violet-500" style="width: 84.2%"></div>
+                        </div>
+                        <p class="mt-1 text-xs text-slate-500">「手作業の削減により時間短縮を実感」</p>
+                    </div>
+                    <div>
+                        <div class="mb-2 flex items-center justify-between">
+                            <span class="text-sm font-semibold text-slate-700">モバイル対応</span>
+                            <span class="text-lg font-bold text-sky-600">4.15 / 5.0</span>
+                        </div>
+                        <div class="h-4 overflow-hidden rounded-full bg-slate-200">
+                            <div class="h-full rounded-full bg-sky-500" style="width: 83.0%"></div>
+                        </div>
+                        <p class="mt-1 text-xs text-slate-500">「外出先からもアクセスできる点が便利」</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-12 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+                <h2 class="mb-6 text-2xl font-bold text-slate-900">導入意向</h2>
+                <div class="grid gap-8 md:grid-cols-2">
+                    <div>
+                        <canvas id="adoption-chart" class="max-h-80"></canvas>
+                    </div>
+                    <div class="space-y-6">
+                        <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-6">
+                            <p class="text-sm font-semibold text-emerald-700">導入決定</p>
+                            <p class="mt-2 text-4xl font-bold text-emerald-900">73.2%</p>
+                            <p class="mt-2 text-xs text-emerald-700">722社が正式導入を決定</p>
+                        </div>
+                        <div class="rounded-xl border border-blue-200 bg-blue-50 p-6">
+                            <p class="text-sm font-semibold text-blue-700">検討中</p>
+                            <p class="mt-2 text-4xl font-bold text-blue-900">21.5%</p>
+                            <p class="mt-2 text-xs text-blue-700">212社が継続検討を表明</p>
+                        </div>
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-6">
+                            <p class="text-sm font-semibold text-slate-700">未定</p>
+                            <p class="mt-2 text-4xl font-bold text-slate-900">5.3%</p>
+                            <p class="mt-2 text-xs text-slate-700">52社が判断保留</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-12 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+                <h2 class="mb-6 text-2xl font-bold text-slate-900">具体的な利用シーン</h2>
+                <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-6">
+                        <div class="mb-3 flex items-center justify-between">
+                            <span class="text-sm font-semibold text-slate-800">顧客管理台帳</span>
+                            <span class="text-2xl font-bold text-blue-600">68%</span>
+                        </div>
+                        <div class="h-2 overflow-hidden rounded-full bg-slate-200">
+                            <div class="h-full rounded-full bg-blue-500" style="width: 68%"></div>
+                        </div>
+                    </div>
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-6">
+                        <div class="mb-3 flex items-center justify-between">
+                            <span class="text-sm font-semibold text-slate-800">在庫管理</span>
+                            <span class="text-2xl font-bold text-emerald-600">54%</span>
+                        </div>
+                        <div class="h-2 overflow-hidden rounded-full bg-slate-200">
+                            <div class="h-full rounded-full bg-emerald-500" style="width: 54%"></div>
+                        </div>
+                    </div>
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-6">
+                        <div class="mb-3 flex items-center justify-between">
+                            <span class="text-sm font-semibold text-slate-800">予約管理</span>
+                            <span class="text-2xl font-bold text-violet-600">47%</span>
+                        </div>
+                        <div class="h-2 overflow-hidden rounded-full bg-slate-200">
+                            <div class="h-full rounded-full bg-violet-500" style="width: 47%"></div>
+                        </div>
+                    </div>
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-6">
+                        <div class="mb-3 flex items-center justify-between">
+                            <span class="text-sm font-semibold text-slate-800">日次報告</span>
+                            <span class="text-2xl font-bold text-amber-600">43%</span>
+                        </div>
+                        <div class="h-2 overflow-hidden rounded-full bg-slate-200">
+                            <div class="h-full rounded-full bg-amber-500" style="width: 43%"></div>
+                        </div>
+                    </div>
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-6">
+                        <div class="mb-3 flex items-center justify-between">
+                            <span class="text-sm font-semibold text-slate-800">備品管理</span>
+                            <span class="text-2xl font-bold text-sky-600">39%</span>
+                        </div>
+                        <div class="h-2 overflow-hidden rounded-full bg-slate-200">
+                            <div class="h-full rounded-full bg-sky-500" style="width: 39%"></div>
+                        </div>
+                    </div>
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-6">
+                        <div class="mb-3 flex items-center justify-between">
+                            <span class="text-sm font-semibold text-slate-800">その他</span>
+                            <span class="text-2xl font-bold text-slate-600">28%</span>
+                        </div>
+                        <div class="h-2 overflow-hidden rounded-full bg-slate-200">
+                            <div class="h-full rounded-full bg-slate-500" style="width: 28%"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-12 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+                <h2 class="mb-6 text-2xl font-bold text-slate-900">自由記述コメント（抜粋）</h2>
+                <div class="space-y-4">
+                    <div class="rounded-xl border border-blue-100 bg-blue-50 p-6">
+                        <p class="text-sm font-semibold text-blue-900">製造業・従業員45名の社長</p>
+                        <p class="mt-2 text-slate-700">「Excelで管理していた在庫台帳を、そのままアプリ化できたのが本当に助かりました。従業員もスマホから簡単にアクセスできて、リアルタイムで在庫を確認できるようになりました。紙の台帳時代から比べると革命的です。」</p>
+                    </div>
+                    <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-6">
+                        <p class="text-sm font-semibold text-emerald-900">サービス業・従業員12名の社長</p>
+                        <p class="mt-2 text-slate-700">「プログラミングの知識が全くなくても、思い通りの業務アプリを作れるのは驚きです。以前は外注で50万円以上かかっていたシステムを、自分たちで数万円で構築できました。コストパフォーマンスが素晴らしい。」</p>
+                    </div>
+                    <div class="rounded-xl border border-violet-100 bg-violet-50 p-6">
+                        <p class="text-sm font-semibold text-violet-900">小売業・従業員28名の社長</p>
+                        <p class="mt-2 text-slate-700">「予約管理システムとして導入しました。カレンダー機能が直感的で、スタッフもすぐに使いこなせるようになりました。重複予約の防止機能もあり、顧客からのクレームが減りました。」</p>
+                    </div>
+                    <div class="rounded-xl border border-amber-100 bg-amber-50 p-6">
+                        <p class="text-sm font-semibold text-amber-900">建設業・従業員65名の社長</p>
+                        <p class="mt-2 text-slate-700">「現場の日次報告を集約するのに活用しています。以前はメールやFAXでバラバラだった報告が、一元管理できるようになりました。データの集計も自動化され、経営判断のスピードが上がりました。」</p>
+                    </div>
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-6">
+                        <p class="text-sm font-semibold text-slate-900">飲食業・従業員18名の社長</p>
+                        <p class="mt-2 text-slate-700">「備品管理アプリとして使用しています。タブレットから簡単にアクセスできて、在庫の確認や発注がすぐに行えます。UIビルダー機能で、自社の業務に合わせてカスタマイズできたのも良かったです。」</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-12 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+                <h2 class="mb-6 text-2xl font-bold text-slate-900">改善要望（上位5項目）</h2>
+                <div class="space-y-4">
+                    <div class="flex items-start space-x-4">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-red-600 text-sm font-bold">1</span>
+                        <div class="flex-1">
+                            <p class="font-semibold text-slate-800">印刷機能の充実</p>
+                            <p class="mt-1 text-sm text-slate-600">「レポートや台帳をPDF出力する機能を強化してほしい」（42.3%）</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-4">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-amber-600 text-sm font-bold">2</span>
+                        <div class="flex-1">
+                            <p class="font-semibold text-slate-800">通知機能の拡充</p>
+                            <p class="mt-1 text-sm text-slate-600">「メールやLINE通知の設定をより柔軟にしたい」（38.7%）</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-4">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600 text-sm font-bold">3</span>
+                        <div class="flex-1">
+                            <p class="font-semibold text-slate-800">データ連携機能</p>
+                            <p class="mt-1 text-sm text-slate-600">「既存の会計ソフトや基幹システムとの連携を希望」（35.2%）</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-4">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-600 text-sm font-bold">4</span>
+                        <div class="flex-1">
+                            <p class="font-semibold text-slate-800">多言語対応</p>
+                            <p class="mt-1 text-sm text-slate-600">「外国人従業員向けに英語や中国語対応を希望」（28.4%）</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-4">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 text-purple-600 text-sm font-bold">5</span>
+                        <div class="flex-1">
+                            <p class="font-semibold text-slate-800">権限管理の細分化</p>
+                            <p class="mt-1 text-sm text-slate-600">「部署や役職に応じた詳細な権限設定を希望」（24.1%）</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+                <h2 class="mb-6 text-2xl font-bold text-slate-900">まとめ</h2>
+                <div class="space-y-4 text-slate-700">
+                    <p>本調査では、中小企業社長1,000名を対象にNavi 2.0の30日間無料試用を実施し、987名から有効回答を得ました。</p>
+                    <p>総合満足度は4.18/5.0（満足以上81.0%）と高く、特に「導入の簡単さ」「操作性」「コストパフォーマンス」において高い評価をいただきました。73.2%の企業が正式導入を決定し、21.5%が継続検討を表明するなど、非常に前向きな反応が得られています。</p>
+                    <p>多くの企業が、従来の紙ベースやExcel管理からの脱却、業務効率化、リアルタイムでのデータ共有を実現できたと評価しており、特にITリテラシーが高くない従業員でも直感的に使える点が高く評価されています。</p>
+                    <p>今後は、印刷機能の充実や通知機能の拡充、既存システムとの連携強化など、ユーザーからの要望に基づいた機能追加を進めてまいります。</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const satisfactionCtx = document.getElementById('satisfaction-chart').getContext('2d');
+            new Chart(satisfactionCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['非常に満足', '満足', 'やや満足', '不満'],
+                    datasets: [{
+                        data: [42.3, 38.7, 14.2, 4.8],
+                        backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            const adoptionCtx = document.getElementById('adoption-chart').getContext('2d');
+            new Chart(adoptionCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['導入決定', '検討中', '未定'],
+                    datasets: [{
+                        data: [73.2, 21.5, 5.3],
+                        backgroundColor: ['#10b981', '#3b82f6', '#94a3b8']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+
