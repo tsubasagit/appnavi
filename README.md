@@ -2,6 +2,8 @@
 
 A tool to instantly create web applications from your Excel-managed data.
 
+🔗 **Live Demo**: [View on GitHub Pages](https://tsubasagit.github.io/appnavi/)
+
 ## Features
 
 - 📊 **Instant App Creation from Excel/CSV**: Upload a file and automatically generate a data management app
