@@ -2097,17 +2097,14 @@
                 settingsApiConnectBtn.textContent = '接続中...';
 
                 try {
-                    // Google Sheets APIサービスの初期化
+                    // Google Sheets APIサービスの初期化（公開スプレッドシートの場合は認証不要）
                     await googleSheetsService.initAuth();
                     
-                    // 認証が必要な場合
+                    // 公開スプレッドシートの場合は認証不要
+                    // 認証が必要なスプレッドシートの場合は、エラーメッセージで共有設定を変更してもらう
                     if (!googleSheetsService.isAuthenticated) {
-                        const shouldSignIn = confirm('Google認証が必要です。認証を開始しますか？');
-                        if (shouldSignIn) {
-                            await googleSheetsService.signIn();
-                        } else {
-                            throw new Error('認証が必要です');
-                        }
+                        // 公開スプレッドシートの場合は自動的に認証済みとして扱う
+                        await googleSheetsService.signIn();
                     }
 
                     // スプレッドシートのデータを取得・分析

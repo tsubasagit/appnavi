@@ -27,16 +27,18 @@ class GoogleSheetsService {
         }
     }
 
-    // Google認証を実行（簡易版：公開スプレッドシート用）
+    // Google認証を実行（公開スプレッドシート用：認証不要）
     async signIn() {
         try {
             // 公開スプレッドシートの場合は認証不要
-            // 認証が必要なスプレッドシートの場合は、ユーザーに共有設定を変更してもらう
+            // スプレッドシートを「リンクを知っている全員」に共有すれば、認証なしでアクセス可能
+            // 認証が必要なスプレッドシートの場合は、fetchSpreadsheetDataでエラーが発生し、
+            // ユーザーに共有設定を変更してもらうメッセージが表示される
             this.isAuthenticated = true;
             return true;
         } catch (error) {
             console.error('Error signing in:', error);
-            throw new Error('Googleアカウントでのログインに失敗しました。スプレッドシートの共有設定を確認してください。');
+            throw new Error('スプレッドシートの共有設定を確認してください。「リンクを知っている全員」に共有されている必要があります。');
         }
     }
 
