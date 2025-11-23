@@ -109,7 +109,9 @@ class GoogleSheetsService {
             }
             
             if (!response.ok) {
-                if (response.status === 403) {
+                if (response.status === 400) {
+                    throw new Error('スプレッドシートURLが正しくありません。完全なURLをコピー&ペーストしてください。\n\n【確認してください】\n・URLが完全か（https://docs.google.com/spreadsheets/d/...で始まる）\n・スプレッドシートが存在するか\n・スプレッドシートが削除されていないか');
+                } else if (response.status === 403) {
                     throw new Error('スプレッドシートへのアクセスが拒否されました。スプレッドシートの共有設定を「リンクを知っている全員」に変更してください。');
                 } else if (response.status === 404) {
                     throw new Error('スプレッドシートが見つかりませんでした。URLが正しいか確認してください。');

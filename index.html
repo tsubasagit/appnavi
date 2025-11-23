@@ -267,7 +267,8 @@
                                 </ol>
                             </div>
                             <p class="text-sm font-medium text-green-700 mb-2 text-center">スプレッドシートの<span class="help-tooltip" data-help="インターネット上の場所を示すアドレス。ブラウザのアドレスバーに表示されている文字列です。">URL</span>を入力</p>
-                            <input type="text" id="google-sheets-url-input" placeholder="https://docs.google.com/spreadsheets/d/..." class="w-full mb-3 rounded-lg border border-green-300 px-3 py-2 text-xs focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200" />
+                            <input type="text" id="google-sheets-url-input" placeholder="https://docs.google.com/spreadsheets/d/1c2bPLLCVvebx_7QBL7JilTBTGSUotLxEEQEP/edit" class="w-full mb-3 rounded-lg border border-green-300 px-3 py-2 text-xs focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200" />
+                            <p class="text-xs text-green-600 mb-3 text-center">💡 スプレッドシートを開いて、アドレスバーから完全なURLをコピーしてください</p>
                             <div class="mb-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
                                 <p class="text-xs text-amber-800">💡 <strong>訪問管理記録の例:</strong> 日時、担当者、顧客名、訪問目的、結果などの列があるスプレッドシートに対応しています。</p>
                             </div>
@@ -2651,6 +2652,14 @@
                         return;
                     }
                     
+                    // スプレッドシートIDの検証
+                    const spreadsheetIdMatch = sheetUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+                    if (!spreadsheetIdMatch || !spreadsheetIdMatch[1] || spreadsheetIdMatch[1].length < 10) {
+                        showNotification('スプレッドシートURLが不完全です。完全なURLをコピー&ペーストしてください。\n\n例: https://docs.google.com/spreadsheets/d/1c2bPLLCVvebx_7QBL7JilTBTGSUotLxEEQEP/edit', 'error');
+                        googleSheetsUrlInput.focus();
+                        return;
+                    }
+                    
                     // ローディング表示
                     const btn = document.getElementById('connect-google-sheets');
                     if (btn) {
@@ -2745,7 +2754,9 @@
                         }
                         
                         if (!response.ok) {
-                            if (response.status === 403) {
+                            if (response.status === 400) {
+                                throw new Error('スプレッドシートURLが正しくありません。完全なURLをコピー&ペーストしてください。\n\n【確認してください】\n・URLが完全か（https://docs.google.com/spreadsheets/d/...で始まる）\n・スプレッドシートが存在するか\n・スプレッドシートが削除されていないか');
+                            } else if (response.status === 403) {
                                 throw new Error('スプレッドシートへのアクセスが拒否されました。スプレッドシートの共有設定を「リンクを知っている全員」に変更してください。');
                             } else if (response.status === 404) {
                                 throw new Error('スプレッドシートが見つかりませんでした。URLが正しいか確認してください。');
@@ -2879,6 +2890,15 @@
                         errorMessage += '5. もう一度「連携を開始する」をクリック\n\n';
                         errorMessage += '【次のステップ】\n';
                         errorMessage += '上記の手順で共有設定を変更してから、もう一度お試しください。';
+                    } else if (error.message && (error.message.includes('400') || error.message.includes('URLが正しくありません'))) {
+                        errorMessage += '【原因】スプレッドシートURLが正しくありません。\n\n';
+                        errorMessage += '【解決方法】\n';
+                        errorMessage += '・完全なURLをコピー&ペーストしてください\n';
+                        errorMessage += '・URLは「https://docs.google.com/spreadsheets/d/」で始まる必要があります\n';
+                        errorMessage += '・URLの最後に「/edit」や「/view」が付いていても問題ありません\n';
+                        errorMessage += '・スプレッドシートを開いて、アドレスバーからURLをコピーしてください\n\n';
+                        errorMessage += '【次のステップ】\n';
+                        errorMessage += '正しいURLを入力して、もう一度お試しください。';
                     } else if (error.message && (error.message.includes('見つかりません') || error.message.includes('404'))) {
                         errorMessage += '【原因】スプレッドシートが見つかりませんでした。\n\n';
                         errorMessage += '【解決方法】\n';
