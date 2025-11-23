@@ -2598,19 +2598,37 @@
                 }
             });
 
+            // ページ読み込み時にfile://プロトコルの警告を表示
+            if (window.location.protocol === 'file:') {
+                const warningBanner = document.createElement('div');
+                warningBanner.className = 'fixed top-0 left-0 right-0 z-50 bg-amber-500 text-white px-4 py-2 text-sm text-center shadow-lg';
+                warningBanner.innerHTML = `
+                    <div class="flex items-center justify-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                        </svg>
+                        <span><strong>重要:</strong> ファイルを直接開いているため、Googleスプレッドシート連携が動作しません。</span>
+                        <a href="http://localhost:8000" class="underline font-semibold">ローカルサーバーで開く</a>
+                        <span>または</span>
+                        <button onclick="this.parentElement.parentElement.remove()" class="underline">閉じる</button>
+                    </div>
+                `;
+                document.body.insertBefore(warningBanner, document.body.firstChild);
+            }
+
             // Google Sheets連携機能
             const connectGoogleSheetsBtn = document.getElementById('connect-google-sheets');
             const googleSheetsUrlInput = document.getElementById('google-sheets-url-input');
             
-            console.log('Google Sheets連携ボタン:', connectGoogleSheetsBtn);
-            console.log('Google Sheets URL入力:', googleSheetsUrlInput);
-            
             if (connectGoogleSheetsBtn && googleSheetsUrlInput) {
-                console.log('Google Sheets連携ボタンのイベントリスナーを設定します');
                 connectGoogleSheetsBtn.addEventListener('click', async function() {
-                    console.log('Google Sheets連携ボタンがクリックされました');
+                    // file://プロトコルの場合は早期リターン
+                    if (window.location.protocol === 'file:') {
+                        alert('ファイルを直接開いているため、Googleスプレッドシート連携が動作しません。\n\n【解決方法】\n1. ターミナルで「python -m http.server 8000」を実行\n2. ブラウザで「http://localhost:8000」を開く\n3. もう一度「連携を開始する」をクリック\n\nまたは、start-local-server.bat をダブルクリックしてローカルサーバーを起動してください。');
+                        return;
+                    }
+                    
                     const sheetUrl = googleSheetsUrlInput.value.trim();
-                    console.log('入力されたURL:', sheetUrl);
                     
                     if (!sheetUrl) {
                         showNotification('スプレッドシートURLを入力してください', 'error');
@@ -2633,18 +2651,14 @@
                     }
                     
                     try {
-                        console.log('スプレッドシートのデータ取得を開始します');
                         showNotification('スプレッドシートを分析中...', 'info');
                     
-                    // Google Sheets APIサービスの使用（実際の実装では、適切に初期化が必要）
+                    // Google Sheets APIサービスの使用
                     if (typeof googleSheetsService !== 'undefined') {
-                        // 認証が必要な場合
+                        // 公開スプレッドシートの場合は認証不要
+                        await googleSheetsService.initAuth();
                         if (!googleSheetsService.isAuthenticated) {
-                            showNotification('Googleアカウントでのログインが必要です。ログインを開始します...', 'info');
-                            await googleSheetsService.initAuth();
-                            if (!googleSheetsService.isAuthenticated) {
-                                await googleSheetsService.signIn();
-                            }
+                            await googleSheetsService.signIn();
                         }
                         
                         // スプレッドシートのデータを取得・分析
@@ -2705,10 +2719,7 @@
                         // CSV形式でエクスポート（公開スプレッドシートの場合）
                         const exportUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=0`;
                         
-                        console.log('スプレッドシートURL:', exportUrl);
-                        console.log('現在のorigin:', window.location.origin);
-                        
-                        // CORS対応: まず直接アクセスを試行
+                        // CORS対応: 直接アクセスを試行
                         let response;
                         try {
                             response = await fetch(exportUrl, {
@@ -2720,13 +2731,9 @@
                                 }
                             });
                         } catch (corsError) {
-                            console.error('CORSエラー:', corsError);
-                            // file://プロトコルを使用している場合のエラーメッセージ
-                            if (window.location.protocol === 'file:') {
-                                throw new Error('CORSエラーが発生しました。ローカルサーバー（http://localhost:8000）を使用してアクセスしてください。\n\n【解決方法】\n1. ターミナルで「python -m http.server 8000」を実行\n2. ブラウザで「http://localhost:8000」を開く\n3. もう一度「連携を開始する」をクリック');
-                            } else {
-                                throw new Error('スプレッドシートへのアクセスがCORSポリシーによってブロックされました。スプレッドシートの共有設定を確認してください。');
-                            }
+                            // file://プロトコルの場合は早期リターンで既に処理済み
+                            // ここに到達する場合は、他のCORSエラーの可能性
+                            throw new Error('スプレッドシートへのアクセスがCORSポリシーによってブロックされました。スプレッドシートの共有設定を「リンクを知っている全員」に変更してください。');
                         }
                         
                         if (!response.ok) {
@@ -2851,8 +2858,7 @@
                         }
                     }
                 } catch (error) {
-                    console.error('Error connecting to Google Sheets:', error);
-                    // ユーザーフレンドリーなエラーメッセージ
+                    // コンソールエラーは最小限に（ユーザーには分かりやすいメッセージを表示）
                     let errorMessage = 'Googleスプレッドシートとの連携に失敗しました。\n\n';
                     
                     if (error.message && (error.message.includes('アクセスが拒否') || error.message.includes('403'))) {
@@ -2910,10 +2916,6 @@
                     }
                 }
                 });
-            } else {
-                console.error('Google Sheets connection elements not found');
-                console.error('connectGoogleSheetsBtn:', connectGoogleSheetsBtn);
-                console.error('googleSheetsUrlInput:', googleSheetsUrlInput);
             }
         });
     </script>
