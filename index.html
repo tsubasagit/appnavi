@@ -2695,8 +2695,24 @@
                             fullAnalysis: analysis
                         });
                         
-                        if (!analysis.rows || analysis.rows.length === 0) {
-                            throw new Error('スプレッドシートにデータ行がありません。2行目以降にデータがあるか確認してください。');
+                        // rowsプロパティがない場合、sampleRowsから復元を試みる
+                        let rows = analysis.rows;
+                        if (!rows || rows.length === 0) {
+                            console.warn('analysis.rowsが見つかりません。sampleRowsから復元を試みます。');
+                            // sampleRowsがある場合は、それを使用（ただし完全なデータではない）
+                            if (analysis.sampleRows && analysis.sampleRows.length > 0) {
+                                rows = analysis.sampleRows;
+                                console.warn('sampleRowsを使用しますが、完全なデータではない可能性があります。');
+                            }
+                        }
+                        
+                        if (!rows || rows.length === 0) {
+                            const errorMsg = 'スプレッドシートにデータ行がありません。2行目以降にデータがあるか確認してください。\n\n【デバッグ情報】\n' +
+                                `- ヘッダー数: ${analysis.headers ? analysis.headers.length : 0}\n` +
+                                `- 行数: ${analysis.rowCount || 0}\n` +
+                                `- rowsプロパティ: ${analysis.rows ? 'あり' : 'なし'}\n` +
+                                `- sampleRows: ${analysis.sampleRows ? analysis.sampleRows.length + '件' : 'なし'}`;
+                            throw new Error(errorMsg);
                         }
                         
                         // 列設定を作成
@@ -2715,25 +2731,31 @@
                         
                         // アプリを作成
                         showNotification('アプリを作成中...', 'info');
-                        const newApp = await addApp({
-                            name: appName,
-                            description: 'Googleスプレッドシートから作成されたアプリです。',
-                            columns: columns,
-                            data: analysis.rows, // 空配列チェック済み
-                            color: 'green',
-                            googleSheetsUrl: sheetUrl,
-                            googleSheetsLastSynced: new Date().toISOString()
-                        });
                         
-                        if (newApp && newApp.id) {
-                            showNotification('Googleスプレッドシートと連携しました！');
+                        try {
+                            const newApp = await addApp({
+                                name: appName,
+                                description: 'Googleスプレッドシートから作成されたアプリです。',
+                                columns: columns,
+                                data: rows,
+                                color: 'green',
+                                googleSheetsUrl: sheetUrl,
+                                googleSheetsLastSynced: new Date().toISOString()
+                            });
                             
-                            // 作成したアプリに遷移
-                            setTimeout(() => {
-                                window.location.href = `myapp.html?appId=${newApp.id}`;
-                            }, 1000);
-                        } else {
-                            throw new Error('アプリの作成に失敗しました');
+                            if (newApp && newApp.id) {
+                                showNotification('Googleスプレッドシートと連携しました！');
+                                
+                                // 作成したアプリに遷移
+                                setTimeout(() => {
+                                    window.location.href = `myapp.html?appId=${newApp.id}`;
+                                }, 1000);
+                            } else {
+                                throw new Error('アプリの作成に失敗しました。アプリIDが生成されませんでした。');
+                            }
+                        } catch (appError) {
+                            console.error('アプリ作成エラー:', appError);
+                            throw new Error(`アプリの作成に失敗しました: ${appError.message}`);
                         }
                     } else {
                         // Google Sheets APIサービスが利用できない場合、直接CSVエクスポート方式で試行
@@ -2947,8 +2969,13 @@
                         }
                     }
                 } catch (error) {
-                    // コンソールエラーは最小限に（ユーザーには分かりやすいメッセージを表示）
+                    // エラーの詳細をコンソールに出力
+                    console.error('Google Sheets連携エラー:', error);
+                    console.error('エラースタック:', error.stack);
+                    
+                    // ユーザー向けのエラーメッセージ
                     let errorMessage = 'Googleスプレッドシートとの連携に失敗しました。\n\n';
+                    errorMessage += `【エラー内容】\n${error.message || '不明なエラーが発生しました'}\n\n`;
                     
                     if (error.message && (error.message.includes('アクセスが拒否') || error.message.includes('403'))) {
                         errorMessage += '【原因】スプレッドシートへのアクセスが拒否されました。\n\n';
@@ -3004,8 +3031,29 @@
                         errorMessage += 'Excelファイルからアプリを作成するか、スプレッドシートの設定を確認してください。';
                     }
                     
-                    alert(errorMessage);
-                    showNotification('Googleスプレッドシートとの連携に失敗しました。エラーメッセージを確認してください。', 'error');
+                    // エラーダイアログを表示（詳細な情報を含む）
+                    const errorDetails = errorMessage + '\n\n【デバッグ情報】\n' +
+                        `エラータイプ: ${error.name || 'Error'}\n` +
+                        `エラーメッセージ: ${error.message || '不明'}\n` +
+                        (error.stack ? `スタックトレース: ${error.stack.substring(0, 200)}...` : '');
+                    
+                    const userConfirmed = confirm(errorDetails + '\n\n【次のステップ】\n' +
+                        '1. ブラウザのコンソール（F12キー）でエラーの詳細を確認してください\n' +
+                        '2. スプレッドシートの共有設定を確認してください\n' +
+                        '3. スプレッドシートにデータが含まれているか確認してください\n' +
+                        '4. 問題が解決しない場合は、FAQ.mdを参照してください\n\n' +
+                        'コンソールを開きますか？');
+                    
+                    if (userConfirmed) {
+                        // コンソールを開く方法を案内
+                        alert('コンソールを開く方法:\n\n' +
+                            '1. F12キーを押す\n' +
+                            '2. 「Console」タブをクリック\n' +
+                            '3. エラーメッセージを確認\n\n' +
+                            'エラーの詳細が表示されています。');
+                    }
+                    
+                    showNotification(`エラー: ${error.message || '不明なエラー'}`, 'error');
                 } finally {
                     const btn = document.getElementById('connect-google-sheets');
                     if (btn) {
