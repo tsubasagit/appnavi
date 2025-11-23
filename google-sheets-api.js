@@ -258,13 +258,24 @@ class GoogleSheetsService {
         try {
             const { headers, rows } = await this.fetchSpreadsheetData(spreadsheetUrl, sheetName);
             
-            return {
+            console.log('analyzeSpreadsheet内:', {
+                headers: headers,
+                rowsLength: rows.length,
+                sampleRows: rows.slice(0, 3)
+            });
+            
+            const result = {
                 rowCount: rows.length,
                 columnCount: headers.length,
                 headers: headers,
+                rows: rows, // rowsを明示的に含める
                 sampleRows: rows.slice(0, 5), // 最初の5行をサンプルとして返す
                 dataTypes: this.detectDataTypes(headers, rows)
             };
+            
+            console.log('analyzeSpreadsheet返り値:', result);
+            
+            return result;
         } catch (error) {
             console.error('Error analyzing spreadsheet:', error);
             throw error;

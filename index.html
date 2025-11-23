@@ -2681,6 +2681,8 @@
                         // スプレッドシートのデータを取得・分析
                         const analysis = await googleSheetsService.analyzeSpreadsheet(sheetUrl);
                         
+                        console.log('analyzeSpreadsheet結果:', analysis);
+                        
                         if (!analysis.headers || analysis.headers.length === 0) {
                             throw new Error('スプレッドシートにデータが見つかりませんでした');
                         }
@@ -2689,7 +2691,8 @@
                         console.log('取得したデータ:', {
                             headers: analysis.headers,
                             rowCount: analysis.rows ? analysis.rows.length : 0,
-                            sampleRows: analysis.rows ? analysis.rows.slice(0, 3) : []
+                            sampleRows: analysis.rows ? analysis.rows.slice(0, 3) : [],
+                            fullAnalysis: analysis
                         });
                         
                         if (!analysis.rows || analysis.rows.length === 0) {
