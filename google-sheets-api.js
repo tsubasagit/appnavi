@@ -81,13 +81,12 @@ class GoogleSheetsService {
             
             // CSV形式でエクスポート（公開スプレッドシートの場合）
             // スプレッドシートIDからCSVエクスポートURLを生成
+            // 注意: gidパラメータなしで最初のシートを取得
             let exportUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv`;
             if (sheetName) {
                 exportUrl += `&gid=${sheetName}`;
-            } else {
-                // 最初のシートを取得
-                exportUrl += '&gid=0';
             }
+            // gidパラメータなしの場合、最初のシートが自動的にエクスポートされる
 
             // CORS対応: まず直接アクセスを試行
             let response;
