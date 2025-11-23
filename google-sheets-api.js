@@ -125,6 +125,9 @@ class GoogleSheetsService {
                 throw new Error('スプレッドシートにデータが含まれていません。1行目に見出し、2行目以降にデータがあるか確認してください。');
             }
 
+            // BOMを削除（UTF-8 BOM対応）
+            const cleanCsvText = csvText.replace(/^\uFEFF/, '');
+            
             // CSVパース（引用符で囲まれたカンマを含むセルに対応）
             const parseCSVLine = (line) => {
                 const result = [];
@@ -134,7 +137,13 @@ class GoogleSheetsService {
                 for (let i = 0; i < line.length; i++) {
                     const char = line[i];
                     if (char === '"') {
-                        inQuotes = !inQuotes;
+                        if (inQuotes && line[i + 1] === '"') {
+                            // エスケープされた引用符
+                            current += '"';
+                            i++; // 次の文字をスキップ
+                        } else {
+                            inQuotes = !inQuotes;
+                        }
                     } else if (char === ',' && !inQuotes) {
                         result.push(current.trim().replace(/^"|"$/g, ''));
                         current = '';
@@ -146,20 +155,54 @@ class GoogleSheetsService {
                 return result;
             };
 
-            const lines = csvText.split('\n').filter(line => line.trim().length > 0);
+            // 行を分割（CRLF、LF、CRのいずれにも対応）
+            const lines = cleanCsvText.split(/\r?\n|\r/).filter(line => line.trim().length > 0);
+            
+            console.log('CSVパース前:', {
+                totalLines: lines.length,
+                firstLine: lines[0],
+                secondLine: lines[1],
+                csvTextLength: csvText.length
+            });
+            
             if (lines.length === 0) {
                 throw new Error('スプレッドシートにデータが含まれていません。');
             }
 
             const headers = parseCSVLine(lines[0]);
-            const rows = lines.slice(1).map(line => {
+            console.log('パースされたヘッダー:', headers);
+            
+            const rows = lines.slice(1).map((line, lineIndex) => {
                 const values = parseCSVLine(line);
                 const rowObj = {};
                 headers.forEach((header, index) => {
                     rowObj[header] = values[index] || '';
                 });
+                
+                // デバッグ: 最初の数行をログ出力
+                if (lineIndex < 3) {
+                    console.log(`行 ${lineIndex + 1}:`, {
+                        rawLine: line,
+                        parsedValues: values,
+                        rowObj: rowObj
+                    });
+                }
+                
                 return rowObj;
-            }).filter(row => Object.values(row).some(v => v && String(v).trim().length > 0)); // 空行を除外
+            }).filter(row => {
+                // 空行を除外（すべての値が空でない行を保持）
+                const hasData = Object.values(row).some(v => v && String(v).trim().length > 0);
+                if (!hasData) {
+                    console.log('空行を除外:', row);
+                }
+                return hasData;
+            });
+            
+            console.log('パース後のデータ:', {
+                headerCount: headers.length,
+                rowCount: rows.length,
+                sampleRows: rows.slice(0, 3)
+            });
 
             if (rows.length === 0) {
                 throw new Error('スプレッドシートにデータ行がありません。2行目以降にデータがあるか確認してください。');
