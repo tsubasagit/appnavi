@@ -260,6 +260,16 @@ This is convenient for development and demos, but Firebase is strongly recommend
 - Verify API is enabled
 - Ensure correct credentials are used
 
+## FAQ（よくある質問）
+
+よくある質問とトラブルシューティングについては、[FAQ.md](./FAQ.md) をご覧ください。
+
+主な内容：
+- Googleスプレッドシート連携のエラー対処法
+- サンプルスプレッドシートのURL
+- 認証について
+- データ保存先について
+
 ## Future Implementation
 
 - [ ] Authentication feature (user management)
