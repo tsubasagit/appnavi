@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>自治体DXアプリ - Navi 2.0</title>
+    <title>AppNavi</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- Firebase SDK -->
@@ -257,6 +257,42 @@
                 </div>
             </aside>
             <main id="data-view" class="flex-1 overflow-auto px-6 py-6">
+                <!-- 初回ガイダンスバナー -->
+                <div id="data-onboarding-banner" class="mb-6 rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-6 shadow-sm">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5 text-blue-600">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <h3 class="text-lg font-semibold text-blue-900">データをインポートしました！</h3>
+                            </div>
+                            <p class="text-sm text-blue-700 mb-4">次に、UIやグラフを作成してアプリを完成させましょう。</p>
+                            <div class="grid gap-3 md:grid-cols-2">
+                                <div class="rounded-lg border border-blue-200 bg-white p-4">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <div class="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-600 font-bold text-xs">1</div>
+                                        <h4 class="text-sm font-semibold text-blue-900">UIタブで入力フォームを作成</h4>
+                                    </div>
+                                    <p class="text-xs text-blue-700">左側の「UI」タブをクリックして、データ入力用のフォームを作成します。</p>
+                                </div>
+                                <div class="rounded-lg border border-blue-200 bg-white p-4">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <div class="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-600 font-bold text-xs">2</div>
+                                        <h4 class="text-sm font-semibold text-blue-900">グラフタブで可視化</h4>
+                                    </div>
+                                    <p class="text-xs text-blue-700">左側の「グラフ」タブをクリックして、データをグラフで表示します。</p>
+                                </div>
+                            </div>
+                        </div>
+                        <button id="close-data-onboarding" class="ml-4 rounded-lg p-1 text-blue-400 hover:bg-blue-100 hover:text-blue-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
                 <!-- テーブル表示 -->
                 <div id="table-display-container" class="rounded-2xl border border-slate-200 bg-white shadow-sm">
                     <div id="table-header" class="flex items-center justify-between px-6 py-4">
@@ -292,6 +328,43 @@
             <!-- グラフ表示ビュー -->
             <main id="chart-view" class="hidden flex-1 overflow-auto px-6 py-6">
                 <div class="space-y-6">
+                    <!-- グラフ作成ガイダンス -->
+                    <div id="chart-onboarding-banner" class="rounded-2xl border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 p-6 shadow-sm">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5 text-green-600">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+                                    </svg>
+                                    <h3 class="text-lg font-semibold text-green-900">グラフの作成</h3>
+                                </div>
+                                <p class="text-sm text-green-700 mb-4">データをグラフで可視化できます。左側の設定から、グラフの種類や表示方法を変更できます。</p>
+                                <div class="grid gap-3 md:grid-cols-2">
+                                    <div class="rounded-lg border border-green-200 bg-white p-3">
+                                        <div class="flex items-center space-x-2 mb-1">
+                                            <span class="text-xs font-bold text-green-600">1.</span>
+                                            <span class="text-sm font-semibold text-green-900">グラフタイプを選択</span>
+                                        </div>
+                                        <p class="text-xs text-green-700 ml-5">左側の「グラフタイプ」から、棒グラフ・折れ線グラフ・円グラフなどを選択</p>
+                                    </div>
+                                    <div class="rounded-lg border border-green-200 bg-white p-3">
+                                        <div class="flex items-center space-x-2 mb-1">
+                                            <span class="text-xs font-bold text-green-600">2.</span>
+                                            <span class="text-sm font-semibold text-green-900">集計方法を選択</span>
+                                        </div>
+                                        <p class="text-xs text-green-700 ml-5">左側の「集計方法」から、ステータス別・日付別などでデータを集計</p>
+                                    </div>
+                                </div>
+                                <p class="mt-3 text-xs text-green-600">💡 ヒント: グラフは自動で更新されます。データを追加・編集すると、グラフも自動的に反映されます。</p>
+                            </div>
+                            <button id="close-chart-onboarding" class="ml-4 rounded-lg p-1 text-green-400 hover:bg-green-100 hover:text-green-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    
                     <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                         <div class="mb-4">
                             <h2 class="text-xl font-semibold text-slate-900">データ可視化</h2>
@@ -331,6 +404,49 @@
             <section id="builder-view" class="hidden flex flex-1 overflow-hidden bg-slate-100">
                 <div class="flex h-full w-full">
                     <div class="flex-1 overflow-auto bg-slate-50 p-6">
+                        <!-- UI作成ガイダンス -->
+                        <div id="ui-onboarding-banner" class="mb-6 mx-auto max-w-3xl rounded-2xl border border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50 p-6 shadow-sm">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5 text-purple-600">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 0 0-5.78 1.128 2.25 2.25 0 0 1-2.4 2.245 4.5 4.5 0 0 0 8.4-2.245c0-.399-.078-.78-.22-1.128Zm0 0a15.998 15.998 0 0 0 3.388-1.62m-5.043-.025a15.994 15.994 0 0 1 1.622-3.395m3.42 3.42a15.995 15.995 0 0 0 4.764-4.648l3.876-5.814a1.151 1.151 0 0 0-1.597-1.597L14.146 6.32a15.996 15.996 0 0 0-4.649 4.763m3.42 3.42a6.776 6.776 0 0 0-3.42-3.42" />
+                                        </svg>
+                                        <h3 class="text-lg font-semibold text-purple-900">UI（入力フォーム）の作成</h3>
+                                    </div>
+                                    <p class="text-sm text-purple-700 mb-4">データ入力用のフォームが自動生成されています。以下の方法でカスタマイズできます。</p>
+                                    <div class="space-y-3">
+                                        <div class="rounded-lg border border-purple-200 bg-white p-3">
+                                            <div class="flex items-center space-x-2 mb-1">
+                                                <span class="text-xs font-bold text-purple-600">1.</span>
+                                                <span class="text-sm font-semibold text-purple-900">左側の「ページを追加」ボタン</span>
+                                            </div>
+                                            <p class="text-xs text-purple-700 ml-5">新しいページ（入力フォーム）を追加できます</p>
+                                        </div>
+                                        <div class="rounded-lg border border-purple-200 bg-white p-3">
+                                            <div class="flex items-center space-x-2 mb-1">
+                                                <span class="text-xs font-bold text-purple-600">2.</span>
+                                                <span class="text-sm font-semibold text-purple-900">コンポーネントをドラッグ&ドロップ</span>
+                                            </div>
+                                            <p class="text-xs text-purple-700 ml-5">左側の「コンポーネント」から、入力フィールドやボタンを追加できます</p>
+                                        </div>
+                                        <div class="rounded-lg border border-purple-200 bg-white p-3">
+                                            <div class="flex items-center space-x-2 mb-1">
+                                                <span class="text-xs font-bold text-purple-600">3.</span>
+                                                <span class="text-sm font-semibold text-purple-900">フォームを直接編集</span>
+                                            </div>
+                                            <p class="text-xs text-purple-700 ml-5">下のフォームをクリックして、項目を編集・削除できます</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button id="close-ui-onboarding" class="ml-4 rounded-lg p-1 text-purple-400 hover:bg-purple-100 hover:text-purple-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        
                         <div id="auto-generated-form" class="mx-auto max-w-3xl space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow">
                             <!-- 自動生成フォームがここに表示されます -->
                             <div class="grid grid-cols-2 gap-4" id="default-form">
@@ -428,9 +544,10 @@
                 </div>
             </section>
             <!-- 設定表示ビュー -->
-            <main id="settings-view" class="hidden flex-1 overflow-auto bg-slate-50 px-6 py-6">
-                <!-- 全般設定 -->
-                <div id="settings-general" class="settings-content rounded-2xl border border-slate-200 bg-white p-6 shadow-sm max-w-4xl">
+            <main id="settings-view" class="hidden flex-1 overflow-auto bg-slate-50">
+                <div class="px-6 py-6">
+                    <!-- 全般設定 -->
+                    <div id="settings-general" class="settings-content rounded-2xl border border-slate-200 bg-white p-6 shadow-sm max-w-4xl">
                         <h2 class="text-xl font-semibold text-slate-900 mb-6">全般設定</h2>
                         <div class="space-y-6">
                             <div>
@@ -451,16 +568,25 @@
                     </div>
                 <!-- API・連携設定 -->
                 <div id="settings-api" class="settings-content hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm max-w-4xl">
-                        <h2 class="text-xl font-semibold text-slate-900 mb-6">API・連携設定</h2>
+                        <h2 class="text-xl font-semibold text-slate-900 mb-6">外部サービスとの連携設定</h2>
                         <div class="space-y-6">
                             <div class="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
                                 <p class="text-sm font-semibold text-blue-900">Googleスプレッドシート連携</p>
-                                <p class="mt-1 text-xs text-blue-700">Googleスプレッドシートと連携して、データを自動同期できます</p>
+                                <p class="mt-1 text-xs text-blue-700">Googleスプレッドシートと連携して、データを自動で更新できます</p>
+                                <p class="mt-2 text-xs text-blue-600">📌 使い方: スプレッドシートのURLをコピー&ペーストするだけ。Excelのようにデータを管理できます。</p>
                             </div>
                             <div>
-                                <label class="text-sm font-semibold text-slate-700 mb-2 block">スプレッドシートURL</label>
+                                <label class="text-sm font-semibold text-slate-700 mb-2 block">スプレッドシートURL <span class="text-xs font-normal text-slate-500">(必須)</span></label>
                                 <input type="text" id="settings-sheet-url" class="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="https://docs.google.com/spreadsheets/d/..." />
-                                <p class="mt-1 text-xs text-slate-500">共有設定を「リンクを知っている全員」に変更してください</p>
+                                <div class="mt-2 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2">
+                                    <p class="text-xs font-semibold text-amber-900 mb-1">⚠️ 事前準備が必要です</p>
+                                    <ol class="ml-4 list-decimal text-xs text-amber-700 space-y-1">
+                                        <li>Googleスプレッドシートを開く</li>
+                                        <li>右上の「共有」ボタンをクリック</li>
+                                        <li>「リンクを知っている全員」に変更</li>
+                                        <li>URLをコピーして、上の入力欄に貼り付け</li>
+                                    </ol>
+                                </div>
                             </div>
                             <div class="flex items-center justify-end space-x-3 pt-4 border-t border-slate-200">
                                 <button class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100">キャンセル</button>
@@ -497,6 +623,7 @@
                             </div>
                         </div>
                     </div>
+                </div>
             </main>
         </div>
     </div>
@@ -594,6 +721,61 @@
             const chartTypeSelect = document.getElementById('chart-type');
             const chartGroupBySelect = document.getElementById('chart-group-by');
 
+            // オンボーディングバナーの要素
+            const closeDataOnboarding = document.getElementById('close-data-onboarding');
+            const closeUIOnboarding = document.getElementById('close-ui-onboarding');
+            const closeChartOnboarding = document.getElementById('close-chart-onboarding');
+            const dataOnboardingBanner = document.getElementById('data-onboarding-banner');
+            const uiOnboardingBanner = document.getElementById('ui-onboarding-banner');
+            const chartOnboardingBanner = document.getElementById('chart-onboarding-banner');
+            
+            // 初回表示チェック（URLパラメータでnewApp=trueの場合のみ表示）
+            const urlParamsForOnboarding = new URLSearchParams(window.location.search);
+            const isNewAppForOnboarding = urlParamsForOnboarding.get('newApp') === 'true';
+            const hasSeenDataOnboarding = localStorage.getItem('hasSeenDataOnboarding');
+            const hasSeenUIOnboarding = localStorage.getItem('hasSeenUIOnboarding');
+            const hasSeenChartOnboarding = localStorage.getItem('hasSeenChartOnboarding');
+            
+            // オンボーディングバナーの閉じるボタンのイベント
+            if (closeDataOnboarding) {
+                closeDataOnboarding.addEventListener('click', () => {
+                    dataOnboardingBanner?.classList.add('hidden');
+                    localStorage.setItem('hasSeenDataOnboarding', 'true');
+                });
+            }
+            
+            // UIオンボーディングバナーの閉じるボタン（localStorageに保存して永続化）
+            if (closeUIOnboarding) {
+                closeUIOnboarding.addEventListener('click', () => {
+                    uiOnboardingBanner?.classList.add('hidden');
+                    // localStorageに保存（永続的に非表示にする）
+                    localStorage.setItem('hasSeenUIOnboarding', 'true');
+                });
+            }
+            
+            if (closeChartOnboarding) {
+                closeChartOnboarding.addEventListener('click', () => {
+                    chartOnboardingBanner?.classList.add('hidden');
+                    localStorage.setItem('hasSeenChartOnboarding', 'true');
+                });
+            }
+            
+            // 初回表示の制御
+            if (isNewAppForOnboarding && !hasSeenDataOnboarding) {
+                // 新規アプリ作成時はデータビューのガイダンスを表示
+                dataOnboardingBanner?.classList.remove('hidden');
+            } else if (hasSeenDataOnboarding) {
+                dataOnboardingBanner?.classList.add('hidden');
+            }
+            
+            if (hasSeenUIOnboarding && uiOnboardingBanner) {
+                uiOnboardingBanner.classList.add('hidden');
+            }
+            
+            if (hasSeenChartOnboarding && chartOnboardingBanner) {
+                chartOnboardingBanner.classList.add('hidden');
+            }
+
             // タブ切り替え関数
             const setTab = (tabName) => {
                 // すべてのタブのスタイルをリセット
@@ -633,6 +815,13 @@
                     searchBar.classList.add('hidden');
                     backToDashboardLink.classList.remove('hidden');
                     viewTitle.textContent = 'サンプルアプリ';
+                    // UIタブを開くとき、既に閉じられている場合は非表示のままにする
+                    if (hasSeenUIOnboarding && uiOnboardingBanner) {
+                        uiOnboardingBanner.classList.add('hidden');
+                    } else if (!hasSeenUIOnboarding && uiOnboardingBanner) {
+                        // 初めて開く場合のみガイダンスを表示
+                        uiOnboardingBanner.classList.remove('hidden');
+                    }
                 } else if (tabName === 'chart') {
                     tabChart.classList.remove('text-slate-500');
                     tabChart.classList.add('bg-white', 'text-blue-600');
@@ -643,6 +832,10 @@
                     backToDashboardLink.classList.remove('hidden');
                     viewTitle.textContent = 'グラフ';
                     initCharts();
+                    // グラフタブを初めて開く場合、ガイダンスを表示
+                    if (!hasSeenChartOnboarding && chartOnboardingBanner) {
+                        chartOnboardingBanner.classList.remove('hidden');
+                    }
                 } else if (tabName === 'settings') {
                     tabSettings.classList.remove('text-slate-500');
                     tabSettings.classList.add('bg-white', 'text-blue-600');
@@ -762,18 +955,43 @@
                     }
                 }
 
-                // ボディ更新
+                // ヘッダーに「操作」列を追加
+                if (tableHead) {
+                    const headerRow = tableHead.querySelector('tr');
+                    if (headerRow && !headerRow.querySelector('th:last-child')?.textContent.includes('操作')) {
+                        headerRow.innerHTML += '<th class="px-6 py-3 text-left font-semibold">操作</th>';
+                    }
+                }
+                
+                // ボディ更新（編集・削除ボタン付き）
                 if (tableBody) {
                     tableBody.innerHTML = data.rows.map((row, index) => {
                         const firstCell = row[0];
                         const isLink = firstCell.startsWith('R-') || firstCell.startsWith('E-') || firstCell.startsWith('U-');
                         const firstCellHTML = isLink ? `<td class="px-6 py-4 font-semibold text-blue-600">${firstCell}</td>` : `<td class="px-6 py-4 font-semibold text-blue-600">${firstCell}</td>`;
+                        const rowId = firstCell || `row-${index}`;
                         
-                        return `<tr class="hover:bg-slate-50">
+                        return `<tr class="hover:bg-slate-50" data-row-id="${rowId}">
                             ${firstCellHTML}
                             ${row.slice(1).map(cell => `<td class="px-6 py-4">${cell}</td>`).join('')}
+                            ${getActionButtonsHTML(rowId)}
                         </tr>`;
                     }).join('');
+                    
+                    // イベントリスナーを追加（サンプルデータ用）
+                    tableBody.querySelectorAll('.edit-row-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            showNotification('サンプルデータは編集できません。実際のアプリデータを編集してください。', 'info');
+                        });
+                    });
+                    
+                    tableBody.querySelectorAll('.delete-row-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            showNotification('サンプルデータは削除できません。実際のアプリデータを削除してください。', 'info');
+                        });
+                    });
                 }
 
                 // ヘッダータイトルも更新
@@ -851,7 +1069,7 @@
                 dataTableButtons[0].click();
             }
 
-            // グラフ初期化関数
+            // グラフ初期化関数（実際のデータから生成）
             const initCharts = () => {
                 const chartCtx = document.getElementById('data-chart');
                 const trendCtx = document.getElementById('trend-chart');
@@ -866,29 +1084,45 @@
                     trendChart.destroy();
                 }
 
-                // サンプルデータ（実際の実装では、選択されたテーブルからデータを取得）
-                const sampleData = {
-                    status: {
-                        labels: ['承認済み', '承認待ち', '申請中'],
-                        data: [24, 3, 1]
-                    },
-                    department: {
-                        labels: ['税務課', '市民課', '企画課'],
-                        data: [10, 12, 5]
-                    },
-                    facility: {
-                        labels: ['第1会議室', '公用車', '大会議室'],
-                        data: [15, 8, 4]
-                    },
-                    date: {
-                        labels: ['11/20', '11/21', '11/22', '11/23', '11/24'],
-                        data: [5, 8, 6, 4, 4]
-                    }
-                };
+                // 実際のアプリデータからグラフデータを生成
+                let chartData = null;
+                let trendData = null;
 
-                const groupBy = chartGroupBySelect.value;
-                const chartType = chartTypeSelect.value;
-                const data = sampleData[groupBy] || sampleData.status;
+                if (currentApp && currentApp.data && currentApp.data.length > 0 && currentApp.columns) {
+                    const groupBy = chartGroupBySelect.value;
+                    const chartType = chartTypeSelect.value;
+                    
+                    // データから集計
+                    chartData = generateChartDataFromAppData(currentApp.data, currentApp.columns, groupBy);
+                    trendData = generateTrendDataFromAppData(currentApp.data, currentApp.columns);
+                } else {
+                    // フォールバック: サンプルデータ
+                    const sampleData = {
+                        status: {
+                            labels: ['承認済み', '承認待ち', '申請中'],
+                            data: [24, 3, 1]
+                        },
+                        department: {
+                            labels: ['税務課', '市民課', '企画課'],
+                            data: [10, 12, 5]
+                        },
+                        facility: {
+                            labels: ['第1会議室', '公用車', '大会議室'],
+                            data: [15, 8, 4]
+                        },
+                        date: {
+                            labels: ['11/20', '11/21', '11/22', '11/23', '11/24'],
+                            data: [5, 8, 6, 4, 4]
+                        }
+                    };
+                    chartData = sampleData[chartGroupBySelect.value] || sampleData.status;
+                    trendData = {
+                        labels: ['11/20', '11/21', '11/22', '11/23', '11/24', '11/25'],
+                        data: [5, 8, 6, 4, 4, 7]
+                    };
+                }
+
+                const data = chartData;
 
                 // メイングラフ
                 dataChart = new Chart(chartCtx, {
@@ -923,10 +1157,10 @@
                 trendChart = new Chart(trendCtx, {
                     type: 'line',
                     data: {
-                        labels: ['11/20', '11/21', '11/22', '11/23', '11/24', '11/25'],
+                        labels: trendData.labels,
                         datasets: [{
-                            label: '予約数',
-                            data: [5, 8, 6, 4, 4, 7],
+                            label: trendData.label || '件数',
+                            data: trendData.data,
                             borderColor: '#3b82f6',
                             backgroundColor: 'rgba(59, 130, 246, 0.1)',
                             tension: 0.4,
@@ -949,6 +1183,128 @@
                     }
                 });
             };
+
+            // アプリデータからグラフデータを生成（営業戦略レポート用）
+            function generateChartDataFromAppData(data, columns, groupBy) {
+                if (!data || data.length === 0) {
+                    return { labels: [], data: [] };
+                }
+
+                // 訪問管理記録でよく使われる列名のパターン
+                const dateColumnPatterns = ['日時', '日付', '訪問日', '訪問日時', 'date', 'datetime', '訪問日付', '実施日'];
+                const personColumnPatterns = ['担当者', '営業担当', '担当', 'person', 'owner', 'salesperson'];
+                const customerColumnPatterns = ['顧客名', '顧客', '会社名', '企業名', 'customer', 'company', 'client'];
+                const resultColumnPatterns = ['結果', '訪問結果', 'ステータス', '状態', 'status', 'result', '成約', '商談結果'];
+                const purposeColumnPatterns = ['訪問目的', '目的', 'purpose', '目的', '訪問内容'];
+
+                // グループ化する列を特定
+                let groupColumn = null;
+                const groupByLower = groupBy.toLowerCase();
+
+                if (groupByLower.includes('date') || groupByLower.includes('日')) {
+                    groupColumn = columns.find(col => 
+                        dateColumnPatterns.some(pattern => col.name.includes(pattern))
+                    );
+                } else if (groupByLower.includes('person') || groupByLower.includes('担当')) {
+                    groupColumn = columns.find(col => 
+                        personColumnPatterns.some(pattern => col.name.includes(pattern))
+                    );
+                } else if (groupByLower.includes('customer') || groupByLower.includes('顧客')) {
+                    groupColumn = columns.find(col => 
+                        customerColumnPatterns.some(pattern => col.name.includes(pattern))
+                    );
+                } else if (groupByLower.includes('result') || groupByLower.includes('結果') || groupByLower.includes('status') || groupByLower.includes('ステータス')) {
+                    groupColumn = columns.find(col => 
+                        resultColumnPatterns.some(pattern => col.name.includes(pattern))
+                    );
+                } else if (groupByLower.includes('purpose') || groupByLower.includes('目的')) {
+                    groupColumn = columns.find(col => 
+                        purposeColumnPatterns.some(pattern => col.name.includes(pattern))
+                    );
+                } else {
+                    // デフォルト: 最初のselect型またはtext型の列
+                    groupColumn = columns.find(col => 
+                        col.type === 'select' || col.type === 'text'
+                    ) || columns[0];
+                }
+
+                if (!groupColumn) {
+                    return { labels: ['データなし'], data: [0] };
+                }
+
+                // データを集計
+                const counts = {};
+                data.forEach(row => {
+                    const value = String(row[groupColumn.name] || '').trim();
+                    if (value) {
+                        counts[value] = (counts[value] || 0) + 1;
+                    }
+                });
+
+                // ラベルとデータをソート（件数の多い順）
+                const sortedEntries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+                const labels = sortedEntries.map(([key]) => key);
+                const values = sortedEntries.map(([, value]) => value);
+
+                return { labels, data: values };
+            }
+
+            // 時系列トレンドデータを生成（訪問管理記録用）
+            function generateTrendDataFromAppData(data, columns) {
+                if (!data || data.length === 0) {
+                    return { labels: [], data: [], label: '件数' };
+                }
+
+                // 日付列を特定
+                const dateColumnPatterns = ['日時', '日付', '訪問日', '訪問日時', 'date', 'datetime', '訪問日付', '実施日'];
+                const dateColumn = columns.find(col => 
+                    dateColumnPatterns.some(pattern => col.name.includes(pattern))
+                );
+
+                if (!dateColumn) {
+                    // 日付列がない場合は、データ件数を時系列で表示
+                    return { labels: ['データ'], data: [data.length], label: '総件数' };
+                }
+
+                // 日付ごとに集計
+                const dateCounts = {};
+                data.forEach(row => {
+                    const dateValue = String(row[dateColumn.name] || '').trim();
+                    if (dateValue) {
+                        // 日付を正規化（YYYY-MM-DD形式に変換を試みる）
+                        let normalizedDate = dateValue;
+                        try {
+                            const date = new Date(dateValue);
+                            if (!isNaN(date.getTime())) {
+                                normalizedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                            }
+                        } catch (e) {
+                            // 日付パースに失敗した場合は元の値を使用
+                        }
+                        dateCounts[normalizedDate] = (dateCounts[normalizedDate] || 0) + 1;
+                    }
+                });
+
+                // 日付順にソート
+                const sortedEntries = Object.entries(dateCounts).sort((a, b) => {
+                    return a[0].localeCompare(b[0]);
+                });
+
+                // 直近30日分または全データを表示
+                const displayEntries = sortedEntries.slice(-30);
+                const labels = displayEntries.map(([date]) => {
+                    // 日付を短縮形式に変換
+                    try {
+                        const d = new Date(date);
+                        return `${d.getMonth() + 1}/${d.getDate()}`;
+                    } catch (e) {
+                        return date;
+                    }
+                });
+                const values = displayEntries.map(([, count]) => count);
+
+                return { labels, data: values, label: '訪問件数' };
+            }
 
             // グラフタイプ・集計方法変更時のイベント
             if (chartTypeSelect) {
@@ -1010,6 +1366,12 @@
                             // データタブでデータを表示
                             if (currentApp.data && currentApp.data.length > 0 && currentApp.columns) {
                                 updateAppDataTable(currentApp.data, currentApp.columns);
+                                // グラフの集計方法を動的に更新
+                                updateChartGroupByOptions(currentApp.columns);
+                                // グラフを更新
+                                if (!chartView.classList.contains('hidden')) {
+                                    initCharts();
+                                }
                             }
                         }
                     } else {
@@ -1041,10 +1403,85 @@
                                 };
                                 if (currentApp.data && currentApp.data.length > 0 && currentApp.columns) {
                                     updateAppDataTable(currentApp.data, currentApp.columns);
+                                    // グラフの集計方法を動的に更新
+                                    updateChartGroupByOptions(currentApp.columns);
+                                    // グラフを更新
+                                    if (!chartView.classList.contains('hidden')) {
+                                        initCharts();
+                                    }
                                 }
                             }
                         }
                     }
+                }
+            }
+
+            // グラフの集計方法の選択肢を動的に更新
+            function updateChartGroupByOptions(columns) {
+                if (!chartGroupBySelect || !columns) return;
+
+                // 訪問管理記録でよく使われる列名のパターン
+                const dateColumnPatterns = ['日時', '日付', '訪問日', '訪問日時', 'date', 'datetime', '訪問日付', '実施日'];
+                const personColumnPatterns = ['担当者', '営業担当', '担当', 'person', 'owner', 'salesperson'];
+                const customerColumnPatterns = ['顧客名', '顧客', '会社名', '企業名', 'customer', 'company', 'client'];
+                const resultColumnPatterns = ['結果', '訪問結果', 'ステータス', '状態', 'status', 'result', '成約', '商談結果'];
+                const purposeColumnPatterns = ['訪問目的', '目的', 'purpose', '目的', '訪問内容'];
+
+                // 列を分類
+                const dateColumn = columns.find(col => 
+                    dateColumnPatterns.some(pattern => col.name.includes(pattern))
+                );
+                const personColumn = columns.find(col => 
+                    personColumnPatterns.some(pattern => col.name.includes(pattern))
+                );
+                const customerColumn = columns.find(col => 
+                    customerColumnPatterns.some(pattern => col.name.includes(pattern))
+                );
+                const resultColumn = columns.find(col => 
+                    resultColumnPatterns.some(pattern => col.name.includes(pattern))
+                );
+                const purposeColumn = columns.find(col => 
+                    purposeColumnPatterns.some(pattern => col.name.includes(pattern))
+                );
+
+                // 選択肢を生成
+                const options = [];
+                if (dateColumn) {
+                    options.push({ value: 'date', label: '日付別', column: dateColumn });
+                }
+                if (personColumn) {
+                    options.push({ value: 'person', label: '担当者別', column: personColumn });
+                }
+                if (customerColumn) {
+                    options.push({ value: 'customer', label: '顧客別', column: customerColumn });
+                }
+                if (resultColumn) {
+                    options.push({ value: 'result', label: '結果別', column: resultColumn });
+                }
+                if (purposeColumn) {
+                    options.push({ value: 'purpose', label: '目的別', column: purposeColumn });
+                }
+
+                // デフォルトオプションを追加（select型の列）
+                columns.forEach(col => {
+                    if (col.type === 'select' && !options.find(opt => opt.column.name === col.name)) {
+                        options.push({ value: col.name.toLowerCase().replace(/\s+/g, '-'), label: `${col.name}別`, column: col });
+                    }
+                });
+
+                // 選択肢が1つもない場合は、最初の列を使用
+                if (options.length === 0 && columns.length > 0) {
+                    options.push({ value: columns[0].name.toLowerCase().replace(/\s+/g, '-'), label: `${columns[0].name}別`, column: columns[0] });
+                }
+
+                // select要素を更新
+                chartGroupBySelect.innerHTML = options.map(opt => 
+                    `<option value="${opt.value}">${opt.label}</option>`
+                ).join('');
+
+                // デフォルト選択を設定
+                if (options.length > 0) {
+                    chartGroupBySelect.value = options[0].value;
                 }
             }
 
@@ -1084,17 +1521,34 @@
                     }
                 }
 
-                // ボディを更新
+                // ボディを更新（編集・削除ボタン付き）
                 if (tableBody) {
                     tableBody.innerHTML = data.map((row, index) => {
                         const cells = columns.map(col => {
                             const value = row[col.name] || '';
                             return `<td class="px-6 py-4">${value}</td>`;
                         });
-                        return `<tr class="hover:bg-slate-50">
+                        const rowId = row[columns[0]?.name] || `row-${index}`;
+                        return `<tr class="hover:bg-slate-50" data-row-id="${rowId}">
                             ${cells.join('')}
+                            ${getActionButtonsHTML(rowId)}
                         </tr>`;
                     }).join('');
+                    
+                    // イベントリスナーを追加
+                    tableBody.querySelectorAll('.edit-row-btn').forEach((btn, index) => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            editDataRow(index, data[index], columns);
+                        });
+                    });
+                    
+                    tableBody.querySelectorAll('.delete-row-btn').forEach((btn, index) => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            deleteDataRow(index, data[index]);
+                        });
+                    });
                 }
             }
 
@@ -1717,6 +2171,544 @@
                     settingsApiConnectBtn.textContent = originalText;
                 }
             });
+
+            // 検索機能の実装
+            const searchInput = document.querySelector('#search-bar input[type="search"]');
+            let filteredData = null;
+            
+            searchInput?.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.trim().toLowerCase();
+                if (!searchTerm) {
+                    // 検索が空の場合は元のデータを表示
+                    if (currentApp && currentApp.data && currentApp.columns) {
+                        updateAppDataTable(currentApp.data, currentApp.columns);
+                    } else if (selectedTable) {
+                        updateTableDisplay(selectedTable);
+                    }
+                    filteredData = null;
+                    return;
+                }
+                
+                // データをフィルタリング
+                if (currentApp && currentApp.data && currentApp.columns) {
+                    filteredData = currentApp.data.filter(row => {
+                        return currentApp.columns.some(col => {
+                            const value = String(row[col.name] || '').toLowerCase();
+                            return value.includes(searchTerm);
+                        });
+                    });
+                    updateAppDataTable(filteredData, currentApp.columns);
+                } else if (selectedTable && tableData[selectedTable]) {
+                    // サンプルデータの場合
+                    const data = tableData[selectedTable];
+                    const filteredRows = data.rows.filter(row => {
+                        return row.some(cell => String(cell).toLowerCase().includes(searchTerm));
+                    });
+                    
+                    // フィルタリングされたテーブルを表示
+                    const tableBody = document.getElementById('table-body');
+                    if (tableBody) {
+                        tableBody.innerHTML = filteredRows.map(row => {
+                            const firstCell = row[0];
+                            const isLink = firstCell.startsWith('R-') || firstCell.startsWith('E-') || firstCell.startsWith('U-');
+                            const firstCellHTML = isLink ? `<td class="px-6 py-4 font-semibold text-blue-600">${firstCell}</td>` : `<td class="px-6 py-4 font-semibold text-blue-600">${firstCell}</td>`;
+                            
+                            return `<tr class="hover:bg-slate-50">
+                                ${firstCellHTML}
+                                ${row.slice(1).map(cell => `<td class="px-6 py-4">${cell}</td>`).join('')}
+                                ${getActionButtonsHTML(row[0])}
+                            </tr>`;
+                        }).join('');
+                        
+                        if (filteredRows.length === 0) {
+                            tableBody.innerHTML = '<tr><td colspan="' + data.headers.length + '" class="px-6 py-8 text-center text-slate-500">検索結果が見つかりませんでした</td></tr>';
+                        }
+                    }
+                }
+            });
+
+            // アクションボタンのHTML生成（編集・削除）
+            function getActionButtonsHTML(rowId) {
+                return `<td class="px-6 py-4">
+                    <div class="flex items-center space-x-2">
+                        <button class="edit-row-btn rounded-lg p-1.5 text-blue-600 hover:bg-blue-50" data-row-id="${rowId}" title="編集">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                            </svg>
+                        </button>
+                        <button class="delete-row-btn rounded-lg p-1.5 text-red-600 hover:bg-red-50" data-row-id="${rowId}" title="削除">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                            </svg>
+                        </button>
+                    </div>
+                </td>`;
+            }
+
+            // データテーブルの更新関数を拡張（編集・削除ボタンを追加）
+            const originalUpdateAppDataTable = updateAppDataTable;
+            updateAppDataTable = function(data, columns) {
+                originalUpdateAppDataTable(data, columns);
+                
+                // アクションボタン列を追加
+                const tableHead = document.getElementById('table-head');
+                const tableBody = document.getElementById('table-body');
+                
+                if (tableHead) {
+                    const headerRow = tableHead.querySelector('tr');
+                    if (headerRow && !headerRow.querySelector('th:last-child')?.textContent.includes('操作')) {
+                        headerRow.innerHTML += '<th class="px-6 py-3 text-left font-semibold">操作</th>';
+                    }
+                }
+                
+                if (tableBody) {
+                    // 各行にアクションボタンを追加
+                    const rows = tableBody.querySelectorAll('tr');
+                    rows.forEach((row, index) => {
+                        if (!row.querySelector('.edit-row-btn')) {
+                            const rowId = `row-${index}`;
+                            row.innerHTML += getActionButtonsHTML(rowId);
+                            
+                            // イベントリスナーを追加
+                            const editBtn = row.querySelector('.edit-row-btn');
+                            const deleteBtn = row.querySelector('.delete-row-btn');
+                            
+                            editBtn?.addEventListener('click', () => {
+                                editDataRow(index, data[index], columns);
+                            });
+                            
+                            deleteBtn?.addEventListener('click', () => {
+                                deleteDataRow(index, data[index]);
+                            });
+                        }
+                    });
+                }
+            };
+
+            // データ編集機能（より使いやすいモーダル版）
+            function editDataRow(index, rowData, columns) {
+                if (!currentApp || !currentApp.data || !currentApp.columns) {
+                    showNotification('データを編集できません。アプリデータが読み込まれていません。', 'error');
+                    return;
+                }
+                
+                // 編集フォームを表示（手動入力フォームと同じUIを使用）
+                const formColumns = currentApp.columns;
+                const originalData = { ...rowData };
+                
+                // モーダルのコンテンツを編集フォームに変更
+                const modalContent = document.querySelector('#data-add-modal .px-6');
+                if (!modalContent) return;
+                
+                let formHTML = '<div class="space-y-4">';
+                columns.forEach(col => {
+                    const required = col.required ? '<span class="text-red-500">*</span>' : '';
+                    const currentValue = originalData[col.name] || '';
+                    let inputHTML = '';
+                    
+                    switch (col.type) {
+                        case 'select':
+                            const options = col.options || [];
+                            inputHTML = `
+                                <select id="edit-field-${col.name}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200" ${col.required ? 'required' : ''}>
+                                    <option value="">選択してください</option>
+                                    ${options.map(opt => `<option value="${opt}" ${opt === currentValue ? 'selected' : ''}>${opt}</option>`).join('')}
+                                </select>
+                            `;
+                            break;
+                        case 'date':
+                            inputHTML = `<input type="date" id="edit-field-${col.name}" value="${currentValue}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200" ${col.required ? 'required' : ''} />`;
+                            break;
+                        case 'datetime':
+                            inputHTML = `<input type="datetime-local" id="edit-field-${col.name}" value="${currentValue}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200" ${col.required ? 'required' : ''} />`;
+                            break;
+                        case 'number':
+                            inputHTML = `<input type="number" id="edit-field-${col.name}" value="${currentValue}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200" ${col.required ? 'required' : ''} />`;
+                            break;
+                        default:
+                            inputHTML = `<input type="text" id="edit-field-${col.name}" value="${currentValue}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="${col.name}を入力" ${col.required ? 'required' : ''} />`;
+                    }
+                    
+                    formHTML += `
+                        <div>
+                            <label class="text-sm font-semibold text-slate-700 mb-1 block">${col.name} ${required}</label>
+                            ${inputHTML}
+                        </div>
+                    `;
+                });
+                
+                formHTML += '</div>';
+                formHTML += `
+                    <div class="mt-6 flex items-center justify-end space-x-2">
+                        <button id="data-edit-form-cancel" class="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-100">キャンセル</button>
+                        <button id="data-edit-form-save" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700">保存</button>
+                    </div>
+                `;
+                
+                modalContent.innerHTML = `
+                    <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4 -mx-6 -mt-6 mb-6">
+                        <div>
+                            <h3 class="text-lg font-semibold text-slate-900">データを編集</h3>
+                            <p class="text-xs text-slate-500">データの内容を変更できます。保存ボタンをクリックすると変更が反映されます。</p>
+                        </div>
+                        <button id="data-add-modal-close" class="rounded-full border border-slate-200 p-2 text-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    ${formHTML}
+                `;
+                
+                // モーダルを表示
+                const modal = document.getElementById('data-add-modal');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                }
+                
+                // イベントリスナーを追加
+                document.getElementById('data-edit-form-save')?.addEventListener('click', () => {
+                    saveEditedDataRow(index, formColumns);
+                });
+                document.getElementById('data-edit-form-cancel')?.addEventListener('click', () => {
+                    closeDataAddModal();
+                    // モーダルを元に戻す
+                    setTimeout(() => {
+                        location.reload();
+                    }, 300);
+                });
+            }
+            
+            // 編集したデータ行を保存
+            async function saveEditedDataRow(index, columns) {
+                if (!currentApp || !currentApp.data) {
+                    showNotification('データを更新できません。アプリデータが読み込まれていません。', 'error');
+                    return;
+                }
+                
+                const newRowData = {};
+                let hasError = false;
+                
+                columns.forEach(col => {
+                    const input = document.getElementById(`edit-field-${col.name}`);
+                    if (!input) {
+                        hasError = true;
+                        return;
+                    }
+                    
+                    const value = input.value.trim();
+                    if (col.required && !value) {
+                        showNotification(`${col.name}は必須項目です。入力してください。`, 'error');
+                        input.focus();
+                        hasError = true;
+                        return;
+                    }
+                    
+                    newRowData[col.name] = value;
+                });
+                
+                if (hasError) return;
+                
+                // データを更新
+                currentApp.data[index] = { ...currentApp.data[index], ...newRowData };
+                
+                // データベースに保存
+                if (appId && databaseService) {
+                    try {
+                        await databaseService.updateApp(appId, {
+                            data: currentApp.data
+                        });
+                        updateAppDataTable(currentApp.data, currentApp.columns);
+                        closeDataAddModal();
+                        showNotification('データを更新しました');
+                    } catch (error) {
+                        console.error('Error updating data:', error);
+                        showNotification('データの更新に失敗しました。もう一度お試しください。', 'error');
+                    }
+                } else {
+                    updateAppDataTable(currentApp.data, currentApp.columns);
+                    closeDataAddModal();
+                    showNotification('データを更新しました（ローカル保存）');
+                }
+            }
+
+            // データ削除機能（より分かりやすい確認）
+            async function deleteDataRow(index, rowData) {
+                // より分かりやすい確認メッセージ
+                const confirmMessage = `このデータを削除しますか？\n\nこの操作は元に戻せません。\n削除を続ける場合は「OK」をクリックしてください。`;
+                if (!confirm(confirmMessage)) {
+                    return;
+                }
+                
+                if (currentApp && currentApp.data) {
+                    currentApp.data.splice(index, 1);
+                    
+                    // データベースに保存
+                    if (appId && databaseService) {
+                        try {
+                            await databaseService.updateApp(appId, {
+                                data: currentApp.data
+                            });
+                            updateAppDataTable(currentApp.data, currentApp.columns);
+                            showNotification('データを削除しました');
+                        } catch (error) {
+                            console.error('Error deleting data:', error);
+                            showNotification('データの削除に失敗しました', 'error');
+                        }
+                    } else {
+                        updateAppDataTable(currentApp.data, currentApp.columns);
+                        showNotification('データを削除しました（ローカル保存）');
+                    }
+                }
+            }
+
+            // データ追加モーダルの「手動で入力」ボタンの実装
+            const dataAddModalContent = document.querySelector('#data-add-modal .space-y-4');
+            const manualInputBtn = dataAddModalContent?.querySelector('button:first-child');
+            const excelImportBtn = dataAddModalContent?.querySelector('button:nth-child(2)');
+            const csvImportBtn = dataAddModalContent?.querySelector('button:nth-child(3)');
+            
+            manualInputBtn?.addEventListener('click', () => {
+                if (!selectedTable && (!currentApp || !currentApp.columns)) {
+                    showNotification('データテーブルを選択してください。左側のサイドバーからテーブルを選択してから、もう一度お試しください。', 'error');
+                    return;
+                }
+                
+                // フォームを表示
+                showManualInputForm();
+            });
+
+            // 手動入力フォーム表示
+            function showManualInputForm() {
+                const columns = currentApp?.columns || [];
+                if (columns.length === 0) {
+                    showNotification('データ構造が定義されていません。先にExcelファイルをアップロードしてアプリを作成してください。', 'error');
+                    closeDataAddModal();
+                    return;
+                }
+                
+                // モーダルのコンテンツを置き換え
+                const modalContent = document.querySelector('#data-add-modal .px-6');
+                if (!modalContent) return;
+                
+                let formHTML = '<div class="space-y-4">';
+                columns.forEach(col => {
+                    const required = col.required ? '<span class="text-red-500">*</span>' : '';
+                    let inputHTML = '';
+                    
+                    switch (col.type) {
+                        case 'select':
+                            const options = col.options || [];
+                            inputHTML = `
+                                <select id="add-field-${col.name}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200" ${col.required ? 'required' : ''}>
+                                    <option value="">選択してください</option>
+                                    ${options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+                                </select>
+                            `;
+                            break;
+                        case 'date':
+                            inputHTML = `<input type="date" id="add-field-${col.name}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200" ${col.required ? 'required' : ''} />`;
+                            break;
+                        case 'datetime':
+                            inputHTML = `<input type="datetime-local" id="add-field-${col.name}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200" ${col.required ? 'required' : ''} />`;
+                            break;
+                        case 'number':
+                            inputHTML = `<input type="number" id="add-field-${col.name}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200" ${col.required ? 'required' : ''} />`;
+                            break;
+                        default:
+                            inputHTML = `<input type="text" id="add-field-${col.name}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="${col.name}を入力" ${col.required ? 'required' : ''} />`;
+                    }
+                    
+                    formHTML += `
+                        <div>
+                            <label class="text-sm font-semibold text-slate-700 mb-1 block">${col.name} ${required}</label>
+                            ${inputHTML}
+                        </div>
+                    `;
+                });
+                
+                formHTML += '</div>';
+                formHTML += `
+                    <div class="mt-6 flex items-center justify-end space-x-2">
+                        <button id="data-add-form-cancel" class="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-100">キャンセル</button>
+                        <button id="data-add-form-save" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700">保存</button>
+                    </div>
+                `;
+                
+                modalContent.innerHTML = `
+                    <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4 -mx-6 -mt-6 mb-6">
+                        <div>
+                            <h3 class="text-lg font-semibold text-slate-900">データを追加</h3>
+                            <p class="text-xs text-slate-500" id="modal-table-name">新しいデータを入力してください。</p>
+                        </div>
+                        <button id="data-add-modal-close" class="rounded-full border border-slate-200 p-2 text-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    ${formHTML}
+                `;
+                
+                // イベントリスナーを追加
+                document.getElementById('data-add-form-save')?.addEventListener('click', saveNewDataRow);
+                document.getElementById('data-add-form-cancel')?.addEventListener('click', () => {
+                    closeDataAddModal();
+                    // モーダルを元に戻す
+                    location.reload();
+                });
+            }
+
+            // 新しいデータ行を保存
+            async function saveNewDataRow() {
+                if (!currentApp || !currentApp.columns) {
+                    showNotification('データ構造が定義されていません。先にExcelファイルをアップロードしてアプリを作成してください。', 'error');
+                    return;
+                }
+                
+                const newRow = {};
+                let hasError = false;
+                
+                currentApp.columns.forEach(col => {
+                    const input = document.getElementById(`add-field-${col.name}`);
+                    if (!input) {
+                        hasError = true;
+                        return;
+                    }
+                    
+                    const value = input.value.trim();
+                    if (col.required && !value) {
+                        showNotification(`${col.name}は必須項目です。入力してください。`, 'error');
+                        input.focus();
+                        hasError = true;
+                        return;
+                    }
+                    
+                    newRow[col.name] = value;
+                });
+                
+                if (hasError) return;
+                
+                // データを追加
+                if (!currentApp.data) {
+                    currentApp.data = [];
+                }
+                currentApp.data.push(newRow);
+                
+                // データベースに保存
+                if (appId && databaseService) {
+                    try {
+                        await databaseService.updateApp(appId, {
+                            data: currentApp.data
+                        });
+                        updateAppDataTable(currentApp.data, currentApp.columns);
+                        closeDataAddModal();
+                        showNotification('データを追加しました');
+                    } catch (error) {
+                        console.error('Error adding data:', error);
+                        showNotification('データの追加に失敗しました', 'error');
+                    }
+                } else {
+                    updateAppDataTable(currentApp.data, currentApp.columns);
+                    closeDataAddModal();
+                    showNotification('データを追加しました（ローカル保存）');
+                }
+            }
+
+            // エクスポート機能を追加（テーブルヘッダーにエクスポートボタンを追加）
+            function addExportButton() {
+                const tableHeader = document.querySelector('#data-view .flex.items-center.justify-between');
+                if (tableHeader && !tableHeader.querySelector('#export-btn')) {
+                    const exportBtn = document.createElement('button');
+                    exportBtn.id = 'export-btn';
+                    exportBtn.className = 'inline-flex items-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm hover:bg-slate-50';
+                    exportBtn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mr-2 h-4 w-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                        </svg>
+                        エクスポート
+                    `;
+                    exportBtn.addEventListener('click', exportData);
+                    tableHeader.appendChild(exportBtn);
+                }
+            }
+
+            // データエクスポート機能
+            function exportData() {
+                const data = filteredData || currentApp?.data || [];
+                const columns = currentApp?.columns || [];
+                
+                if (data.length === 0) {
+                    showNotification('エクスポートするデータがありません。先にデータを追加してください。', 'warning');
+                    return;
+                }
+                
+                showNotification('データをエクスポート中...', 'info');
+                
+                // CSV形式でエクスポート
+                const headers = columns.map(col => col.name);
+                const csvRows = [headers.join(',')];
+                
+                data.forEach(row => {
+                    const values = headers.map(header => {
+                        const value = row[header] || '';
+                        // カンマやダブルクォートが含まれる場合はエスケープ
+                        if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+                            return `"${String(value).replace(/"/g, '""')}"`;
+                        }
+                        return value;
+                    });
+                    csvRows.push(values.join(','));
+                });
+                
+                const csvContent = csvRows.join('\n');
+                const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                
+                link.setAttribute('href', url);
+                link.setAttribute('download', `${currentApp?.name || 'データ'}_${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showNotification('データをエクスポートしました');
+            }
+
+            // 通知表示関数を改善
+            const originalShowNotification = showNotification;
+            showNotification = function(message, type = 'success') {
+                // 既存の通知を削除
+                const existingNotification = document.querySelector('.notification-toast');
+                if (existingNotification) {
+                    existingNotification.remove();
+                }
+
+                const bgColors = {
+                    success: 'bg-blue-600',
+                    error: 'bg-red-600',
+                    warning: 'bg-amber-600',
+                    info: 'bg-slate-600'
+                };
+
+                const notification = document.createElement('div');
+                notification.className = `notification-toast fixed top-4 right-4 z-50 rounded-lg ${bgColors[type] || bgColors.success} px-4 py-3 text-sm text-white shadow-lg`;
+                notification.textContent = message;
+                document.body.appendChild(notification);
+
+                setTimeout(() => {
+                    notification.style.opacity = '0';
+                    notification.style.transition = 'opacity 0.3s';
+                    setTimeout(() => notification.remove(), 300);
+                }, 3000);
+            };
+
+            // エクスポートボタンを追加
+            setTimeout(() => {
+                addExportButton();
+            }, 1000);
 
             // デフォルトで「データ」タブを選択
             setTab('data');

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Navi 2.0 ダッシュボード</title>
+    <title>AppNavi ダッシュボード</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -13,6 +13,11 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <!-- Firebase設定 -->
     <script src="firebase-config.js"></script>
+    <!-- Google Sheets API -->
+    <script src="google-sheets-api.js"></script>
+    <!-- Google API Client Library -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client"></script>
     <style>
         /* ツールチップスタイル */
         .help-tooltip {
@@ -61,13 +66,25 @@
                 <span class="text-lg font-semibold tracking-wide">AppNavi</span>
         </div>
             <nav class="flex-1 space-y-1 px-4 text-sm">
-                <button class="flex w-full items-center space-x-3 rounded-lg bg-blue-50 px-3 py-2 text-blue-700 shadow-sm">
+                <button class="nav-menu-btn flex w-full items-center space-x-3 rounded-lg bg-blue-50 px-3 py-2 text-blue-700 shadow-sm" data-section="dashboard">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9l7.5 6 7.5-6" />
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5h15a.75.75 0 0 0 .75-.75V6.125a.75.75 0 0 0-.285-.585l-7.5-5.625a.75.75 0 0 0-.93 0L4.035 5.54a.75.75 0 0 0-.285.585V18.75a.75.75 0 0 0 .75.75Z" />
-                </svg>
+                    </svg>
                     <span class="font-semibold">ダッシュボード</span>
-            </button>
+                </button>
+                <button class="nav-menu-btn flex w-full items-center space-x-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100" data-section="my-apps">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75M15 12h3.75M15 15h3.75M15 18h3.75M5.25 6h13.5A2.25 2.25 0 0 1 21 8.25v9a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 17.25v-9A2.25 2.25 0 0 1 5.25 6Z" />
+                    </svg>
+                    <span>マイ・アプリ</span>
+                </button>
+                <button class="nav-menu-btn flex w-full items-center space-x-3 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100" data-section="templates">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75M15 12h3.75M15 15h3.75M15 18h3.75M5.25 6h13.5A2.25 2.25 0 0 1 21 8.25v9a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 17.25v-9A2.25 2.25 0 0 1 5.25 6Z" />
+                    </svg>
+                    <span>テンプレート</span>
+                </button>
             </nav>
             <div class="border-t border-slate-200 px-4 py-4">
                 <button class="flex w-full items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-500 hover:bg-slate-100">
@@ -80,11 +97,50 @@
         </aside>
 
         <main class="flex-1 overflow-auto px-10 py-10">
+            <!-- ダッシュボードセクション -->
+            <section id="dashboard-section" class="section-content">
             <!-- ヒーローセクション -->
             <div class="mb-10 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 p-8 text-white shadow-xl">
                 <div class="max-w-3xl">
                     <h1 class="text-3xl font-bold">AppNaviへようこそ</h1>
                     <p class="mt-3 text-lg text-blue-100">Excelで管理しているデータから、すぐに使えるWebアプリを作成できます</p>
+                    <div class="mt-3 rounded-lg bg-green-500/30 border border-green-400/50 px-4 py-2 inline-block">
+                        <p class="text-base font-bold text-white">✨ 設定不要！すぐに使えます ✨</p>
+                        <p class="text-sm text-green-50 mt-1">アカウント登録や<span class="help-tooltip" data-help="データを保存するためのコンピューター。AppNaviでは設定不要で、ブラウザに自動保存されます。">サーバー</span>設定は一切不要です。Excelファイルをアップロードするだけで始められます。</p>
+                    </div>
+                    <p class="mt-3 text-sm text-blue-200">IT知識は不要です。Excelファイルをドラッグ&ドロップするだけ。5分で完了します。</p>
+                    
+                    <!-- 現在のデータ保存方法の表示 -->
+                    <div id="current-storage-info" class="mt-4 rounded-lg bg-white/10 border border-white/20 px-4 py-3 backdrop-blur-sm">
+                        <p class="text-xs font-semibold text-white mb-2">📦 現在のデータ保存方法</p>
+                        <div id="storage-type-display" class="flex items-center space-x-2">
+                            <span class="text-sm font-semibold text-white">読み込み中...</span>
+                        </div>
+                        <p id="storage-type-description" class="text-xs text-blue-200 mt-2"></p>
+                    </div>
+                    
+                    <!-- データ保存方法の選択（初回のみ） -->
+                    <div id="storage-selection" class="mt-4 rounded-lg bg-white/10 border border-white/20 px-4 py-3 backdrop-blur-sm hidden">
+                        <p class="text-xs font-semibold text-white mb-2">💡 データ保存方法を選択（初回のみ設定可能）</p>
+                        <p class="text-xs text-amber-200 mb-3">⚠️ 一度設定したら変更できません。慎重に選択してください。</p>
+                        <div class="flex flex-wrap items-center gap-3 text-xs">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="radio" name="storage-type" value="local" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500">
+                                <span class="text-white">ブラウザに保存（設定不要・推奨）</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="radio" name="storage-type" value="firebase" class="h-4 w-4 text-blue-600 focus:ring-blue-500">
+                                <span class="text-white flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4 mr-1">
+                                        <path d="M3.89 15.672L6.255.461A.542.542 0 017.27.288l2.543 4.771zm16.794 3.692l-2.25-14a.54.54 0 00-.919-.295L3.316 19.365l7.856 4.427a1.621 1.621 0 001.588 0zM14.3 7.147l-1.82-3.482a.542.542 0 00-.96 0L3.53 19.984z"/>
+                                    </svg>
+                                    Firebase（クラウド）
+                                </span>
+                            </label>
+                        </div>
+                        <button id="confirm-storage-btn" class="mt-3 rounded-lg bg-white/20 hover:bg-white/30 px-4 py-2 text-xs font-semibold text-white border border-white/30">保存方法を確定</button>
+                    </div>
+                    
                     <div class="mt-6 flex flex-wrap items-center gap-4">
                         <div class="flex items-center space-x-2 rounded-lg bg-white/20 px-4 py-2 backdrop-blur-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
@@ -102,7 +158,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                             </svg>
-                            <span class="text-sm font-semibold">サーバー管理不要</span>
+                            <span class="text-sm font-semibold"><span class="help-tooltip" data-help="データを保存するためのコンピューターの管理。AppNaviでは自動で管理されるため、何もする必要はありません。">サーバー</span>管理不要</span>
                         </div>
                     </div>
                                 </div>
@@ -120,7 +176,11 @@
                                     <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600 font-bold">1</div>
                                     <h3 class="text-lg font-semibold text-slate-900">Excel/CSVからアプリを作成</h3>
                             </div>
-                                <p class="mt-2 text-sm text-slate-600">管理台帳や日報のExcelファイルをアップロードするだけで、即座にWebアプリを自動生成します。</p>
+                                <p class="mt-2 text-sm text-slate-600">管理台帳や日報のExcelファイルをアップロードするだけで、即座に<span class="help-tooltip" data-help="インターネット上で使えるアプリケーション。ブラウザで開いて使えます。">Webアプリ</span>を自動生成します。</p>
+                                <p class="mt-1 text-xs text-slate-500">💡 ヒント: Excelファイルをそのまま使えます。準備は不要です。</p>
+                                <div id="excel-storage-info" class="mt-2 p-2 rounded-lg bg-blue-50 border border-blue-200">
+                                    <p class="text-xs font-semibold text-blue-900">📦 データ保存先: <span id="excel-storage-type" class="text-blue-700">読み込み中...</span></p>
+                                </div>
                             </div>
                         </div>
                         <div class="flex items-center space-x-2 mb-4">
@@ -152,7 +212,7 @@
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                <p class="text-sm font-medium text-blue-700">ファイルを解析中...</p>
+                                <p class="text-sm font-medium text-blue-700">ファイルを<span class="help-tooltip" data-help="ファイルの内容を読み取って、データの構造を理解すること">解析</span>中...</p>
                             </div>
                         </div>
                         <div id="file-error" class="hidden mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
@@ -174,104 +234,514 @@
                             <div class="flex-1">
                                 <div class="flex items-center space-x-2 mb-2">
                                     <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-green-100 text-green-600 font-bold">2</div>
-                                    <h3 class="text-lg font-semibold text-slate-900">Googleスプレッドシートと連携</h3>
+                                    <h3 class="text-lg font-semibold text-slate-900">
+                                        Googleスプレッドシートと<span class="help-tooltip" data-help="外部サービスとの接続。高度な機能です。設定不要でExcelファイルから始めることもできます。">連携</span>
+                                    </h3>
                         </div>
-                                <p class="mt-2 text-sm text-slate-600">既存のGoogleスプレッドシートと連携して、リアルタイムでデータを同期し、自動的にグラフ化・可視化します。</p>
+                                <p class="mt-2 text-sm text-slate-600">既存の<span class="help-tooltip" data-help="Googleが提供する表計算ソフト。Excelと似た機能で、インターネット上で使えます。">Googleスプレッドシート</span>と連携して、訪問管理記録を営業戦略レポートに変換できます。データを<span class="help-tooltip" data-help="自動的に最新の状態に更新すること">同期</span>し、自動的に<span class="help-tooltip" data-help="データを棒グラフや折れ線グラフなどの図にすること">グラフ化</span>・<span class="help-tooltip" data-help="データを見やすく図やグラフで表示すること">可視化</span>します。</p>
+                                <div class="mt-3 rounded-lg bg-blue-50 border border-blue-200 px-4 py-3">
+                                    <p class="text-xs font-semibold text-blue-900 mb-2">📋 訪問管理記録の形式</p>
+                                    <p class="text-xs text-blue-700">スプレッドシートの1行目に見出し（例：日時、担当者、顧客名、訪問目的、結果など）があり、2行目以降にデータが入っている形式でご利用いただけます。</p>
+                                </div>
+                                <p class="mt-2 text-xs text-amber-600 font-semibold">⚠️ <span class="help-tooltip" data-help="Googleアカウントでログインして、データへのアクセス許可を与えること。初回のみ必要です。">Google認証</span>が必要です。初めての方は、まずExcelファイルから始めることをおすすめします。</p>
+                                <p class="mt-1 text-xs text-slate-500">💡 ヒント: スプレッドシートのURLをコピー&ペーストするだけ。自動で連携します。</p>
+                                <div id="sheets-storage-info" class="mt-2 p-2 rounded-lg bg-green-50 border border-green-200">
+                                    <p class="text-xs font-semibold text-green-900">📦 データ保存先: <span id="sheets-storage-type" class="text-green-700">読み込み中...</span></p>
+                                    <p class="text-xs text-green-700 mt-1">※ スプレッドシートのデータは読み込み専用です。アプリのデータは上記の保存先に保存されます。</p>
+                                </div>
                     </div>
                 </div>
-                        <div class="rounded-xl border-2 border-dashed border-green-300 bg-green-50/50 p-6 text-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto h-12 w-12 text-green-400 mb-3">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 0 0 2.25-2.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v2.25A2.25 2.25 0 0 0 6 10.5Zm0 9.75h2.25A2.25 2.25 0 0 0 10.5 18v-2.25a2.25 2.25 0 0 0-2.25-2.25H6a2.25 2.25 0 0 0-2.25 2.25V18A2.25 2.25 0 0 0 6 20.25Zm9.75-9.75H18a2.25 2.25 0 0 0 2.25-2.25V6A2.25 2.25 0 0 0 18 3.75h-2.25A2.25 2.25 0 0 0 13.5 6v2.25a2.25 2.25 0 0 0 2.25 2.25Z" />
-                            </svg>
-                            <p class="text-sm font-medium text-green-700 mb-2">スプレッドシートのURLを入力</p>
-                            <button id="connect-google-sheets" class="rounded-lg border border-green-300 bg-white px-4 py-2 text-xs font-semibold text-green-600 hover:bg-green-50">連携を開始する</button>
-            </div>
-        </section>
-            </div>
-            </div>
-
-            <div class="mt-8 grid gap-6 md:grid-cols-2">
-                <section class="rounded-2xl border border-blue-200 bg-blue-50 p-6 shadow-sm">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <div class="flex items-center space-x-2">
-                                <h2 class="text-lg font-semibold text-blue-700">Excel/CSVからアプリを即時作成</h2>
-                                <button class="help-tooltip relative group" data-help="ExcelやCSVファイルをアップロードするだけで、データ管理アプリが自動生成されます。日報や顧客管理などの台帳をそのまま活用できます。">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4 text-blue-500">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
-                    </svg>
-                </button>
-        </div>
-                            <p class="mt-2 text-sm text-blue-600">管理台帳や日報のExcelファイルをアップロードするだけで、即座にWeb/モバイルアプリを自動生成します。</p>
-                    </div>
-                    </div>
-                    <div class="mt-4 flex items-center space-x-2">
-                        <button id="download-sample-btn" class="inline-flex items-center rounded-lg border border-blue-300 bg-white px-3 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-50">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mr-1.5 h-4 w-4">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                        </svg>
-                            サンプルExcelをダウンロード
-                    </button>
-                        <span class="text-xs text-blue-500">まずはサンプルで試してみましょう</span>
-                </div>
-                    <div id="file-drop-zone" class="mt-6 rounded-2xl border-2 border-dashed border-blue-300 bg-white/70 p-8 text-center transition-colors hover:border-blue-400 hover:bg-blue-50/50 cursor-pointer">
-                        <input type="file" id="file-input" accept=".xlsx,.xls,.csv" class="hidden">
-                        <div id="drop-zone-content" class="mx-auto flex h-24 w-full max-w-xl flex-col items-center justify-center space-y-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-10 w-10 text-blue-400">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75 9 17.25 20.25 6" />
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5 4.5 12 12 19.5" />
-                                </svg>
-                            <p class="text-sm font-medium text-blue-700">ExcelまたはCSVファイルをドラッグ＆ドロップ</p>
-                            <p class="text-xs text-blue-500">または</p>
-                            <button id="file-select-btn" class="rounded-full border border-blue-300 px-4 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-100">ファイルを選択する</button>
-                        </div>
-                        <div id="file-loading" class="hidden items-center justify-center space-x-3">
-                            <svg class="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                            <p class="text-sm font-medium text-blue-700">ファイルを解析中...</p>
-                        </div>
-                    </div>
-                    <div id="file-error" class="hidden mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
-                        <div class="flex items-start space-x-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5 text-red-600 mt-0.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
-                                </svg>
-                            <div class="flex-1">
-                                <p id="file-error-message" class="text-sm font-semibold text-red-800"></p>
-                                <p class="mt-1 text-xs text-red-600">対応ファイル形式: Excel (.xlsx, .xls) または CSV (.csv)</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-                <section class="rounded-2xl border border-green-200 bg-green-50 p-6 shadow-sm">
-                    <h2 class="text-lg font-semibold text-green-700">Googleスプレッドシートと同期</h2>
-                    <p class="mt-2 text-sm text-green-600">Googleスプレッドシートを連携して、リアルタイムでデータを同期し、自動的にグラフ化・可視化します。</p>
-                    <div class="mt-6 rounded-2xl border-2 border-dashed border-green-300 bg-white/70 p-8 text-center">
-                        <div class="mx-auto flex h-24 w-full max-w-xl flex-col items-center justify-center space-y-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-10 w-10 text-green-400">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 0 0 2.25-2.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v2.25A2.25 2.25 0 0 0 6 10.5Zm0 9.75h2.25A2.25 2.25 0 0 0 10.5 18v-2.25a2.25 2.25 0 0 0-2.25-2.25H6a2.25 2.25 0 0 0-2.25 2.25V18A2.25 2.25 0 0 0 6 20.25Zm9.75-9.75H18a2.25 2.25 0 0 0 2.25-2.25V6A2.25 2.25 0 0 0 18 3.75h-2.25A2.25 2.25 0 0 0 13.5 6v2.25a2.25 2.25 0 0 0 2.25 2.25Z" />
-                                        </svg>
-                            <p class="text-sm font-medium text-green-700">Googleスプレッドシートと連携</p>
-                            <p class="text-xs text-green-500">スプレッドシートのURLを入力</p>
-                            <button id="connect-google-sheets" class="rounded-full border border-green-300 px-4 py-2 text-xs font-semibold text-green-600 hover:bg-green-100">連携を開始する</button>
+                        <div class="rounded-xl border-2 border-dashed border-green-300 bg-green-50/50 p-6">
+                            <div class="mb-4 rounded-lg bg-white border border-green-200 p-4">
+                                <p class="text-xs font-semibold text-green-900 mb-2">📌 事前準備（初回のみ）</p>
+                                <ol class="text-xs text-green-700 space-y-1.5 ml-4 list-decimal">
+                                    <li>Googleスプレッドシートを開く</li>
+                                    <li>右上の「共有」ボタンをクリック</li>
+                                    <li>「リンクを知っている全員」に変更して「閲覧者」を選択</li>
+                                    <li>「完了」をクリック</li>
+                                    <li>スプレッドシートのURLをコピー</li>
+                                </ol>
                             </div>
-                        </div>
+                            <p class="text-sm font-medium text-green-700 mb-2 text-center">スプレッドシートの<span class="help-tooltip" data-help="インターネット上の場所を示すアドレス。ブラウザのアドレスバーに表示されている文字列です。">URL</span>を入力</p>
+                            <input type="text" id="google-sheets-url-input" placeholder="https://docs.google.com/spreadsheets/d/..." class="w-full mb-3 rounded-lg border border-green-300 px-3 py-2 text-xs focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200" />
+                            <div class="mb-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+                                <p class="text-xs text-amber-800">💡 <strong>訪問管理記録の例:</strong> 日時、担当者、顧客名、訪問目的、結果などの列があるスプレッドシートに対応しています。</p>
+                            </div>
+                            <button id="connect-google-sheets" class="w-full rounded-lg bg-green-600 px-4 py-2 text-xs font-semibold text-white shadow hover:bg-green-700">連携を開始する</button>
+                            <p class="mt-2 text-xs text-green-600 text-center">※ 初回のみGoogleアカウントでのログインが必要です</p>
+            </div>
         </section>
+                    
+                    <!-- Excelファイル同期（ローカル） -->
+                    <section class="rounded-2xl border border-blue-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600 font-bold">3</div>
+                                    <h3 class="text-lg font-semibold text-slate-900">
+                                        Excelファイルと<span class="help-tooltip" data-help="ローカルのExcelファイルを定期的に読み込んで、データを最新の状態に保つこと。認証不要で使えます。">同期</span>（ローカル）
+                                    </h3>
                         </div>
+                                <p class="mt-2 text-sm text-slate-600">パソコンに保存されているExcelファイルを選択して、定期的にデータを<span class="help-tooltip" data-help="自動的に最新の状態に更新すること">同期</span>できます。<span class="help-tooltip" data-help="Googleアカウントでログインして、データへのアクセス許可を与えること。初回のみ必要です。">認証不要</span>で使えます。</p>
+                                <p class="mt-1 text-xs text-blue-600 font-semibold">✨ 認証不要: Googleアカウントのログインは不要です。Excelファイルを選択するだけ。</p>
+                                <p class="mt-1 text-xs text-slate-500">💡 ヒント: Excelファイルを編集したら、「再読み込み」ボタンをクリックするか、自動更新を有効にしてください。</p>
+                                <div id="excel-sync-storage-info" class="mt-2 p-2 rounded-lg bg-blue-50 border border-blue-200">
+                                    <p class="text-xs font-semibold text-blue-900">📦 データ保存先: <span id="excel-sync-storage-type" class="text-blue-700">読み込み中...</span></p>
+                                    <p class="text-xs text-blue-700 mt-1">※ Excelファイルのデータは読み込み専用です。アプリのデータは上記の保存先に保存されます。</p>
+                                </div>
+                    </div>
+                </div>
+                        <div class="rounded-xl border-2 border-dashed border-blue-300 bg-blue-50/50 p-6 text-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto h-12 w-12 text-blue-400 mb-3">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                            </svg>
+                            <p class="text-sm font-medium text-blue-700 mb-2">Excelファイルを選択</p>
+                            <input type="file" id="excel-sync-file-input" accept=".xlsx,.xls,.csv" class="hidden">
+                            <button id="select-excel-sync-file" class="mb-3 rounded-lg border border-blue-300 bg-white px-4 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-50">ファイルを選択</button>
+                            <div id="excel-sync-file-info" class="hidden mt-3 p-3 rounded-lg bg-white border border-blue-200">
+                                <p class="text-xs font-semibold text-blue-900 mb-1" id="excel-sync-file-name"></p>
+                                <p class="text-xs text-blue-700 mb-2" id="excel-sync-file-status">最終同期: 未同期</p>
+                                <div class="flex items-center justify-center space-x-2">
+                                    <button id="excel-sync-reload-btn" class="rounded-lg border border-blue-300 bg-white px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50">再読み込み</button>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" id="excel-sync-auto" class="h-4 w-4 rounded border-blue-300 text-blue-600 focus:ring-blue-500">
+                                        <span class="text-xs text-blue-700">自動更新（5分ごと）</span>
+                                    </label>
+                                </div>
+                            </div>
+            </div>
+        </section>
+            </div>
+            </div>
 
-            <!-- マイ・アプリセクション -->
+            <!-- 最近開いたアプリ -->
             <section class="mt-10">
                 <div class="mb-6 flex items-center justify-between">
                     <div>
-                        <h2 class="text-xl font-bold text-slate-900">マイ・アプリ</h2>
-                        <p class="mt-1 text-sm text-slate-500">作成したアプリの一覧です。アプリをクリックして編集や管理を行います。</p>
+                        <h2 class="text-xl font-bold text-slate-900">最近開いたアプリ</h2>
+                        <p class="mt-1 text-sm text-slate-500">最近使用したアプリを素早く開けます。</p>
+                    </div>
+                </div>
+                <div id="recent-apps-list" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                    <!-- 最近開いたアプリがここに動的に追加されます -->
+                </div>
+                <div id="recent-apps-empty" class="hidden rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto h-12 w-12 text-slate-400">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75M15 12h3.75M15 15h3.75M15 18h3.75M5.25 6h13.5A2.25 2.25 0 0 1 21 8.25v9a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 17.25v-9A2.25 2.25 0 0 1 5.25 6Z" />
+                    </svg>
+                    <p class="mt-4 text-sm font-semibold text-slate-600">最近開いたアプリはありません</p>
+                    <p class="mt-1 text-xs text-slate-500">アプリを作成または開くと、ここに表示されます</p>
+                </div>
+            </section>
+            </section>
+
+            <!-- テンプレートセクション -->
+            <section id="templates-section" class="section-content hidden">
+                <div class="mb-6 flex items-center justify-between">
+                    <div>
+                        <div class="flex items-center space-x-2 mb-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5 text-purple-600">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75M15 12h3.75M15 15h3.75M15 18h3.75M5.25 6h13.5A2.25 2.25 0 0 1 21 8.25v9a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 17.25v-9A2.25 2.25 0 0 1 5.25 6Z" />
+                            </svg>
+                            <h2 class="text-xl font-bold text-slate-900">テンプレートから始める</h2>
+                        </div>
+                        <p class="mt-1 text-sm text-slate-500">よく使う業務アプリのテンプレートです。クリックするだけで、すぐに使えるアプリが作成されます。</p>
+                    </div>
+                </div>
+                
+                <!-- 検索バー -->
+                <div class="mb-6">
+                    <div class="relative">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                        </svg>
+                        <input type="text" id="template-search-input" placeholder="テンプレートを検索..." class="w-full rounded-lg border border-slate-300 bg-white px-10 py-3 text-sm text-slate-700 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                    </div>
+                </div>
+                
+                <div id="templates-grid" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                    <!-- 営業日報テンプレート -->
+                    <article class="template-card group relative rounded-2xl border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 p-5 shadow-sm hover:border-purple-300 hover:shadow-md transition-all" data-template-name="営業日報" data-template-keywords="営業 日報 訪問 顧客 商談">
+                        <div class="absolute top-3 right-3">
+                            <span class="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1 h-3 w-3">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75M15 12h3.75M15 15h3.75M15 18h3.75M5.25 6h13.5A2.25 2.25 0 0 1 21 8.25v9a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 17.25v-9A2.25 2.25 0 0 1 5.25 6Z" />
+                                </svg>
+                                テンプレート
+                            </span>
+                        </div>
+                        <div class="flex items-center space-x-3 mb-3">
+                            <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 text-purple-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                </svg>
+                            </span>
+                            <div class="flex-1">
+                                <h4 class="text-base font-bold text-slate-900">営業日報</h4>
+                                <p class="text-xs text-slate-600">営業活動の記録と管理</p>
+                            </div>
+                        </div>
+                        <div class="mb-4 space-y-2">
+                            <div class="flex items-center space-x-2 text-xs text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>日時・担当者・顧客名の記録</span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-xs text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>訪問目的の選択入力</span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-xs text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>活動内容の記録</span>
+                            </div>
+                        </div>
+                        <button class="template-create-btn w-full rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-purple-700 transition-colors" data-template="sales-report">
+                            このテンプレートで作成
+                        </button>
+                    </article>
+
+                    <!-- 在庫管理テンプレート -->
+                    <article class="template-card group relative rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 p-5 shadow-sm hover:border-blue-300 hover:shadow-md transition-all" data-template-name="在庫管理" data-template-keywords="在庫 商品 備品 入出庫 管理">
+                        <div class="absolute top-3 right-3">
+                            <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1 h-3 w-3">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75M15 12h3.75M15 15h3.75M15 18h3.75M5.25 6h13.5A2.25 2.25 0 0 1 21 8.25v9a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 17.25v-9A2.25 2.25 0 0 1 5.25 6Z" />
+                                </svg>
+                                テンプレート
+                            </span>
+                        </div>
+                        <div class="flex items-center space-x-3 mb-3">
+                            <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                                </svg>
+                            </span>
+                            <div class="flex-1">
+                                <h4 class="text-base font-bold text-slate-900">在庫管理</h4>
+                                <p class="text-xs text-slate-600">商品・備品の在庫管理</p>
+                            </div>
+                        </div>
+                        <div class="mb-4 space-y-2">
+                            <div class="flex items-center space-x-2 text-xs text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>商品名・型番の管理</span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-xs text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>在庫数の記録・更新</span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-xs text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>入出庫履歴の記録</span>
+                            </div>
+                        </div>
+                        <button class="template-create-btn w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700 transition-colors" data-template="inventory">
+                            このテンプレートで作成
+                        </button>
+                    </article>
+
+                    <!-- 顧客管理テンプレート -->
+                    <article class="template-card group relative rounded-2xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 p-5 shadow-sm hover:border-emerald-300 hover:shadow-md transition-all" data-template-name="顧客管理" data-template-keywords="顧客 取引先 連絡先 メール 管理">
+                        <div class="absolute top-3 right-3">
+                            <span class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1 h-3 w-3">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75M15 12h3.75M15 15h3.75M15 18h3.75M5.25 6h13.5A2.25 2.25 0 0 1 21 8.25v9a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 17.25v-9A2.25 2.25 0 0 1 5.25 6Z" />
+                                </svg>
+                                テンプレート
+                            </span>
+                        </div>
+                        <div class="flex items-center space-x-3 mb-3">
+                            <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+                                </svg>
+                            </span>
+                            <div class="flex-1">
+                                <h4 class="text-base font-bold text-slate-900">顧客管理</h4>
+                                <p class="text-xs text-slate-600">顧客情報の一元管理</p>
+                            </div>
+                        </div>
+                        <div class="mb-4 space-y-2">
+                            <div class="flex items-center space-x-2 text-xs text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>会社名・担当者名の記録</span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-xs text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>連絡先・メールアドレス</span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-xs text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>取引履歴・メモの記録</span>
+                            </div>
+                        </div>
+                        <button class="template-create-btn w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-emerald-700 transition-colors" data-template="customer-management">
+                            このテンプレートで作成
+                        </button>
+                    </article>
+
+                    <!-- 勤怠管理テンプレート -->
+                    <article class="template-card group relative rounded-2xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-5 shadow-sm hover:border-amber-300 hover:shadow-md transition-all" data-template-name="勤怠管理" data-template-keywords="勤怠 出勤 退勤 労働時間 タイムカード">
+                        <div class="absolute top-3 right-3">
+                            <span class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1 h-3 w-3">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75M15 12h3.75M15 15h3.75M15 18h3.75M5.25 6h13.5A2.25 2.25 0 0 1 21 8.25v9a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 17.25v-9A2.25 2.25 0 0 1 5.25 6Z" />
+                                </svg>
+                                テンプレート
+                            </span>
+                        </div>
+                        <div class="flex items-center space-x-3 mb-3">
+                            <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                </svg>
+                            </span>
+                            <div class="flex-1">
+                                <h4 class="text-base font-bold text-slate-900">勤怠管理</h4>
+                                <p class="text-xs text-slate-600">出勤・退勤の記録と管理</p>
+                            </div>
+                        </div>
+                        <div class="mb-4 space-y-2">
+                            <div class="flex items-center space-x-2 text-xs text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>出勤・退勤時刻の記録</span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-xs text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>労働時間の自動計算</span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-xs text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>休憩時間の記録</span>
+                            </div>
+                        </div>
+                        <button class="template-create-btn w-full rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-amber-700 transition-colors" data-template="attendance">
+                            このテンプレートで作成
+                        </button>
+                    </article>
+
+                    <!-- 経費精算テンプレート -->
+                    <article class="template-card group relative rounded-2xl border-2 border-rose-200 bg-gradient-to-br from-rose-50 to-pink-50 p-5 shadow-sm hover:border-rose-300 hover:shadow-md transition-all" data-template-name="経費精算" data-template-keywords="経費 精算 領収書 交通費 出張費">
+                        <div class="absolute top-3 right-3">
+                            <span class="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-semibold text-rose-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1 h-3 w-3">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75M15 12h3.75M15 15h3.75M15 18h3.75M5.25 6h13.5A2.25 2.25 0 0 1 21 8.25v9a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 17.25v-9A2.25 2.25 0 0 1 5.25 6Z" />
+                                </svg>
+                                テンプレート
+                            </span>
+                        </div>
+                        <div class="flex items-center space-x-3 mb-3">
+                            <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-100 text-rose-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
+                                </svg>
+                            </span>
+                            <div class="flex-1">
+                                <h4 class="text-base font-bold text-slate-900">経費精算</h4>
+                                <p class="text-xs text-slate-600">経費の申請と精算管理</p>
+                            </div>
+                        </div>
+                        <div class="mb-4 space-y-2">
+                            <div class="flex items-center space-x-2 text-xs text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>交通費・出張費の記録</span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-xs text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>領収書の管理</span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-xs text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>精算状況の管理</span>
+                            </div>
+                        </div>
+                        <button class="template-create-btn w-full rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-rose-700 transition-colors" data-template="expense">
+                            このテンプレートで作成
+                        </button>
+                    </article>
+
+                    <!-- 商品管理テンプレート -->
+                    <article class="template-card group relative rounded-2xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-violet-50 p-5 shadow-sm hover:border-indigo-300 hover:shadow-md transition-all" data-template-name="商品管理" data-template-keywords="商品 価格 カタログ 仕入れ 販売">
+                        <div class="absolute top-3 right-3">
+                            <span class="inline-flex items-center rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1 h-3 w-3">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75M15 12h3.75M15 15h3.75M15 18h3.75M5.25 6h13.5A2.25 2.25 0 0 1 21 8.25v9a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 17.25v-9A2.25 2.25 0 0 1 5.25 6Z" />
+                                </svg>
+                                テンプレート
+                            </span>
+                        </div>
+                        <div class="flex items-center space-x-3 mb-3">
+                            <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                                </svg>
+                            </span>
+                            <div class="flex-1">
+                                <h4 class="text-base font-bold text-slate-900">商品管理</h4>
+                                <p class="text-xs text-slate-600">商品情報と価格の管理</p>
+                            </div>
+                        </div>
+                        <div class="mb-4 space-y-2">
+                            <div class="flex items-center space-x-2 text-xs text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>商品名・型番・価格の管理</span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-xs text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>カテゴリ・仕入れ先の記録</span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-xs text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>在庫数との連携</span>
+                            </div>
+                        </div>
+                        <button class="template-create-btn w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-700 transition-colors" data-template="product">
+                            このテンプレートで作成
+                        </button>
+                    </article>
+
+                    <!-- イベント管理テンプレート -->
+                    <article class="template-card group relative rounded-2xl border-2 border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50 p-5 shadow-sm hover:border-teal-300 hover:shadow-md transition-all" data-template-name="イベント管理" data-template-keywords="イベント 予定 カレンダー 開催 参加者">
+                        <div class="absolute top-3 right-3">
+                            <span class="inline-flex items-center rounded-full bg-teal-100 px-2.5 py-0.5 text-xs font-semibold text-teal-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1 h-3 w-3">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75M15 12h3.75M15 15h3.75M15 18h3.75M5.25 6h13.5A2.25 2.25 0 0 1 21 8.25v9a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 17.25v-9A2.25 2.25 0 0 1 5.25 6Z" />
+                                </svg>
+                                テンプレート
+                            </span>
+                        </div>
+                        <div class="flex items-center space-x-3 mb-3">
+                            <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-teal-100 text-teal-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+                                </svg>
+                            </span>
+                            <div class="flex-1">
+                                <h4 class="text-base font-bold text-slate-900">イベント管理</h4>
+                                <p class="text-xs text-slate-600">イベントの予定と参加者管理</p>
+                            </div>
+                        </div>
+                        <div class="mb-4 space-y-2">
+                            <div class="flex items-center space-x-2 text-xs text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>イベント名・日時・場所の記録</span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-xs text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>参加者の管理</span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-xs text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>準備物・備考の記録</span>
+                            </div>
+                        </div>
+                        <button class="template-create-btn w-full rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-teal-700 transition-colors" data-template="event">
+                            このテンプレートで作成
+                        </button>
+                    </article>
+
+                    <!-- タスク管理テンプレート -->
+                    <article class="template-card group relative rounded-2xl border-2 border-violet-200 bg-gradient-to-br from-violet-50 to-purple-50 p-5 shadow-sm hover:border-violet-300 hover:shadow-md transition-all" data-template-name="タスク管理" data-template-keywords="タスク 作業 進捗 プロジェクト 期限">
+                        <div class="absolute top-3 right-3">
+                            <span class="inline-flex items-center rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-semibold text-violet-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1 h-3 w-3">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75M15 12h3.75M15 15h3.75M15 18h3.75M5.25 6h13.5A2.25 2.25 0 0 1 21 8.25v9a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 17.25v-9A2.25 2.25 0 0 1 5.25 6Z" />
+                                </svg>
+                                テンプレート
+                            </span>
+                        </div>
+                        <div class="flex items-center space-x-3 mb-3">
+                            <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                </svg>
+                            </span>
+                            <div class="flex-1">
+                                <h4 class="text-base font-bold text-slate-900">タスク管理</h4>
+                                <p class="text-xs text-slate-600">作業タスクと進捗の管理</p>
+                            </div>
+                        </div>
+                        <div class="mb-4 space-y-2">
+                            <div class="flex items-center space-x-2 text-xs text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>タスク名・担当者・期限の記録</span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-xs text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>進捗状況の管理</span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-xs text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-green-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                <span>優先度・カテゴリの設定</span>
+                            </div>
+                        </div>
+                        <button class="template-create-btn w-full rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-violet-700 transition-colors" data-template="task">
+                            このテンプレートで作成
+                        </button>
+                    </article>
+                </div>
+            </section>
+
+            <!-- マイ・アプリセクション -->
+            <section id="my-apps-section" class="section-content hidden">
+                <div class="mb-6 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">マイ・<span class="help-tooltip" data-help="アプリケーションの略。Excelデータから自動生成される、データ管理や入力ができるツールです。">アプリ</span></h2>
+                        <p class="mt-1 text-sm text-slate-500">作成した<span class="help-tooltip" data-help="アプリケーションの略。Excelデータから自動生成される、データ管理や入力ができるツールです。">アプリ</span>の一覧です。<span class="help-tooltip" data-help="アプリケーションの略。Excelデータから自動生成される、データ管理や入力ができるツールです。">アプリ</span>をクリックして編集や管理を行います。</p>
                     </div>
                 </div>
                 <div id="app-list" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     <!-- アプリカードがここに動的に追加されます -->
                 </div>
+            </section>
             </section>
         </main>
                                 </div>
@@ -288,28 +758,32 @@
                                     </div>
                     <h2 class="mt-4 text-2xl font-bold text-slate-900">AppNaviへようこそ</h2>
                     <p class="mt-2 text-sm text-slate-600">Excelで管理しているデータから、すぐに使えるWebアプリを作成できます</p>
+                    <div class="mt-3 rounded-lg bg-green-100 border border-green-300 px-3 py-2">
+                        <p class="text-xs font-bold text-green-800">✨ 設定不要！すぐに使えます ✨</p>
+                        <p class="text-xs text-green-700 mt-1">アカウント登録やサーバー設定は一切不要です。Excelファイルをアップロードするだけで始められます。</p>
+                    </div>
                                         </div>
 
                 <div class="mt-8 space-y-4">
                     <div class="flex items-start space-x-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
                         <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white">1</div>
                         <div class="flex-1">
-                            <h3 class="text-sm font-semibold text-blue-900">Excelファイルをアップロード</h3>
-                            <p class="mt-1 text-xs text-blue-700">日報、在庫管理、顧客リストなどのExcelファイルをドラッグ&ドロップするだけ</p>
+                            <h3 class="text-sm font-semibold text-blue-900">Excelファイルを<span class="help-tooltip" data-help="パソコンからインターネット上にファイルを送ること。ドラッグ&ドロップするだけでできます。">アップロード</span></h3>
+                            <p class="mt-1 text-xs text-blue-700">日報、在庫管理、顧客リストなどのExcelファイルをドラッグ&ドロップするだけ。設定は不要です。</p>
                                     </div>
                                 </div>
                     <div class="flex items-start space-x-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
                         <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white">2</div>
                         <div class="flex-1">
-                            <h3 class="text-sm font-semibold text-blue-900">データを確認・調整</h3>
-                            <p class="mt-1 text-xs text-blue-700">自動的に列の型（日付、数値、選択肢など）を判定。必要に応じて修正できます</p>
+                            <h3 class="text-sm font-semibold text-blue-900"><span class="help-tooltip" data-help="Excelファイルに含まれる情報。行と列で整理されています。">データ</span>を確認・調整</h3>
+                            <p class="mt-1 text-xs text-blue-700">自動的に<span class="help-tooltip" data-help="Excelの列のこと。1列目、2列目など、縦に並んだセルの集まりです。">列</span>の<span class="help-tooltip" data-help="Excelの列ごとに設定する種類。日付、数値、テキスト、選択肢などがあります。">種類</span>（日付、数値、選択肢など）を<span class="help-tooltip" data-help="ファイルの内容を見て、自動的に項目の種類を判断すること">判定</span>します。必要に応じて修正できますが、そのままでも使えます。</p>
                             </div>
                                 </div>
                     <div class="flex items-start space-x-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
                         <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white">3</div>
                         <div class="flex-1">
-                            <h3 class="text-sm font-semibold text-blue-900">アプリが完成</h3>
-                            <p class="mt-1 text-xs text-blue-700">入力フォーム、データ表示、グラフ化などが自動生成されます</p>
+                            <h3 class="text-sm font-semibold text-blue-900"><span class="help-tooltip" data-help="アプリケーションの略。Excelデータから自動生成される、データ管理や入力ができるツールです。">アプリ</span>が完成</h3>
+                            <p class="mt-1 text-xs text-blue-700"><span class="help-tooltip" data-help="データを入力するための画面。Excelのセルに入力するのと同じように使えます。">入力フォーム</span>、<span class="help-tooltip" data-help="Excelファイルに含まれる情報。行と列で整理されています。">データ</span>表示、<span class="help-tooltip" data-help="データを棒グラフや折れ線グラフなどの図にすること">グラフ化</span>などが<span class="help-tooltip" data-help="自動的に作り出されること。Excelデータから、入力フォームやグラフなどが自動で作られます。">自動生成</span>されます。すぐに使えます。</p>
                                 </div>
                             </div>
                                     </div>
@@ -334,8 +808,8 @@
             <!-- ヘッダー -->
             <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">
                                                     <div>
-                    <h3 class="text-lg font-semibold text-slate-900">アプリ作成ウィザード</h3>
-                    <p class="text-xs text-slate-500" id="wizard-step-text">ステップ 1/3: ファイルをアップロード</p>
+                    <h3 class="text-lg font-semibold text-slate-900"><span class="help-tooltip" data-help="アプリケーションの略。Excelデータから自動生成される、データ管理や入力ができるツールです。">アプリ</span>作成<span class="help-tooltip" data-help="手順を案内する画面。3つのステップでアプリを作成します。">ウィザード</span></h3>
+                    <p class="text-xs text-slate-500" id="wizard-step-text">ステップ 1/3: ファイルを<span class="help-tooltip" data-help="パソコンからインターネット上にファイルを送ること。ドラッグ&ドロップするだけでできます。">アップロード</span></p>
                                                     </div>
                 <button id="wizard-close" class="rounded-full border border-slate-200 p-2 text-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
@@ -358,8 +832,8 @@
                     <div id="step-3-indicator" class="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-xs font-semibold text-slate-600">3</div>
                                         </div>
                 <div class="mt-2 flex items-center justify-between text-xs text-slate-500">
-                    <span>データ確認</span>
-                    <span>構造分析</span>
+                    <span><span class="help-tooltip" data-help="Excelファイルに含まれる情報。行と列で整理されています。">データ</span>確認</span>
+                    <span><span class="help-tooltip" data-help="ファイルの内容を見て、自動的に項目の種類を判断すること">構造分析</span></span>
                     <span>完了</span>
                                             </div>
                                             </div>
@@ -382,7 +856,7 @@
                                             </div>
                     <div class="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3">
                         <p class="text-xs text-amber-700">
-                            <strong>確認事項:</strong> データが正しく表示されているか確認してください。次のステップで項目の種類（日付、数値、テキストなど）を自動判定します。
+                            <strong>確認事項:</strong> <span class="help-tooltip" data-help="Excelファイルに含まれる情報。行と列で整理されています。">データ</span>が正しく表示されているか確認してください。次のステップで<span class="help-tooltip" data-help="Excelの列ごとに設定する種類。日付、数値、テキスト、選択肢などがあります。">項目の種類</span>（日付、数値、テキストなど）を<span class="help-tooltip" data-help="ファイルの内容を見て、自動的に項目の種類を判断すること">自動判定</span>します。
                         </p>
                                             </div>
                                             </div>
@@ -390,7 +864,7 @@
                 <!-- ステップ2: 項目の種類設定 -->
                 <div id="wizard-step-2" class="hidden space-y-4">
                     <div class="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
-                        <p class="text-sm font-semibold text-blue-900">項目の種類を自動判定しました</p>
+                        <p class="text-sm font-semibold text-blue-900"><span class="help-tooltip" data-help="Excelの列ごとに設定する種類。日付、数値、テキスト、選択肢などがあります。">項目の種類</span>を<span class="help-tooltip" data-help="ファイルの内容を見て、自動的に項目の種類を判断すること">自動判定</span>しました</p>
                         <p class="mt-1 text-xs text-blue-700">必要に応じて種類を修正してください（例：日付、数値、テキスト、選択肢）</p>
                                             </div>
                     <div id="column-settings" class="space-y-3"></div>
@@ -408,7 +882,7 @@
                             <input type="text" id="app-name-input" value="新しいアプリ" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="例: 営業日報管理">
                                             </div>
                         <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                            <p class="text-xs font-semibold text-slate-700 mb-2">生成される機能</p>
+                            <p class="text-xs font-semibold text-slate-700 mb-2"><span class="help-tooltip" data-help="自動的に作り出されること。Excelデータから、入力フォームやグラフなどが自動で作られます。">生成</span>される<span class="help-tooltip" data-help="アプリができること。データの入力、表示、検索、グラフ表示などがあります。">機能</span></p>
                             <ul id="app-features" class="space-y-1 text-xs text-slate-600"></ul>
                                                 </div>
                                             </div>
@@ -446,8 +920,130 @@
             
             let apps = [];
             const appListContainer = document.getElementById('app-list');
+            const recentAppsListContainer = document.getElementById('recent-apps-list');
+            const recentAppsEmpty = document.getElementById('recent-apps-empty');
             const createAppBtn = document.getElementById('create-app-btn');
             let appsUnsubscribe = null; // Firebaseリアルタイムリスナー
+
+            // セクション切り替え機能
+            function switchSection(sectionName) {
+                // すべてのセクションを非表示
+                document.querySelectorAll('.section-content').forEach(section => {
+                    section.classList.add('hidden');
+                });
+                
+                // すべてのメニューボタンのスタイルをリセット
+                document.querySelectorAll('.nav-menu-btn').forEach(btn => {
+                    btn.classList.remove('bg-blue-50', 'text-blue-700', 'shadow-sm');
+                    btn.classList.add('text-slate-600', 'hover:bg-slate-100');
+                });
+                
+                // 選択されたセクションを表示
+                const targetSection = document.getElementById(`${sectionName}-section`);
+                if (targetSection) {
+                    targetSection.classList.remove('hidden');
+                }
+                
+                // 選択されたメニューボタンのスタイルを更新
+                const activeBtn = document.querySelector(`.nav-menu-btn[data-section="${sectionName}"]`);
+                if (activeBtn) {
+                    activeBtn.classList.remove('text-slate-600', 'hover:bg-slate-100');
+                    activeBtn.classList.add('bg-blue-50', 'text-blue-700', 'shadow-sm');
+                }
+            }
+
+            // メニューボタンのイベントリスナー
+            document.querySelectorAll('.nav-menu-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const section = btn.dataset.section;
+                    switchSection(section);
+                });
+            });
+
+            // 最近開いたアプリを取得
+            function getRecentApps() {
+                const recentAppsData = localStorage.getItem('appnavi_recent_apps');
+                if (!recentAppsData) {
+                    return [];
+                }
+                try {
+                    return JSON.parse(recentAppsData);
+                } catch (e) {
+                    return [];
+                }
+            }
+
+            // 最近開いたアプリを保存
+            function saveRecentApp(appId, appName) {
+                let recentApps = getRecentApps();
+                // 既に存在する場合は削除
+                recentApps = recentApps.filter(app => app.id !== appId);
+                // 先頭に追加
+                recentApps.unshift({ id: appId, name: appName, openedAt: new Date().toISOString() });
+                // 最大10件まで
+                recentApps = recentApps.slice(0, 10);
+                localStorage.setItem('appnavi_recent_apps', JSON.stringify(recentApps));
+            }
+
+            // 最近開いたアプリを表示
+            function renderRecentApps() {
+                if (!recentAppsListContainer) return;
+                
+                const recentApps = getRecentApps();
+                const recentAppIds = recentApps.map(app => app.id);
+                const recentAppsData = apps.filter(app => recentAppIds.includes(app.id));
+                
+                // 開いた順にソート
+                recentAppsData.sort((a, b) => {
+                    const aIndex = recentAppIds.indexOf(a.id);
+                    const bIndex = recentAppIds.indexOf(b.id);
+                    return aIndex - bIndex;
+                });
+
+                if (recentAppsData.length === 0) {
+                    recentAppsListContainer.innerHTML = '';
+                    if (recentAppsEmpty) {
+                        recentAppsEmpty.classList.remove('hidden');
+                    }
+                    return;
+                }
+
+                if (recentAppsEmpty) {
+                    recentAppsEmpty.classList.add('hidden');
+                }
+
+                const iconColors = {
+                    'emerald': 'bg-emerald-100 text-emerald-600',
+                    'violet': 'bg-violet-100 text-violet-600',
+                    'blue': 'bg-blue-100 text-blue-600',
+                    'amber': 'bg-amber-100 text-amber-600',
+                    'rose': 'bg-rose-100 text-rose-600',
+                    'indigo': 'bg-indigo-100 text-indigo-600'
+                };
+
+                const icons = {
+                    'document': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h3m-6 4.5h9m-9 4.5h9M5.25 6v12a2.25 2.25 0 0 0 2.25 2.25h9a2.25 2.25 0 0 0 2.25-2.25V6" /></svg>',
+                    'table': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 6.75h15m-13.5 0v10.5a2.25 2.25 0 0 0 2.25 2.25h6a2.25 2.25 0 0 0 2.25-2.25V6.75" /></svg>',
+                    'calendar': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>'
+                };
+
+                recentAppsListContainer.innerHTML = recentAppsData.slice(0, 6).map(app => `
+                    <article class="group relative rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:border-blue-300 hover:shadow-md transition-all">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-3 flex-1">
+                                <span class="flex h-9 w-9 items-center justify-center rounded-full ${iconColors[app.color] || iconColors.blue}">
+                                    ${icons[app.icon] || icons.document}
+                                </span>
+                                <div class="flex-1">
+                                    <h4 class="text-sm font-semibold text-slate-800">${app.name}</h4>
+                                    <p class="text-xs text-slate-500">${app.description || ''}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="myapp.html?appId=${app.id}" onclick="if(typeof saveRecentApp !== 'undefined') saveRecentApp('${app.id}', '${app.name.replace(/'/g, "\\'")}')" class="mt-4 inline-block text-sm font-semibold text-blue-600 group-hover:underline">アプリを開く</a>
+                    </article>
+                `).join('');
+            }
 
             // 初期化: アプリリストを読み込む
             async function loadApps() {
@@ -466,6 +1062,7 @@
                                 updatedAt: app.updatedAt?.toDate ? app.updatedAt.toDate().toISOString() : app.updatedAt
                             }));
                             renderApps();
+                            renderRecentApps();
                         });
                     } else {
                         // localStorageを使用する場合
@@ -481,6 +1078,7 @@
                             apps = [sampleApp];
                         }
                         renderApps();
+                        renderRecentApps();
                     }
                 } catch (error) {
                     console.error('Error loading apps:', error);
@@ -496,6 +1094,7 @@
                         apps = [sampleApp];
                     }
                     renderApps();
+                    renderRecentApps();
                 }
             }
 
@@ -503,6 +1102,18 @@
             async function addApp(appData) {
                 try {
                     showNotification('アプリを作成中...', 'info');
+                    
+                    // 現在の保存方法を取得（未設定の場合はlocalをデフォルトとして設定）
+                    const currentStorageType = databaseService.getStorageType();
+                    if (!currentStorageType || currentStorageType === 'local') {
+                        // 未設定の場合はlocalを設定
+                        try {
+                            databaseService.setStorageType('local');
+                        } catch (e) {
+                            // 既に設定されている場合は無視
+                        }
+                    }
+                    
                     const newApp = await databaseService.addApp({
                         name: appData.name || '新しいアプリ',
                         description: appData.description || 'Excelから作成されたアプリです。',
@@ -750,7 +1361,13 @@
                     'calendar': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>'
                 };
 
-                appListContainer.innerHTML = apps.map(app => `
+                appListContainer.innerHTML = apps.map(app => {
+                    const storageType = app.storageType || 'local';
+                    const storageBadge = storageType === 'firebase' 
+                        ? '<span class="inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-xs font-semibold text-orange-700"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1 h-3 w-3"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>Firebase</span>'
+                        : '<span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1 h-3 w-3"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0121.75 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" /></svg>ローカル</span>';
+                    
+                    return `
                     <article class="group relative rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:border-blue-300 hover:shadow-md">
                         <div class="flex items-start justify-between">
                             <div class="flex items-center space-x-3 flex-1">
@@ -758,7 +1375,10 @@
                                     ${icons[app.icon] || icons.document}
                                 </span>
                                 <div class="flex-1">
-                                    <h4 class="text-sm font-semibold text-slate-800">${app.name}</h4>
+                                    <div class="flex items-center space-x-2 mb-1">
+                                        <h4 class="text-sm font-semibold text-slate-800">${app.name}</h4>
+                                        ${storageBadge}
+                                    </div>
                                     <p class="text-xs text-slate-500">${app.description}</p>
                                 </div>
                             </div>
@@ -770,9 +1390,10 @@
                                 </button>
                             </div>
                         </div>
-                        <a href="myapp.html?appId=${app.id}" class="mt-4 inline-block text-sm font-semibold text-blue-600 group-hover:underline">アプリを開く</a>
+                        <a href="myapp.html?appId=${app.id}" onclick="if(typeof saveRecentApp !== 'undefined') saveRecentApp('${app.id}', '${app.name.replace(/'/g, "\\'")}')" class="mt-4 inline-block text-sm font-semibold text-blue-600 group-hover:underline">アプリを開く</a>
                     </article>
-                `).join('');
+                `;
+                }).join('');
 
                 // 削除ボタンのイベントリスナーを追加
                 setupAppActionButtons();
@@ -902,8 +1523,30 @@
                 } catch (error) {
                     console.error('Error creating sample app:', error);
                     console.error('Error stack:', error.stack);
-                    alert(`サンプルアプリの作成に失敗しました。\n\nエラー: ${error.message || '不明なエラー'}\n\n詳細はコンソールを確認してください。`);
-                    showNotification('サンプルアプリの作成に失敗しました', 'error');
+                    // ユーザーフレンドリーなエラーメッセージ
+                    const errorMessage = error.message || '不明なエラー';
+                    let userFriendlyMessage = 'サンプルアプリの作成に失敗しました。\n\n';
+                    
+                    if (errorMessage.includes('Firebase') || errorMessage.includes('Firestore')) {
+                        userFriendlyMessage += '【原因】データ保存サービスの接続に問題がありました。\n\n';
+                        userFriendlyMessage += '【解決方法】\n';
+                        userFriendlyMessage += '・ページを再読み込みしてください（F5キーを押す）\n';
+                        userFriendlyMessage += '・データはブラウザに保存されるため、設定は不要です\n';
+                        userFriendlyMessage += '・それでも解決しない場合は、別のブラウザでお試しください\n\n';
+                        userFriendlyMessage += '【次のステップ】\n';
+                        userFriendlyMessage += 'ページを再読み込みして、もう一度「サンプルで試す」をクリックしてください。';
+                    } else {
+                        userFriendlyMessage += '【原因】予期しないエラーが発生しました。\n\n';
+                        userFriendlyMessage += '【解決方法】\n';
+                        userFriendlyMessage += '・ページを再読み込みしてください（F5キーを押す）\n';
+                        userFriendlyMessage += '・別のブラウザでお試しください\n';
+                        userFriendlyMessage += '・問題が続く場合は、Excelファイルからアプリを作成してみてください\n\n';
+                        userFriendlyMessage += '【次のステップ】\n';
+                        userFriendlyMessage += 'ページを再読み込みして、もう一度お試しください。';
+                    }
+                    
+                    alert(userFriendlyMessage);
+                    showNotification('サンプルアプリの作成に失敗しました。ページを再読み込みしてお試しください。', 'error');
                 }
             }
 
@@ -915,8 +1558,324 @@
                 onboardingModal.classList.add('hidden');
             }
 
+            // テンプレート検索機能
+            const templateSearchInput = document.getElementById('template-search-input');
+            const templatesGrid = document.getElementById('templates-grid');
+            
+            if (templateSearchInput) {
+                templateSearchInput.addEventListener('input', (e) => {
+                    const searchTerm = e.target.value.toLowerCase().trim();
+                    const templateCards = document.querySelectorAll('.template-card');
+                    
+                    if (searchTerm === '') {
+                        // 検索語が空の場合はすべて表示
+                        templateCards.forEach(card => {
+                            card.style.display = '';
+                        });
+                        return;
+                    }
+                    
+                    templateCards.forEach(card => {
+                        const templateName = card.dataset.templateName?.toLowerCase() || '';
+                        const templateKeywords = card.dataset.templateKeywords?.toLowerCase() || '';
+                        const searchText = templateName + ' ' + templateKeywords;
+                        
+                        if (searchText.includes(searchTerm)) {
+                            card.style.display = '';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                    
+                    // 検索結果がない場合のメッセージ
+                    const visibleCards = Array.from(templateCards).filter(card => card.style.display !== 'none');
+                    if (visibleCards.length === 0 && searchTerm !== '') {
+                        if (!document.getElementById('template-search-no-results')) {
+                            const noResults = document.createElement('div');
+                            noResults.id = 'template-search-no-results';
+                            noResults.className = 'col-span-full rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-8 text-center';
+                            noResults.innerHTML = `
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto h-12 w-12 text-slate-400">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                                </svg>
+                                <p class="mt-4 text-sm font-semibold text-slate-600">検索結果が見つかりませんでした</p>
+                                <p class="mt-1 text-xs text-slate-500">別のキーワードで検索してください</p>
+                            `;
+                            templatesGrid.appendChild(noResults);
+                        }
+                    } else {
+                        const noResults = document.getElementById('template-search-no-results');
+                        if (noResults) {
+                            noResults.remove();
+                        }
+                    }
+                });
+            }
+
+            // テンプレートからアプリを作成
+            const templateCreateButtons = document.querySelectorAll('.template-create-btn');
+            templateCreateButtons.forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const templateType = btn.dataset.template;
+                    await createAppFromTemplate(templateType);
+                });
+            });
+
+            // テンプレートからアプリを作成する関数
+            async function createAppFromTemplate(templateType) {
+                try {
+                    showNotification('テンプレートからアプリを作成中...', 'info');
+                    
+                    let templateData = null;
+                    
+                    // テンプレートデータを定義
+                    if (templateType === 'sales-report') {
+                        templateData = {
+                            name: '営業日報',
+                            description: '営業活動の日報を管理するアプリです。',
+                            columns: [
+                                { name: '日時', type: 'date', required: true },
+                                { name: '担当者', type: 'select', required: true, options: ['田中 太郎', '佐藤 花子', '鈴木 一郎'] },
+                                { name: '顧客/案件名', type: 'text', required: true },
+                                { name: '訪問目的', type: 'select', required: true, options: ['打ち合わせ', '商談', '納品', 'アフターサポート'] },
+                                { name: '活動内容', type: 'text', required: false }
+                            ],
+                            data: [
+                                {
+                                    '日時': '2025/01/20',
+                                    '担当者': '田中 太郎',
+                                    '顧客/案件名': '株式会社ABC',
+                                    '訪問目的': '打ち合わせ',
+                                    '活動内容': '新規プロジェクトの提案'
+                                },
+                                {
+                                    '日時': '2025/01/20',
+                                    '担当者': '佐藤 花子',
+                                    '顧客/案件名': '株式会社XYZ',
+                                    '訪問目的': '商談',
+                                    '活動内容': '契約の最終確認'
+                                }
+                            ],
+                            color: 'purple'
+                        };
+                    } else if (templateType === 'inventory') {
+                        templateData = {
+                            name: '在庫管理',
+                            description: '商品・備品の在庫を管理するアプリです。',
+                            columns: [
+                                { name: '商品名', type: 'text', required: true },
+                                { name: '型番', type: 'text', required: false },
+                                { name: 'カテゴリ', type: 'select', required: true, options: ['商品', '備品', '消耗品', 'その他'] },
+                                { name: '在庫数', type: 'number', required: true },
+                                { name: '単価', type: 'number', required: false },
+                                { name: '保管場所', type: 'text', required: false },
+                                { name: '備考', type: 'text', required: false }
+                            ],
+                            data: [
+                                {
+                                    '商品名': 'ノートPC',
+                                    '型番': 'PC-001',
+                                    'カテゴリ': '備品',
+                                    '在庫数': '15',
+                                    '単価': '80000',
+                                    '保管場所': '倉庫A',
+                                    '備考': '在庫確認済み'
+                                },
+                                {
+                                    '商品名': 'コピー用紙',
+                                    '型番': 'PAPER-A4',
+                                    'カテゴリ': '消耗品',
+                                    '在庫数': '50',
+                                    '単価': '500',
+                                    '保管場所': '倉庫B',
+                                    '備考': ''
+                                }
+                            ],
+                            color: 'blue'
+                        };
+                    } else if (templateType === 'customer-management') {
+                        templateData = {
+                            name: '顧客管理',
+                            description: '顧客情報を一元管理するアプリです。',
+                            columns: [
+                                { name: '会社名', type: 'text', required: true },
+                                { name: '担当者名', type: 'text', required: true },
+                                { name: '部署', type: 'text', required: false },
+                                { name: '電話番号', type: 'text', required: false },
+                                { name: 'メールアドレス', type: 'text', required: false },
+                                { name: '業種', type: 'select', required: false, options: ['製造業', '小売業', 'サービス業', 'IT', 'その他'] },
+                                { name: '取引開始日', type: 'date', required: false },
+                                { name: 'メモ', type: 'text', required: false }
+                            ],
+                            data: [
+                                {
+                                    '会社名': '株式会社ABC',
+                                    '担当者名': '山田 太郎',
+                                    '部署': '営業部',
+                                    '電話番号': '03-1234-5678',
+                                    'メールアドレス': 'yamada@abc.co.jp',
+                                    '業種': '製造業',
+                                    '取引開始日': '2024/04/01',
+                                    'メモ': '定期取引あり'
+                                },
+                                {
+                                    '会社名': '株式会社XYZ',
+                                    '担当者名': '佐藤 花子',
+                                    '部署': '購買部',
+                                    '電話番号': '03-9876-5432',
+                                    'メールアドレス': 'sato@xyz.co.jp',
+                                    '業種': '小売業',
+                                    '取引開始日': '2024/06/15',
+                                    'メモ': ''
+                                }
+                            ],
+                            color: 'emerald'
+                        };
+                    }
+                    
+                    if (!templateData) {
+                        showNotification('テンプレートが見つかりません', 'error');
+                        return;
+                    }
+                    
+                    // データベースサービスの初期化を待つ
+                    if (typeof databaseService !== 'undefined') {
+                        await databaseService.init();
+                    }
+                    
+                    // アプリを追加（保存方法は現在の設定を使用）
+                    const newApp = await addApp(templateData);
+                    
+                    if (!newApp || !newApp.id) {
+                        throw new Error('アプリの作成に失敗しました。アプリIDが生成されませんでした。');
+                    }
+                    
+                    showNotification(`「${templateData.name}」テンプレートからアプリを作成しました！`);
+                    
+                    // 作成したアプリに遷移
+                    setTimeout(() => {
+                        window.location.href = `myapp.html?appId=${newApp.id}&newApp=true`;
+                    }, 500);
+                } catch (error) {
+                    console.error('Error creating app from template:', error);
+                    showNotification('テンプレートからのアプリ作成に失敗しました', 'error');
+                }
+            }
+
+            // データ保存方法の表示と選択
+            async function initStorageTypeDisplay() {
+                try {
+                    await databaseService.init();
+                    const savedStorageType = localStorage.getItem('appnavi_storage_type');
+                    const storageType = savedStorageType || 'local'; // 未設定の場合はlocal
+                    const storageTypeDisplay = document.getElementById('storage-type-display');
+                    const storageTypeDescription = document.getElementById('storage-type-description');
+                    const storageSelection = document.getElementById('storage-selection');
+                    
+                    // 保存先の表示テキスト
+                    let storageTypeText = '';
+                    let storageDescription = '';
+                    
+                    // 既に設定されている場合
+                    if (savedStorageType) {
+                        if (storageType === 'firebase') {
+                            storageTypeText = 'Firebase（クラウドデータベース）';
+                            storageDescription = 'データはFirebaseクラウドに保存されます。複数のデバイスや複数人で共有できます。変更することはできません。';
+                            storageTypeDisplay.innerHTML = `
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 text-green-400">
+                                    <path d="M3.89 15.672L6.255.461A.542.542 0 017.27.288l2.543 4.771zm16.794 3.692l-2.25-14a.54.54 0 00-.919-.295L3.316 19.365l7.856 4.427a1.621 1.621 0 001.588 0zM14.3 7.147l-1.82-3.482a.542.542 0 00-.96 0L3.53 19.984z"/>
+                                </svg>
+                                <span class="text-sm font-semibold text-white">${storageTypeText}</span>
+                                <span class="text-xs text-green-300 bg-green-500/20 px-2 py-0.5 rounded">設定済み</span>
+                            `;
+                        } else {
+                            storageTypeText = 'ブラウザに保存（ローカル）';
+                            storageDescription = 'データはブラウザのローカルストレージに保存されます。同じブラウザ・同じデバイスでのみアクセスできます。変更することはできません。';
+                            storageTypeDisplay.innerHTML = `
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5 text-blue-300">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75M15 12h3.75M15 15h3.75M15 18h3.75M5.25 6h13.5A2.25 2.25 0 0 1 21 8.25v9a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 17.25v-9A2.25 2.25 0 0 1 5.25 6Z" />
+                                </svg>
+                                <span class="text-sm font-semibold text-white">${storageTypeText}</span>
+                                <span class="text-xs text-blue-300 bg-blue-500/20 px-2 py-0.5 rounded">設定済み</span>
+                            `;
+                        }
+                        storageSelection.classList.add('hidden');
+                    } else {
+                        // 未設定の場合は選択UIを表示
+                        storageTypeText = '未設定（選択してください）';
+                        storageDescription = 'データ保存方法を選択してください。一度設定したら変更できません。';
+                        storageTypeDisplay.innerHTML = `
+                            <span class="text-sm font-semibold text-white">${storageTypeText}</span>
+                            <span class="text-xs text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded">未設定</span>
+                        `;
+                        storageSelection.classList.remove('hidden');
+                    }
+                    
+                    storageTypeDescription.textContent = storageDescription;
+                    
+                    // 各セクションの保存先表示を更新
+                    const excelStorageType = document.getElementById('excel-storage-type');
+                    const sheetsStorageType = document.getElementById('sheets-storage-type');
+                    const excelSyncStorageType = document.getElementById('excel-sync-storage-type');
+                    
+                    const displayText = savedStorageType ? storageTypeText : '未設定（選択してください）';
+                    if (excelStorageType) {
+                        excelStorageType.textContent = displayText;
+                    }
+                    if (sheetsStorageType) {
+                        sheetsStorageType.textContent = displayText;
+                    }
+                    if (excelSyncStorageType) {
+                        excelSyncStorageType.textContent = displayText;
+                    }
+                } catch (error) {
+                    console.error('Error initializing storage type display:', error);
+                    // エラー時はデフォルトでlocalを表示
+                    const storageTypeDisplay = document.getElementById('storage-type-display');
+                    storageTypeDisplay.innerHTML = `
+                        <span class="text-sm font-semibold text-white">ブラウザに保存（ローカル）</span>
+                    `;
+                    const excelStorageType = document.getElementById('excel-storage-type');
+                    const sheetsStorageType = document.getElementById('sheets-storage-type');
+                    const excelSyncStorageType = document.getElementById('excel-sync-storage-type');
+                    if (excelStorageType) excelStorageType.textContent = 'ブラウザに保存（ローカル）';
+                    if (sheetsStorageType) sheetsStorageType.textContent = 'ブラウザに保存（ローカル）';
+                    if (excelSyncStorageType) excelSyncStorageType.textContent = 'ブラウザに保存（ローカル）';
+                }
+            }
+
+            // データ保存方法の確定ボタン
+            const confirmStorageBtn = document.getElementById('confirm-storage-btn');
+            confirmStorageBtn?.addEventListener('click', async () => {
+                const selectedStorage = document.querySelector('input[name="storage-type"]:checked')?.value;
+                if (!selectedStorage) {
+                    alert('データ保存方法を選択してください');
+                    return;
+                }
+                
+                try {
+                    databaseService.setStorageType(selectedStorage);
+                    showNotification(`データ保存方法を「${selectedStorage === 'firebase' ? 'Firebase' : 'ブラウザ（ローカル）'}」に設定しました。この設定は変更できません。`, 'success');
+                    
+                    // データベースサービスを再初期化
+                    await databaseService.init();
+                    
+                    // 表示を更新
+                    await initStorageTypeDisplay();
+                    
+                    // アプリリストも再読み込み
+                    await loadApps();
+                } catch (error) {
+                    console.error('Error setting storage type:', error);
+                    alert(error.message || 'データ保存方法の設定に失敗しました');
+                }
+            });
+
             // アプリリストを初期化
             loadApps();
+            
+            // データ保存方法の表示を初期化
+            initStorageTypeDisplay();
 
             // サンプルExcelダウンロード機能
             const downloadSampleBtn = document.getElementById('download-sample-btn');
@@ -1047,10 +2006,10 @@
                             const fileError = document.getElementById('file-error');
                             const fileErrorMessage = document.getElementById('file-error-message');
                             if (fileError && fileErrorMessage) {
-                                fileErrorMessage.textContent = 'ファイルの読み込みに失敗しました。ファイルが破損している可能性があります。別のファイルでお試しください。';
+                                fileErrorMessage.textContent = 'ファイルの読み込みに失敗しました。\n\n【考えられる原因】\n・ファイルが破損している\n・ファイルが大きすぎる（10MB以下を推奨）\n・特殊な文字が含まれている\n\n【解決方法】\n・別のファイルでお試しください\n・ファイルを開いて、正常に表示されるか確認してください\n・サンプルファイルをダウンロードして、形式を確認してください';
                                 fileError.classList.remove('hidden');
                             } else {
-                                alert('ファイルの読み込みに失敗しました。\n\n考えられる原因:\n・ファイルが破損している\n・ファイルが大きすぎる\n・不正な文字が含まれている\n\n別のファイルでお試しください。');
+                                alert('ファイルの読み込みに失敗しました。\n\n【考えられる原因】\n・ファイルが破損している\n・ファイルが大きすぎる（10MB以下を推奨）\n・特殊な文字が含まれている\n\n【解決方法】\n・別のファイルでお試しください\n・ファイルを開いて、正常に表示されるか確認してください\n・サンプルファイルをダウンロードして、形式を確認してください');
                             }
                         }
                     });
@@ -1073,10 +2032,10 @@
                             const fileError = document.getElementById('file-error');
                             const fileErrorMessage = document.getElementById('file-error-message');
                             if (fileError && fileErrorMessage) {
-                                fileErrorMessage.textContent = 'ファイルの読み込みに失敗しました。Excelファイルが破損している可能性があります。別のファイルでお試しください。';
+                                fileErrorMessage.textContent = 'ファイルの読み込みに失敗しました。\n\n【考えられる原因】\n・Excelファイルが破損している\n・ファイルが大きすぎる（10MB以下を推奨）\n・古い形式のExcelファイル（.xls形式は非推奨）\n\n【解決方法】\n・ファイルをExcelで開いて、正常に表示されるか確認してください\n・「名前を付けて保存」で .xlsx 形式で保存し直してください\n・別のファイルでお試しください\n・サンプルファイルをダウンロードして、形式を確認してください';
                                 fileError.classList.remove('hidden');
                             } else {
-                                alert('ファイルの読み込みに失敗しました。\n\n考えられる原因:\n・Excelファイルが破損している\n・ファイルが大きすぎる\n・古い形式のExcelファイル\n\n別のファイルでお試しください。');
+                                alert('ファイルの読み込みに失敗しました。\n\n【考えられる原因】\n・Excelファイルが破損している\n・ファイルが大きすぎる（10MB以下を推奨）\n・古い形式のExcelファイル（.xls形式は非推奨）\n\n【解決方法】\n・ファイルをExcelで開いて、正常に表示されるか確認してください\n・「名前を付けて保存」で .xlsx 形式で保存し直してください\n・別のファイルでお試しください\n・サンプルファイルをダウンロードして、形式を確認してください');
                             }
                         }
                     };
@@ -1089,10 +2048,10 @@
                     const fileError = document.getElementById('file-error');
                     const fileErrorMessage = document.getElementById('file-error-message');
                     if (fileError && fileErrorMessage) {
-                        fileErrorMessage.textContent = 'データが含まれていないファイルです。1行目の見出し（列名）と、2行目以降にデータが含まれているか確認してください。';
+                        fileErrorMessage.textContent = 'データが含まれていないファイルです。\n\n【確認してください】\n・1行目に見出し（列名）があるか\n・2行目以降にデータが含まれているか\n・空のセルが多すぎないか\n\n【解決方法】\n・サンプルファイルをダウンロードして、形式を確認してください\n・Excelファイルを開いて、1行目に見出し、2行目以降にデータがあるか確認してください';
                         fileError.classList.remove('hidden');
                     } else {
-                        alert('データが含まれていないファイルです。\n\n確認してください:\n・1行目に見出し（列名）があるか\n・2行目以降にデータがあるか\n・空のセルが多すぎないか');
+                        alert('データが含まれていないファイルです。\n\n【確認してください】\n・1行目に見出し（列名）があるか\n・2行目以降にデータが含まれているか\n・空のセルが多すぎないか\n\n【解決方法】\n・サンプルファイルをダウンロードして、形式を確認してください\n・Excelファイルを開いて、1行目に見出し、2行目以降にデータがあるか確認してください');
                     }
                     return;
                 }
@@ -1147,7 +2106,13 @@
                     2: 'ステップ 2/3: 項目の種類設定',
                     3: 'ステップ 3/3: アプリ作成'
                 };
-                wizardStepText.textContent = stepTexts[step];
+                // ツールチップ付きのテキストを設定
+                const stepTextsWithTooltips = {
+                    1: 'ステップ 1/3: <span class="help-tooltip" data-help="Excelファイルに含まれる情報。行と列で整理されています。">データ</span>確認',
+                    2: 'ステップ 2/3: <span class="help-tooltip" data-help="Excelの列ごとに設定する種類。日付、数値、テキスト、選択肢などがあります。">項目の種類</span>設定',
+                    3: 'ステップ 3/3: <span class="help-tooltip" data-help="アプリケーションの略。Excelデータから自動生成される、データ管理や入力ができるツールです。">アプリ</span>作成'
+                };
+                wizardStepText.innerHTML = stepTextsWithTooltips[step] || stepTexts[step];
 
                 // 各ステップの処理
                 if (step === 1) {
@@ -1270,18 +2235,18 @@
                 const dateColumns = columnSettings.filter(c => c.type === 'date' || c.type === 'datetime');
 
                 let features = [
-                    `データテーブル表示（${parsedData.length}行）`,
-                    `入力フォーム（${columnSettings.length}項目）`
+                    `<span class="help-tooltip" data-help="データを表形式で見やすく表示すること">データテーブル</span>表示（${parsedData.length}行）`,
+                    `<span class="help-tooltip" data-help="データを入力するための画面。Excelのセルに入力するのと同じように使えます。">入力フォーム</span>（${columnSettings.length}項目）`
                 ];
 
                 if (selectColumns.length > 0) {
-                    features.push(`ドロップダウン選択（${selectColumns.length}項目）`);
+                    features.push(`<span class="help-tooltip" data-help="あらかじめ決められた選択肢から選ぶ入力方法。プルダウンメニューとも呼ばれます。">ドロップダウン選択</span>（${selectColumns.length}項目）`);
                 }
                 if (dateColumns.length > 0) {
                     features.push(`日付・日時入力（${dateColumns.length}項目）`);
                 }
-                features.push('データグラフ可視化');
-                features.push('検索・フィルタ機能');
+                features.push('<span class="help-tooltip" data-help="データを棒グラフや折れ線グラフなどの図で見やすく表示すること">データグラフ可視化</span>');
+                features.push('<span class="help-tooltip" data-help="データの中から特定の条件に合うものだけを表示すること">検索</span>・<span class="help-tooltip" data-help="データを条件で絞り込んで表示すること">フィルタ</span>機能');
 
                 featuresList.innerHTML = features.map(f => `<li class="flex items-center space-x-2">
                     <svg class="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1289,6 +2254,35 @@
                     </svg>
                     <span>${f}</span>
                 </li>`).join('');
+                
+                // データ保存方法の選択UIを追加（まだ存在しない場合のみ）
+                let storageSelection = document.getElementById('storage-selection');
+                if (!storageSelection) {
+                    storageSelection = document.createElement('div');
+                    storageSelection.id = 'storage-selection';
+                    storageSelection.className = 'mt-4 rounded-lg border border-slate-200 bg-white p-4';
+                    storageSelection.innerHTML = `
+                        <p class="text-xs font-semibold text-slate-700 mb-3">データ保存方法を選択 <span class="text-red-600">※一度選択すると変更できません</span></p>
+                        <div class="space-y-3">
+                            <label class="flex items-center space-x-3 rounded-lg border border-blue-200 bg-blue-50 p-3 cursor-pointer hover:border-blue-400">
+                                <input type="radio" name="app-storage-type" value="local" class="h-4 w-4 text-blue-600 focus:ring-blue-500" checked>
+                                <div class="flex-1">
+                                    <span class="text-xs font-semibold text-blue-900">ブラウザに保存（推奨）</span>
+                                    <p class="text-xs text-blue-700 mt-1">設定不要。データはブラウザに保存されます。同じブラウザでのみアクセス可能です。</p>
+                                </div>
+                            </label>
+                            <label class="flex items-center space-x-3 rounded-lg border border-slate-200 bg-white p-3 cursor-pointer hover:border-orange-400">
+                                <input type="radio" name="app-storage-type" value="firebase" class="h-4 w-4 text-orange-600 focus:ring-orange-500">
+                                <div class="flex-1">
+                                    <span class="text-xs font-semibold text-slate-900">Firebaseに保存</span>
+                                    <p class="text-xs text-slate-700 mt-1">複数デバイス・複数人で共有可能。Firebase設定が必要です。</p>
+                                </div>
+                            </label>
+                        </div>
+                    `;
+                    const featuresContainer = featuresList.parentElement;
+                    featuresContainer.parentElement.insertBefore(storageSelection, featuresContainer.nextSibling);
+                }
             }
 
             // イベントリスナー
@@ -1324,13 +2318,26 @@
                         await databaseService.init();
                     }
 
+                    // データ保存方法を取得
+                    const storageTypeRadio = document.querySelector('input[name="app-storage-type"]:checked');
+                    const storageType = storageTypeRadio ? storageTypeRadio.value : 'local';
+                    
+                    // Firebaseが選択されているが、Firebaseが設定されていない場合
+                    if (storageType === 'firebase' && (!databaseService.useFirebase || !db)) {
+                        alert('Firebaseが設定されていません。\n\n【解決方法】\n・設定画面でFirebaseを設定してください\n・または「ブラウザに保存」を選択してください');
+                        createBtn.disabled = false;
+                        createBtn.textContent = originalText;
+                        return;
+                    }
+                    
                     // アプリデータを作成（Firebase/Supabase構造を参考）
                     const appData = {
                         name: appName,
                         description: `${columnSettings.length}項目のデータ管理アプリ`,
                         columns: columnSettings,
                         data: parsedData,
-                        color: ['blue', 'violet', 'emerald', 'amber', 'rose', 'indigo'][Math.floor(Math.random() * 6)]
+                        color: ['blue', 'violet', 'emerald', 'amber', 'rose', 'indigo'][Math.floor(Math.random() * 6)],
+                        storageType: storageType // 保存方法を記録（変更不可）
                     };
                     
                     // アプリを追加（非同期）
@@ -1356,7 +2363,37 @@
                 } catch (error) {
                     console.error('Error creating app:', error);
                     console.error('Error stack:', error.stack);
-                    alert(`アプリの作成に失敗しました。\n\nエラー: ${error.message || '不明なエラー'}\n\n詳細はコンソールを確認してください。`);
+                    // ユーザーフレンドリーなエラーメッセージ
+                    const errorMessage = error.message || '不明なエラー';
+                    let userFriendlyMessage = 'アプリの作成に失敗しました。\n\n';
+                    
+                    if (errorMessage.includes('Firebase') || errorMessage.includes('Firestore')) {
+                        userFriendlyMessage += '【原因】データ保存サービスの接続に問題がありました。\n\n';
+                        userFriendlyMessage += '【解決方法】\n';
+                        userFriendlyMessage += '・ページを再読み込みしてください（F5キーを押す）\n';
+                        userFriendlyMessage += '・データはブラウザに保存されるため、設定は不要です\n';
+                        userFriendlyMessage += '・それでも解決しない場合は、別のブラウザでお試しください\n\n';
+                        userFriendlyMessage += '【次のステップ】\n';
+                        userFriendlyMessage += 'ページを再読み込みして、もう一度「アプリを作成」をクリックしてください。';
+                    } else if (errorMessage.includes('IDが生成されませんでした')) {
+                        userFriendlyMessage += '【原因】アプリの保存に失敗しました。\n\n';
+                        userFriendlyMessage += '【解決方法】\n';
+                        userFriendlyMessage += '・ページを再読み込みしてください（F5キーを押す）\n';
+                        userFriendlyMessage += '・ファイルを再度アップロードしてください\n';
+                        userFriendlyMessage += '・ファイルが大きすぎる場合は、データを減らしてみてください\n\n';
+                        userFriendlyMessage += '【次のステップ】\n';
+                        userFriendlyMessage += 'ページを再読み込みして、もう一度お試しください。';
+                    } else {
+                        userFriendlyMessage += '【原因】予期しないエラーが発生しました。\n\n';
+                        userFriendlyMessage += '【解決方法】\n';
+                        userFriendlyMessage += '・ページを再読み込みしてください（F5キーを押す）\n';
+                        userFriendlyMessage += '・別のブラウザでお試しください\n';
+                        userFriendlyMessage += '・ファイル形式を確認してください（Excel .xlsx または CSV .csv）\n\n';
+                        userFriendlyMessage += '【次のステップ】\n';
+                        userFriendlyMessage += 'ページを再読み込みして、もう一度お試しください。';
+                    }
+                    
+                    alert(userFriendlyMessage);
                     createBtn.disabled = false;
                     createBtn.textContent = originalText;
                 }
@@ -1368,6 +2405,516 @@
                     closeWizard();
                 }
             });
+
+            // データ保存方法の選択機能
+            const storageTypeRadios = document.querySelectorAll('input[name="storage-type"]');
+            const storageSettingsBtn = document.getElementById('storage-settings-btn');
+            
+            storageTypeRadios.forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    const selectedType = e.target.value;
+                    if (selectedType === 'local') {
+                        storageSettingsBtn.classList.add('hidden');
+                        // localStorageを使用（デフォルト）
+                        localStorage.setItem('storageType', 'local');
+                        showNotification('ブラウザに保存する設定になりました（設定不要）', 'info');
+                    } else {
+                        storageSettingsBtn.classList.remove('hidden');
+                        storageSettingsBtn.textContent = `${selectedType === 'firebase' ? 'Firebase' : 'Supabase'}設定を開く`;
+                        localStorage.setItem('storageType', selectedType);
+                        showNotification(`${selectedType === 'firebase' ? 'Firebase' : 'Supabase'}を選択しました。設定が必要です。`, 'info');
+                    }
+                });
+            });
+            
+            storageSettingsBtn?.addEventListener('click', () => {
+                const selectedType = document.querySelector('input[name="storage-type"]:checked')?.value;
+                if (selectedType === 'firebase') {
+                    // Firebase設定モーダルを開く（将来実装）
+                    alert('Firebase設定機能は準備中です。\n\n現在はブラウザに保存する設定（設定不要）でご利用いただけます。\n\nFirebase設定が必要な場合は、firebase-config.jsファイルを編集してください。');
+                } else if (selectedType === 'supabase') {
+                    // Supabase設定モーダルを開く（将来実装）
+                    alert('Supabase設定機能は準備中です。\n\n現在はブラウザに保存する設定（設定不要）でご利用いただけます。');
+                }
+            });
+            
+            // 保存された設定を読み込む
+            const savedStorageType = localStorage.getItem('storageType') || 'local';
+            const savedRadio = document.querySelector(`input[name="storage-type"][value="${savedStorageType}"]`);
+            if (savedRadio) {
+                savedRadio.checked = true;
+                if (savedStorageType !== 'local' && storageSettingsBtn) {
+                    storageSettingsBtn.classList.remove('hidden');
+                    storageSettingsBtn.textContent = `${savedStorageType === 'firebase' ? 'Firebase' : 'Supabase'}設定を開く`;
+                }
+            }
+
+            // Excelファイル同期機能（ローカル）
+            const selectExcelSyncFileBtn = document.getElementById('select-excel-sync-file');
+            const excelSyncFileInput = document.getElementById('excel-sync-file-input');
+            const excelSyncFileInfo = document.getElementById('excel-sync-file-info');
+            const excelSyncFileName = document.getElementById('excel-sync-file-name');
+            const excelSyncFileStatus = document.getElementById('excel-sync-file-status');
+            const excelSyncReloadBtn = document.getElementById('excel-sync-reload-btn');
+            const excelSyncAutoCheckbox = document.getElementById('excel-sync-auto');
+            let excelSyncInterval = null;
+            let currentExcelSyncFile = null;
+            
+            // Excelファイル選択
+            selectExcelSyncFileBtn?.addEventListener('click', () => {
+                excelSyncFileInput?.click();
+            });
+            
+            excelSyncFileInput?.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                currentExcelSyncFile = file;
+                excelSyncFileName.textContent = file.name;
+                excelSyncFileInfo.classList.remove('hidden');
+                
+                // ファイルを読み込んで同期
+                await syncExcelFile(file);
+            });
+            
+            // Excelファイルを同期する関数
+            async function syncExcelFile(file) {
+                try {
+                    showNotification('Excelファイルを読み込み中...', 'info');
+                    
+                    const fileName = file.name.toLowerCase();
+                    let parsedData = null;
+                    
+                    if (fileName.endsWith('.csv')) {
+                        Papa.parse(file, {
+                            header: true,
+                            skipEmptyLines: true,
+                            complete: (results) => {
+                                parsedData = results.data;
+                                updateAppDataFromExcel(parsedData);
+                                excelSyncFileStatus.textContent = `最終同期: ${new Date().toLocaleString('ja-JP')}`;
+                                showNotification('Excelファイルを同期しました', 'success');
+                            },
+                            error: (error) => {
+                                showNotification('ファイルの読み込みに失敗しました', 'error');
+                            }
+                        });
+                    } else {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            try {
+                                const data = new Uint8Array(e.target.result);
+                                const workbook = XLSX.read(data, { type: 'array' });
+                                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+                                
+                                parsedData = jsonData;
+                                updateAppDataFromExcel(parsedData);
+                                excelSyncFileStatus.textContent = `最終同期: ${new Date().toLocaleString('ja-JP')}`;
+                                showNotification('Excelファイルを同期しました', 'success');
+                            } catch (error) {
+                                showNotification('ファイルの読み込みに失敗しました', 'error');
+                            }
+                        };
+                        reader.readAsArrayBuffer(file);
+                    }
+                } catch (error) {
+                    console.error('Error syncing Excel file:', error);
+                    showNotification('Excelファイルの同期に失敗しました', 'error');
+                }
+            }
+            
+            // アプリデータをExcelファイルから更新
+            function updateAppDataFromExcel(parsedData) {
+                // 現在のアプリIDを取得（URLパラメータから）
+                const urlParams = new URLSearchParams(window.location.search);
+                const appId = urlParams.get('appId');
+                
+                if (!appId || !parsedData || parsedData.length === 0) {
+                    showNotification('アプリIDまたはデータが見つかりません', 'error');
+                    return;
+                }
+                
+                // データベースサービスを使用してアプリを更新
+                if (typeof databaseService !== 'undefined') {
+                    databaseService.getApp(appId).then(app => {
+                        if (app) {
+                            // 列設定を維持しつつ、データのみ更新
+                            databaseService.updateApp(appId, {
+                                data: parsedData,
+                                updatedAt: new Date().toISOString()
+                            }).then(() => {
+                                showNotification('データを更新しました。ページを再読み込みしてください。', 'success');
+                                // 3秒後にページを再読み込み
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 3000);
+                            });
+                        }
+                    });
+                } else {
+                    // localStorage fallback
+                    const apps = JSON.parse(localStorage.getItem('apps') || '[]');
+                    const appIndex = apps.findIndex(app => app.id === appId);
+                    if (appIndex !== -1) {
+                        apps[appIndex].data = parsedData;
+                        apps[appIndex].updatedAt = new Date().toISOString();
+                        localStorage.setItem('apps', JSON.stringify(apps));
+                        showNotification('データを更新しました。ページを再読み込みしてください。', 'success');
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 3000);
+                    }
+                }
+            }
+            
+            // 再読み込みボタン
+            excelSyncReloadBtn?.addEventListener('click', async () => {
+                if (currentExcelSyncFile) {
+                    await syncExcelFile(currentExcelSyncFile);
+                } else {
+                    showNotification('Excelファイルが選択されていません', 'error');
+                }
+            });
+            
+            // 自動更新のチェックボックス
+            excelSyncAutoCheckbox?.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    // 自動更新を開始（5分ごと）
+                    excelSyncInterval = setInterval(async () => {
+                        if (currentExcelSyncFile) {
+                            // FileReaderで再度読み込む（ファイルが変更されている可能性があるため）
+                            await syncExcelFile(currentExcelSyncFile);
+                        }
+                    }, 5 * 60 * 1000); // 5分 = 300000ミリ秒
+                    showNotification('自動更新を有効にしました（5分ごと）', 'info');
+                } else {
+                    // 自動更新を停止
+                    if (excelSyncInterval) {
+                        clearInterval(excelSyncInterval);
+                        excelSyncInterval = null;
+                    }
+                    showNotification('自動更新を無効にしました', 'info');
+                }
+            });
+
+            // Google Sheets連携機能
+            const connectGoogleSheetsBtn = document.getElementById('connect-google-sheets');
+            const googleSheetsUrlInput = document.getElementById('google-sheets-url-input');
+            
+            console.log('Google Sheets連携ボタン:', connectGoogleSheetsBtn);
+            console.log('Google Sheets URL入力:', googleSheetsUrlInput);
+            
+            if (connectGoogleSheetsBtn && googleSheetsUrlInput) {
+                console.log('Google Sheets連携ボタンのイベントリスナーを設定します');
+                connectGoogleSheetsBtn.addEventListener('click', async function() {
+                    console.log('Google Sheets連携ボタンがクリックされました');
+                    const sheetUrl = googleSheetsUrlInput.value.trim();
+                    console.log('入力されたURL:', sheetUrl);
+                    
+                    if (!sheetUrl) {
+                        showNotification('スプレッドシートURLを入力してください', 'error');
+                        googleSheetsUrlInput.focus();
+                        return;
+                    }
+                    
+                    // URLの検証
+                    if (!sheetUrl.includes('docs.google.com/spreadsheets')) {
+                        showNotification('有効なGoogleスプレッドシートのURLを入力してください', 'error');
+                        googleSheetsUrlInput.focus();
+                        return;
+                    }
+                    
+                    // ローディング表示
+                    const btn = document.getElementById('connect-google-sheets');
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.textContent = '接続中...';
+                    }
+                    
+                    try {
+                        console.log('スプレッドシートのデータ取得を開始します');
+                        showNotification('スプレッドシートを分析中...', 'info');
+                    
+                    // Google Sheets APIサービスの使用（実際の実装では、適切に初期化が必要）
+                    if (typeof googleSheetsService !== 'undefined') {
+                        // 認証が必要な場合
+                        if (!googleSheetsService.isAuthenticated) {
+                            showNotification('Googleアカウントでのログインが必要です。ログインを開始します...', 'info');
+                            await googleSheetsService.initAuth();
+                            if (!googleSheetsService.isAuthenticated) {
+                                await googleSheetsService.signIn();
+                            }
+                        }
+                        
+                        // スプレッドシートのデータを取得・分析
+                        const analysis = await googleSheetsService.analyzeSpreadsheet(sheetUrl);
+                        
+                        if (!analysis.headers || analysis.headers.length === 0) {
+                            throw new Error('スプレッドシートにデータが見つかりませんでした');
+                        }
+                        
+                        // 列設定を作成
+                        const columns = analysis.headers.map(header => {
+                            const dataType = analysis.dataTypes[header] || { type: 'text' };
+                            return {
+                                name: header,
+                                type: dataType.type,
+                                required: false,
+                                options: dataType.options || null
+                            };
+                        });
+                        
+                        // アプリ名を生成（スプレッドシート名から）
+                        const appName = `スプレッドシート連携アプリ - ${new Date().toLocaleDateString('ja-JP')}`;
+                        
+                        // アプリを作成
+                        showNotification('アプリを作成中...', 'info');
+                        const newApp = await addApp({
+                            name: appName,
+                            description: 'Googleスプレッドシートから作成されたアプリです。',
+                            columns: columns,
+                            data: analysis.rows || [],
+                            color: 'green',
+                            googleSheetsUrl: sheetUrl,
+                            googleSheetsLastSynced: new Date().toISOString()
+                        });
+                        
+                        if (newApp && newApp.id) {
+                            showNotification('Googleスプレッドシートと連携しました！');
+                            
+                            // 作成したアプリに遷移
+                            setTimeout(() => {
+                                window.location.href = `myapp.html?appId=${newApp.id}`;
+                            }, 1000);
+                        } else {
+                            throw new Error('アプリの作成に失敗しました');
+                        }
+                    } else {
+                        // Google Sheets APIサービスが利用できない場合、直接CSVエクスポート方式で試行
+                        showNotification('スプレッドシートを読み込み中...', 'info');
+                        
+                        // スプレッドシートIDを抽出
+                        const spreadsheetIdMatch = sheetUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+                        if (!spreadsheetIdMatch || !spreadsheetIdMatch[1]) {
+                            throw new Error('スプレッドシートURLが正しくありません');
+                        }
+                        
+                        const spreadsheetId = spreadsheetIdMatch[1];
+                        
+                        // CSV形式でエクスポート（公開スプレッドシートの場合）
+                        const exportUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=0`;
+                        
+                        console.log('スプレッドシートURL:', exportUrl);
+                        console.log('現在のorigin:', window.location.origin);
+                        
+                        // CORS対応: まず直接アクセスを試行
+                        let response;
+                        try {
+                            response = await fetch(exportUrl, {
+                                method: 'GET',
+                                mode: 'cors',
+                                credentials: 'omit',
+                                headers: {
+                                    'Accept': 'text/csv'
+                                }
+                            });
+                        } catch (corsError) {
+                            console.error('CORSエラー:', corsError);
+                            // file://プロトコルを使用している場合のエラーメッセージ
+                            if (window.location.protocol === 'file:') {
+                                throw new Error('CORSエラーが発生しました。ローカルサーバー（http://localhost:8000）を使用してアクセスしてください。\n\n【解決方法】\n1. ターミナルで「python -m http.server 8000」を実行\n2. ブラウザで「http://localhost:8000」を開く\n3. もう一度「連携を開始する」をクリック');
+                            } else {
+                                throw new Error('スプレッドシートへのアクセスがCORSポリシーによってブロックされました。スプレッドシートの共有設定を確認してください。');
+                            }
+                        }
+                        
+                        if (!response.ok) {
+                            if (response.status === 403) {
+                                throw new Error('スプレッドシートへのアクセスが拒否されました。スプレッドシートの共有設定を「リンクを知っている全員」に変更してください。');
+                            } else if (response.status === 404) {
+                                throw new Error('スプレッドシートが見つかりませんでした。URLが正しいか確認してください。');
+                            }
+                            throw new Error(`スプレッドシートの読み込みに失敗しました（エラーコード: ${response.status}）。スプレッドシートが公開されているか確認してください。`);
+                        }
+                        
+                        const csvText = await response.text();
+                        
+                        if (!csvText || csvText.trim().length === 0) {
+                            throw new Error('スプレッドシートにデータが含まれていません。1行目に見出し、2行目以降にデータがあるか確認してください。');
+                        }
+                        
+                        // CSVをパース
+                        const lines = csvText.split('\n').filter(line => line.trim().length > 0);
+                        if (lines.length === 0) {
+                            throw new Error('スプレッドシートにデータが含まれていません。');
+                        }
+                        
+                        // 簡易的なCSVパース
+                        const parseCSVLine = (line) => {
+                            const result = [];
+                            let current = '';
+                            let inQuotes = false;
+                            
+                            for (let i = 0; i < line.length; i++) {
+                                const char = line[i];
+                                if (char === '"') {
+                                    inQuotes = !inQuotes;
+                                } else if (char === ',' && !inQuotes) {
+                                    result.push(current.trim());
+                                    current = '';
+                                } else {
+                                    current += char;
+                                }
+                            }
+                            result.push(current.trim());
+                            return result;
+                        };
+                        
+                        const headers = parseCSVLine(lines[0]);
+                        const rows = lines.slice(1)
+                            .map(line => {
+                                const values = parseCSVLine(line);
+                                const rowObj = {};
+                                headers.forEach((header, index) => {
+                                    rowObj[header] = values[index] || '';
+                                });
+                                return rowObj;
+                            })
+                            .filter(row => Object.values(row).some(v => v.trim().length > 0));
+                        
+                        if (rows.length === 0) {
+                            throw new Error('スプレッドシートにデータ行がありません。2行目以降にデータがあるか確認してください。');
+                        }
+                        
+                        // 列設定を作成（簡易的な型判定）
+                        const columns = headers.map(header => {
+                            const sampleValues = rows.slice(0, 100).map(row => row[header]).filter(v => v && String(v).trim().length > 0);
+                            const uniqueValues = [...new Set(sampleValues)];
+                            
+                            let detectedType = 'text';
+                            let options = null;
+                            
+                            // 日付判定
+                            const datePatterns = [
+                                /^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/,
+                                /^\d{4}-\d{2}-\d{2}/,
+                                /^\d{1,2}\/\d{1,2}\/\d{4}/,
+                                /^\d{4}年\d{1,2}月\d{1,2}日/
+                            ];
+                            if (sampleValues.some(v => datePatterns.some(pattern => pattern.test(String(v))))) {
+                                detectedType = 'date';
+                            }
+                            // 数値判定
+                            else if (sampleValues.length > 0 && sampleValues.every(v => !isNaN(Number(v)) && v !== '')) {
+                                detectedType = 'number';
+                            }
+                            // 選択肢判定
+                            else if (uniqueValues.length <= 15 && uniqueValues.length >= 2 && sampleValues.length >= 3) {
+                                detectedType = 'select';
+                                options = uniqueValues;
+                            }
+                            
+                            return {
+                                name: header,
+                                type: detectedType,
+                                required: false,
+                                options: options
+                            };
+                        });
+                        
+                        // アプリ名を生成
+                        const appName = `スプレッドシート連携アプリ - ${new Date().toLocaleDateString('ja-JP')}`;
+                        
+                        // アプリを作成
+                        showNotification('アプリを作成中...', 'info');
+                        const newApp = await addApp({
+                            name: appName,
+                            description: 'Googleスプレッドシートから作成されたアプリです。',
+                            columns: columns,
+                            data: rows,
+                            color: 'green',
+                            storageType: databaseService?.getStorageType() || 'local',
+                            googleSheetsUrl: sheetUrl,
+                            googleSheetsLastSynced: new Date().toISOString()
+                        });
+                        
+                        if (newApp && newApp.id) {
+                            showNotification('Googleスプレッドシートと連携しました！', 'success');
+                            
+                            // 作成したアプリに遷移
+                            setTimeout(() => {
+                                window.location.href = `myapp.html?appId=${newApp.id}`;
+                            }, 1000);
+                        } else {
+                            throw new Error('アプリの作成に失敗しました');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error connecting to Google Sheets:', error);
+                    // ユーザーフレンドリーなエラーメッセージ
+                    let errorMessage = 'Googleスプレッドシートとの連携に失敗しました。\n\n';
+                    
+                    if (error.message && (error.message.includes('アクセスが拒否') || error.message.includes('403'))) {
+                        errorMessage += '【原因】スプレッドシートへのアクセスが拒否されました。\n\n';
+                        errorMessage += '【解決方法】\n';
+                        errorMessage += '1. スプレッドシートを開く\n';
+                        errorMessage += '2. 右上の「共有」ボタンをクリック\n';
+                        errorMessage += '3. 「リンクを知っている全員」に変更\n';
+                        errorMessage += '4. 「閲覧者」を選択して「完了」をクリック\n';
+                        errorMessage += '5. もう一度「連携を開始する」をクリック\n\n';
+                        errorMessage += '【次のステップ】\n';
+                        errorMessage += '上記の手順で共有設定を変更してから、もう一度お試しください。';
+                    } else if (error.message && (error.message.includes('見つかりません') || error.message.includes('404'))) {
+                        errorMessage += '【原因】スプレッドシートが見つかりませんでした。\n\n';
+                        errorMessage += '【解決方法】\n';
+                        errorMessage += '・URLが正しいか確認してください（https://docs.google.com/spreadsheets/d/...で始まる必要があります）\n';
+                        errorMessage += '・スプレッドシートが削除されていないか確認してください\n';
+                        errorMessage += '・URLをコピー&ペーストし直してください\n\n';
+                        errorMessage += '【次のステップ】\n';
+                        errorMessage += '正しいURLを入力して、もう一度お試しください。';
+                    } else if (error.message && error.message.includes('データが含まれていません')) {
+                        errorMessage += '【原因】スプレッドシートにデータが見つかりませんでした。\n\n';
+                        errorMessage += '【解決方法】\n';
+                        errorMessage += '・1行目に見出し（列名）があるか確認してください\n';
+                        errorMessage += '・2行目以降にデータが含まれているか確認してください\n';
+                        errorMessage += '・訪問管理記録の形式: 日時、担当者、顧客名、訪問目的、結果などの列があることを確認してください\n\n';
+                        errorMessage += '【次のステップ】\n';
+                        errorMessage += 'スプレッドシートにデータを追加してから、もう一度お試しください。';
+                    } else if (error.message && error.message.includes('認証')) {
+                        errorMessage += '【原因】Googleアカウントの認証が必要です。\n\n';
+                        errorMessage += '【解決方法】\n';
+                        errorMessage += '・スプレッドシートが「リンクを知っている全員」に共有されているか確認してください\n';
+                        errorMessage += '・共有設定で「閲覧者」を選択してください\n';
+                        errorMessage += '・初めての方は、まずExcelファイルから始めることをおすすめします\n\n';
+                        errorMessage += '【次のステップ】\n';
+                        errorMessage += 'Excelファイルからアプリを作成するか、スプレッドシートの共有設定を確認してください。';
+                    } else {
+                        errorMessage += '【原因】スプレッドシートへの接続に失敗しました。\n\n';
+                        errorMessage += '【解決方法】\n';
+                        errorMessage += '・スプレッドシートのURLが正しいか確認してください\n';
+                        errorMessage += '・スプレッドシートが「リンクを知っている全員」に共有されているか確認してください\n';
+                        errorMessage += '・インターネット接続を確認してください\n';
+                        errorMessage += '・初めての方は、まずExcelファイルから始めることをおすすめします\n\n';
+                        errorMessage += '【次のステップ】\n';
+                        errorMessage += 'Excelファイルからアプリを作成するか、スプレッドシートの設定を確認してください。';
+                    }
+                    
+                    alert(errorMessage);
+                    showNotification('Googleスプレッドシートとの連携に失敗しました。エラーメッセージを確認してください。', 'error');
+                } finally {
+                    const btn = document.getElementById('connect-google-sheets');
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.textContent = '連携を開始する';
+                    }
+                }
+                });
+            } else {
+                console.error('Google Sheets connection elements not found');
+                console.error('connectGoogleSheetsBtn:', connectGoogleSheetsBtn);
+                console.error('googleSheetsUrlInput:', googleSheetsUrlInput);
+            }
         });
     </script>
 </body>

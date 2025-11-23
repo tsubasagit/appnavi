@@ -1,6 +1,29 @@
 # AppNavi - Transform Excel Data into Web Apps
 
-A tool to instantly create web applications from your Excel-managed data.
+<div align="center">
+
+**Excelから、5分でWebアプリへ。コードなし、コストなし、サーバーなし。**
+
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-blue?style=for-the-badge)](https://tsubasagit.github.io/appnavi/)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+[![Open Source](https://img.shields.io/badge/Open%20Source-Yes-orange?style=for-the-badge)](https://github.com/tsubasagit/appnavi)
+
+[English](./README.md) | [日本語](./README_JP.md)
+
+</div>
+
+---
+
+## 🎯 Mission
+
+**"Make data-driven decisions accessible to everyone."**
+
+Transform Excel-managed data into powerful web applications in 5 minutes. No code, no cost, no server management required.
+
+**Target Users:**
+- 🏢 Small and medium-sized business owners (IT beginners)
+- 🏛️ Local government officials (DX promoters)
+- 📊 Non-profit organizations (data managers)
 
 🔗 **Live Demo**: [View on GitHub Pages](https://tsubasagit.github.io/appnavi/)
 
@@ -27,15 +50,69 @@ This approach allows small business owners to focus on their core business witho
 
 See `ARCHITECTURE_STRATEGY.md` for detailed architecture and cost comparison.
 
-## Features
+## ✨ Features
 
-- 📊 **Instant App Creation from Excel/CSV**: Upload a file and automatically generate a data management app
-- 🔄 **Google Spreadsheets Integration**: Real-time synchronization with Google Sheets
-- 📈 **Data Visualization**: Automatic graph generation
-- 🎨 **UI Builder**: Intuitive form design
-- 💾 **Data Persistence**: Secure data storage with Firebase Firestore
+- 📊 **Instant App Creation from Excel/CSV**: Upload a file and automatically generate a data management app in 5 minutes
+- 🔄 **Google Spreadsheets Integration**: Real-time synchronization with Google Sheets (familiar Excel-like interface)
+- 📈 **Data Visualization**: Automatic graph generation and analytics
+- 🎨 **UI Builder**: Intuitive form design, no coding required
+- 💾 **Data Persistence**: Secure data storage with Firebase Firestore (free tier available)
+- 🔓 **100% Open Source**: MIT License, fully transparent, community-driven
+- 💰 **Completely Free**: Zero monthly cost for small businesses
+- 🚀 **Zero Server Management**: Fully managed by Firebase/GitHub Pages
+
+## 🌟 Why AppNavi?
+
+### For Small Business Owners
+
+- **💰 Cost Savings**: $0/month (vs $700+/month for self-hosted servers)
+- **⏰ Time Savings**: Zero IT management time (vs 40-80 hours/month)
+- **🚀 Instant Setup**: 5 minutes to create your first app
+- **🔒 Data Ownership**: Your data stays yours, no vendor lock-in
+
+### For Local Governments
+
+- **💰 Budget Friendly**: Completely free, no additional budget required
+- **🔓 Open Source**: Transparent, auditable, secure
+- **📊 Data Utilization**: Transform Excel assets into web apps instantly
+- **🌐 Community**: Share knowledge with other municipalities
+
+## 📊 Social Impact
+
+**Supporting Digital Transformation for:**
+- 3 million small businesses in Japan
+- 1,700 local governments
+- Reducing digital divide
+- Promoting regional revitalization
 
 ## Setup
+
+### 0. ローカルサーバーの起動（開発時）
+
+**重要**: `file://`プロトコルで直接開くと、Google Sheets APIやFirebaseなどの外部リソースにアクセスできません。必ずローカルサーバーを起動してください。
+
+**方法1: バッチファイルを使用（推奨）**
+```bash
+# Windowsの場合
+start-local-server.bat
+```
+
+**方法2: Python 3を使用**
+```bash
+python -m http.server 8000
+```
+ブラウザで `http://localhost:8000` を開く
+
+**方法3: Node.jsを使用**
+```bash
+npx serve -p 8000
+```
+ブラウザで表示されたURLを開く
+
+**方法4: VS CodeのLive Server拡張機能**
+1. VS Codeでプロジェクトを開く
+2. `index.html`を右クリック
+3. "Open with Live Server"を選択
 
 ### 1. Create a Firebase Project
 

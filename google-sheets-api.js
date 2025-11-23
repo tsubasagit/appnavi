@@ -10,23 +10,16 @@ class GoogleSheetsService {
 
     // Google認証を初期化（OAuth 2.0）
     async initAuth() {
-        // 注意: 実際の実装では、Google API Client Libraryを使用
-        // ここでは簡易的な実装例を示します
-        
         try {
-            // gapiが読み込まれているか確認
-            if (typeof gapi !== 'undefined' && gapi.auth2) {
-                await gapi.load('client:auth2', () => {
-                    gapi.auth2.init({
-                        client_id: 'YOUR_CLIENT_ID' // Google Cloud Consoleから取得
-                    });
-                });
-                this.isAuthenticated = true;
+            // Google Identity Services (新しい方式) を使用
+            if (typeof google !== 'undefined' && google.accounts) {
+                // Google Identity Servicesが利用可能
                 return true;
             }
             
-            // gapiが利用できない場合は、手動認証用のURLを返す
-            console.warn('Google API Client Library not loaded');
+            // フォールバック: 公開スプレッドシートの場合はAPIキーでアクセス可能
+            // ただし、認証が必要な場合はエラーを返す
+            console.warn('Google Identity Services not loaded. Using public spreadsheet access.');
             return false;
         } catch (error) {
             console.error('Error initializing Google Auth:', error);
@@ -34,20 +27,16 @@ class GoogleSheetsService {
         }
     }
 
-    // Google認証を実行
+    // Google認証を実行（簡易版：公開スプレッドシート用）
     async signIn() {
         try {
-            if (typeof gapi !== 'undefined' && gapi.auth2) {
-                const authInstance = gapi.auth2.getAuthInstance();
-                const user = await authInstance.signIn();
-                this.accessToken = user.getAuthResponse().access_token;
-                this.isAuthenticated = true;
-                return true;
-            }
-            return false;
+            // 公開スプレッドシートの場合は認証不要
+            // 認証が必要なスプレッドシートの場合は、ユーザーに共有設定を変更してもらう
+            this.isAuthenticated = true;
+            return true;
         } catch (error) {
             console.error('Error signing in:', error);
-            throw error;
+            throw new Error('Googleアカウントでのログインに失敗しました。スプレッドシートの共有設定を確認してください。');
         }
     }
 
@@ -83,55 +72,84 @@ class GoogleSheetsService {
         }
     }
 
-    // スプレッドシートのデータを取得
+    // スプレッドシートのデータを取得（公開スプレッドシート用）
     async fetchSpreadsheetData(spreadsheetUrl, sheetName = null) {
         try {
-            if (!this.isAuthenticated && !this.apiKey) {
-                throw new Error('Google認証が必要です。');
-            }
-
             const spreadsheetId = this.extractSpreadsheetId(spreadsheetUrl);
-            let url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/`;
             
+            // CSV形式でエクスポート（公開スプレッドシートの場合）
+            // スプレッドシートIDからCSVエクスポートURLを生成
+            let exportUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv`;
             if (sheetName) {
-                url += encodeURIComponent(sheetName);
+                exportUrl += `&gid=${sheetName}`;
             } else {
-                url += 'A:Z'; // デフォルト範囲
+                // 最初のシートを取得
+                exportUrl += '&gid=0';
             }
 
-            const headers = {};
-            if (this.accessToken) {
-                headers['Authorization'] = `Bearer ${this.accessToken}`;
-            } else if (this.apiKey) {
-                url += `?key=${this.apiKey}`;
+            // CORS対応: まず直接アクセスを試行
+            let response;
+            try {
+                response = await fetch(exportUrl, {
+                    method: 'GET',
+                    mode: 'cors',
+                    credentials: 'omit',
+                    headers: {
+                        'Accept': 'text/csv'
+                    }
+                });
+            } catch (corsError) {
+                console.warn('直接アクセスがCORSでブロックされました。', corsError);
+                // CORSエラーの場合、別の方法を試行
+                // 注意: ローカルサーバー（http://localhost）を使用している場合、CORSエラーは発生しません
+                // file://プロトコルを使用している場合は、ローカルサーバーを起動してください
+                throw new Error('CORSエラーが発生しました。ローカルサーバー（http://localhost:8000）を使用してアクセスしてください。\n\n【解決方法】\n1. ターミナルで「python -m http.server 8000」を実行\n2. ブラウザで「http://localhost:8000」を開く\n3. もう一度「連携を開始する」をクリック');
             }
-
-            const response = await fetch(url, { headers });
             
             if (!response.ok) {
-                throw new Error(`Google Sheets API error: ${response.statusText}`);
+                if (response.status === 403) {
+                    throw new Error('スプレッドシートへのアクセスが拒否されました。スプレッドシートの共有設定を「リンクを知っている全員」に変更してください。');
+                } else if (response.status === 404) {
+                    throw new Error('スプレッドシートが見つかりませんでした。URLが正しいか確認してください。');
+                }
+                throw new Error(`スプレッドシートの読み込みに失敗しました（エラーコード: ${response.status}）。スプレッドシートが公開されているか確認してください。`);
             }
 
-            const data = await response.json();
+            const csvText = await response.text();
             
-            // データをパース（最初の行をヘッダーとして使用）
-            if (!data.values || data.values.length === 0) {
-                return { headers: [], rows: [] };
+            // CSVをパース
+            if (!csvText || csvText.trim().length === 0) {
+                throw new Error('スプレッドシートにデータが含まれていません。1行目に見出し、2行目以降にデータがあるか確認してください。');
             }
 
-            const headers = data.values[0];
-            const rows = data.values.slice(1).map(row => {
+            // 簡易的なCSVパース（PapaParseが利用可能な場合はそれを使用）
+            const lines = csvText.split('\n').filter(line => line.trim().length > 0);
+            if (lines.length === 0) {
+                throw new Error('スプレッドシートにデータが含まれていません。');
+            }
+
+            const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+            const rows = lines.slice(1).map(line => {
+                const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
                 const rowObj = {};
                 headers.forEach((header, index) => {
-                    rowObj[header] = row[index] || '';
+                    rowObj[header] = values[index] || '';
                 });
                 return rowObj;
-            });
+            }).filter(row => Object.values(row).some(v => v.trim().length > 0)); // 空行を除外
+
+            if (rows.length === 0) {
+                throw new Error('スプレッドシートにデータ行がありません。2行目以降にデータがあるか確認してください。');
+            }
 
             return { headers, rows };
         } catch (error) {
             console.error('Error fetching spreadsheet data:', error);
-            throw error;
+            // エラーメッセージを改善
+            if (error.message) {
+                throw error;
+            }
+            throw new Error('スプレッドシートの読み込みに失敗しました。スプレッドシートの共有設定を確認してください。');
         }
     }
 
@@ -187,33 +205,61 @@ class GoogleSheetsService {
         }
     }
 
-    // データ型を検出
+    // データ型を検出（訪問管理記録に最適化）
     detectDataTypes(headers, rows) {
         const dataTypes = {};
         
+        // 訪問管理記録でよく使われる列名のパターン
+        const dateColumnPatterns = ['日時', '日付', '訪問日', '訪問日時', 'date', 'datetime', '訪問日付', '実施日'];
+        const selectColumnPatterns = ['担当者', '訪問目的', '結果', 'ステータス', '状態', '目的', 'status', 'result', '目的', '成約', '商談', '訪問結果'];
+        const numberColumnPatterns = ['金額', '売上', '価格', '数量', '回数', 'amount', 'price', 'quantity', 'count'];
+        
         headers.forEach(header => {
-            const columnValues = rows.map(row => row[header]).filter(v => v);
+            const columnValues = rows.map(row => row[header]).filter(v => v && String(v).trim().length > 0);
             const uniqueValues = [...new Set(columnValues)];
+            const headerLower = header.toLowerCase();
             
             let detectedType = 'text';
+            let options = null;
             
-            // 日付判定
-            const datePattern = /^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/;
-            if (columnValues.some(v => datePattern.test(String(v)))) {
+            // 列名ベースの判定（訪問管理記録に最適化）
+            if (dateColumnPatterns.some(pattern => header.includes(pattern) || headerLower.includes(pattern.toLowerCase()))) {
                 detectedType = 'date';
-            }
-            // 数値判定
-            else if (columnValues.every(v => !isNaN(Number(v)) && v !== '')) {
+            } else if (numberColumnPatterns.some(pattern => header.includes(pattern) || headerLower.includes(pattern.toLowerCase()))) {
                 detectedType = 'number';
-            }
-            // 選択肢判定（ユニーク値が少ない場合）
-            else if (uniqueValues.length <= 10 && uniqueValues.length >= 2) {
-                detectedType = 'select';
+            } else if (selectColumnPatterns.some(pattern => header.includes(pattern) || headerLower.includes(pattern.toLowerCase()))) {
+                // 選択肢として判定
+                if (uniqueValues.length <= 20 && uniqueValues.length >= 2) {
+                    detectedType = 'select';
+                    options = uniqueValues.slice(0, 20); // 最大20個まで
+                }
+            } else {
+                // 値ベースの判定
+                // 日付判定（複数のパターンに対応）
+                const datePatterns = [
+                    /^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/,  // 2024/01/01
+                    /^\d{4}-\d{2}-\d{2}/,              // 2024-01-01
+                    /^\d{1,2}\/\d{1,2}\/\d{4}/,        // 01/01/2024
+                    /^\d{4}年\d{1,2}月\d{1,2}日/        // 2024年1月1日
+                ];
+                if (columnValues.some(v => datePatterns.some(pattern => pattern.test(String(v))))) {
+                    detectedType = 'date';
+                }
+                // 数値判定
+                else if (columnValues.length > 0 && columnValues.every(v => !isNaN(Number(v)) && v !== '' && String(v).trim().length > 0)) {
+                    detectedType = 'number';
+                }
+                // 選択肢判定（ユニーク値が少ない場合）
+                else if (uniqueValues.length <= 15 && uniqueValues.length >= 2 && columnValues.length >= 3) {
+                    // 値の種類が少なく、データが3件以上ある場合
+                    detectedType = 'select';
+                    options = uniqueValues;
+                }
             }
 
             dataTypes[header] = {
                 type: detectedType,
-                options: detectedType === 'select' ? uniqueValues : null
+                options: detectedType === 'select' ? options : null
             };
         });
 
