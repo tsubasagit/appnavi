@@ -2685,6 +2685,17 @@
                             throw new Error('スプレッドシートにデータが見つかりませんでした');
                         }
                         
+                        // データの確認（デバッグ用）
+                        console.log('取得したデータ:', {
+                            headers: analysis.headers,
+                            rowCount: analysis.rows ? analysis.rows.length : 0,
+                            sampleRows: analysis.rows ? analysis.rows.slice(0, 3) : []
+                        });
+                        
+                        if (!analysis.rows || analysis.rows.length === 0) {
+                            throw new Error('スプレッドシートにデータ行がありません。2行目以降にデータがあるか確認してください。');
+                        }
+                        
                         // 列設定を作成
                         const columns = analysis.headers.map(header => {
                             const dataType = analysis.dataTypes[header] || { type: 'text' };
@@ -2705,7 +2716,7 @@
                             name: appName,
                             description: 'Googleスプレッドシートから作成されたアプリです。',
                             columns: columns,
-                            data: analysis.rows || [],
+                            data: analysis.rows, // 空配列チェック済み
                             color: 'green',
                             googleSheetsUrl: sheetUrl,
                             googleSheetsLastSynced: new Date().toISOString()
@@ -2813,6 +2824,13 @@
                         if (rows.length === 0) {
                             throw new Error('スプレッドシートにデータ行がありません。2行目以降にデータがあるか確認してください。');
                         }
+                        
+                        // データの確認（デバッグ用）
+                        console.log('取得したデータ:', {
+                            headers: headers,
+                            rowCount: rows.length,
+                            sampleRows: rows.slice(0, 3)
+                        });
                         
                         // 列設定を作成（簡易的な型判定）
                         const columns = headers.map(header => {

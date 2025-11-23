@@ -125,21 +125,41 @@ class GoogleSheetsService {
                 throw new Error('スプレッドシートにデータが含まれていません。1行目に見出し、2行目以降にデータがあるか確認してください。');
             }
 
-            // 簡易的なCSVパース（PapaParseが利用可能な場合はそれを使用）
+            // CSVパース（引用符で囲まれたカンマを含むセルに対応）
+            const parseCSVLine = (line) => {
+                const result = [];
+                let current = '';
+                let inQuotes = false;
+                
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        result.push(current.trim().replace(/^"|"$/g, ''));
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                result.push(current.trim().replace(/^"|"$/g, ''));
+                return result;
+            };
+
             const lines = csvText.split('\n').filter(line => line.trim().length > 0);
             if (lines.length === 0) {
                 throw new Error('スプレッドシートにデータが含まれていません。');
             }
 
-            const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+            const headers = parseCSVLine(lines[0]);
             const rows = lines.slice(1).map(line => {
-                const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+                const values = parseCSVLine(line);
                 const rowObj = {};
                 headers.forEach((header, index) => {
                     rowObj[header] = values[index] || '';
                 });
                 return rowObj;
-            }).filter(row => Object.values(row).some(v => v.trim().length > 0)); // 空行を除外
+            }).filter(row => Object.values(row).some(v => v && String(v).trim().length > 0)); // 空行を除外
 
             if (rows.length === 0) {
                 throw new Error('スプレッドシートにデータ行がありません。2行目以降にデータがあるか確認してください。');
