@@ -1465,6 +1465,9 @@
                                 }
                             }
                         }
+                        
+                        // スプレッドシート連携バナーを更新
+                        updateSheetsIntegrationBanner();
                     } else {
                         console.error('App not found:', appId);
                         if (viewTitle) {
@@ -1502,6 +1505,9 @@
                                     }
                                 }
                             }
+                            
+                            // スプレッドシート連携バナーを更新
+                            updateSheetsIntegrationBanner();
                         }
                     }
                 }
@@ -3158,8 +3164,17 @@
                 loadApp = async function(appId) {
                     const result = await originalLoadApp(appId);
                     updateSettingsContent();
+                    // スプレッドシート連携バナーを更新
+                    updateSheetsIntegrationBanner();
                     return result;
                 };
+            }
+
+            // アプリIDがある場合、アプリを読み込む
+            if (appId) {
+                loadApp(appId).catch(error => {
+                    console.error('Failed to load app:', error);
+                });
             }
 
             // デフォルトで「データ」タブを選択
