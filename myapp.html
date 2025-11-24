@@ -257,6 +257,33 @@
                 </div>
             </aside>
             <main id="data-view" class="flex-1 overflow-auto px-6 py-6">
+                <!-- スプレッドシート連携情報バナー -->
+                <div id="sheets-integration-banner" class="mb-6 rounded-2xl border border-green-200 bg-green-50 p-4 shadow-sm hidden">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5 text-green-600">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75V11.25m0 1.5v1.5m0-1.5H7.5m1.5 0h1.5M15 12.75V11.25m0 1.5v1.5m0-1.5h-1.5m1.5 0h1.5M4.5 6.75h15m-13.5 0v10.5a2.25 2.25 0 0 0 2.25 2.25h6a2.25 2.25 0 0 0 2.25-2.25V6.75" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-green-900">Googleスプレッドシートと連携中</p>
+                                <p id="sheets-integration-url" class="text-xs text-green-700 mt-1 break-all"></p>
+                                <div class="mt-1 flex items-center space-x-2">
+                                    <div id="sheets-integration-auth-indicator" class="h-2 w-2 rounded-full bg-gray-400"></div>
+                                    <span id="sheets-integration-auth-text" class="text-xs text-green-600">未認証</span>
+                                </div>
+                            </div>
+                        </div>
+                        <a id="sheets-integration-link" href="#" target="_blank" class="rounded-lg border border-green-300 bg-white px-3 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-100">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mr-1 inline h-3 w-3">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                            </svg>
+                            開く
+                        </a>
+                    </div>
+                </div>
+                
                 <!-- 初回ガイダンスバナー -->
                 <div id="data-onboarding-banner" class="mb-6 rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-6 shadow-sm">
                     <div class="flex items-start justify-between">
@@ -570,6 +597,34 @@
                 <div id="settings-api" class="settings-content hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm max-w-4xl">
                         <h2 class="text-xl font-semibold text-slate-900 mb-6">外部サービスとの連携設定</h2>
                         <div class="space-y-6">
+                            <!-- 現在の連携状態を表示 -->
+                            <div id="current-integration-status" class="rounded-xl border border-green-200 bg-green-50 px-4 py-4">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-2 mb-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5 text-green-600">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75V11.25m0 1.5v1.5m0-1.5H7.5m1.5 0h1.5M15 12.75V11.25m0 1.5v1.5m0-1.5h-1.5m1.5 0h1.5M4.5 6.75h15m-13.5 0v10.5a2.25 2.25 0 0 0 2.25 2.25h6a2.25 2.25 0 0 0 2.25-2.25V6.75" />
+                                            </svg>
+                                            <p class="text-sm font-semibold text-green-900" id="integration-service-name">連携サービス: 未設定</p>
+                                        </div>
+                                        <div id="integration-url-display" class="mt-2 rounded-lg border border-green-200 bg-white px-3 py-2">
+                                            <p class="text-xs font-semibold text-green-900 mb-1">連携先URL:</p>
+                                            <p id="integration-url-text" class="text-xs text-green-700 break-all">未設定</p>
+                                            <a id="integration-url-link" href="#" target="_blank" class="mt-1 inline-flex items-center text-xs text-green-600 hover:text-green-800 hover:underline hidden">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mr-1 h-3 w-3">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                                                </svg>
+                                                スプレッドシートを開く
+                                            </a>
+                                        </div>
+                                        <div id="integration-auth-status" class="mt-2 flex items-center space-x-2">
+                                            <div id="integration-auth-indicator" class="h-2 w-2 rounded-full bg-gray-400"></div>
+                                            <span id="integration-auth-text" class="text-xs text-green-700">認証状態: 未認証</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <div class="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
                                 <p class="text-sm font-semibold text-blue-900">Googleスプレッドシート連携</p>
                                 <p class="mt-1 text-xs text-blue-700">Googleスプレッドシートと連携して、データを自動で更新できます</p>
@@ -1581,7 +1636,13 @@
                 // 既存のアプリを読み込む（非同期）
                 loadApp(appId).then(() => {
                     // アプリ読み込み後に設定フォームを更新
-                    updateSettingsForm();
+                    if (typeof updateSettingsForm === 'function') {
+                        updateSettingsForm();
+                    }
+                    // スプレッドシート連携情報を表示
+                    updateSheetsIntegrationBanner();
+                    // 設定画面の内容も更新
+                    updateSettingsContent();
                 }).catch(error => {
                     console.error('Error loading app:', error);
                     if (viewTitle) {
@@ -2788,6 +2849,171 @@
             setTimeout(() => {
                 addExportButton();
             }, 1000);
+
+            // 設定画面の切り替え関数
+            function showSettingsContent(contentType) {
+                // すべての設定コンテンツを非表示
+                document.querySelectorAll('.settings-content').forEach(el => {
+                    el.classList.add('hidden');
+                });
+                
+                // すべての設定サイドバーボタンのスタイルをリセット
+                document.querySelectorAll('.settings-sidebar-btn').forEach(btn => {
+                    btn.classList.remove('bg-blue-50', 'text-blue-700', 'shadow-sm');
+                    btn.classList.add('text-slate-600');
+                });
+                
+                // 選択されたコンテンツを表示
+                const contentEl = document.getElementById(`settings-${contentType}`);
+                if (contentEl) {
+                    contentEl.classList.remove('hidden');
+                }
+                
+                // 選択されたボタンのスタイルを更新
+                const btnEl = document.getElementById(`settings-btn-${contentType}`);
+                if (btnEl) {
+                    btnEl.classList.remove('text-slate-600');
+                    btnEl.classList.add('bg-blue-50', 'text-blue-700', 'shadow-sm');
+                }
+                
+                // 設定内容を更新
+                updateSettingsContent();
+            }
+
+            // 設定内容を更新
+            function updateSettingsContent() {
+                if (!currentApp) return;
+                
+                // 全般設定を更新
+                const appNameInput = document.getElementById('settings-app-name');
+                const appDescInput = document.getElementById('settings-app-description');
+                if (appNameInput) appNameInput.value = currentApp.name || '';
+                if (appDescInput) appDescInput.value = currentApp.description || '';
+                
+                // API・連携設定を更新
+                updateIntegrationStatus();
+            }
+
+            // 連携状態を更新
+            function updateIntegrationStatus() {
+                if (!currentApp) return;
+                
+                const serviceNameEl = document.getElementById('integration-service-name');
+                const urlTextEl = document.getElementById('integration-url-text');
+                const urlLinkEl = document.getElementById('integration-url-link');
+                const statusEl = document.getElementById('current-integration-status');
+                const authIndicator = document.getElementById('integration-auth-indicator');
+                const authText = document.getElementById('integration-auth-text');
+                
+                if (currentApp.googleSheetsUrl) {
+                    // スプレッドシート連携が設定されている場合
+                    if (serviceNameEl) {
+                        serviceNameEl.textContent = '連携サービス: Googleスプレッドシート';
+                    }
+                    if (urlTextEl) {
+                        urlTextEl.textContent = currentApp.googleSheetsUrl;
+                    }
+                    if (urlLinkEl) {
+                        urlLinkEl.href = currentApp.googleSheetsUrl;
+                        urlLinkEl.classList.remove('hidden');
+                    }
+                    if (statusEl) {
+                        statusEl.className = 'rounded-xl border border-green-200 bg-green-50 px-4 py-4';
+                    }
+                    
+                    // 認証状態を表示
+                    const hasAuth = currentApp.googleAccessToken || localStorage.getItem('google_access_token');
+                    if (authIndicator) {
+                        authIndicator.className = hasAuth 
+                            ? 'h-2 w-2 rounded-full bg-green-500' 
+                            : 'h-2 w-2 rounded-full bg-gray-400';
+                    }
+                    if (authText) {
+                        authText.textContent = hasAuth ? '認証状態: 認証済み（データ変更可能）' : '認証状態: 未認証（読み込み専用）';
+                    }
+                } else {
+                    // 連携が設定されていない場合
+                    if (serviceNameEl) {
+                        serviceNameEl.textContent = '連携サービス: 未設定';
+                    }
+                    if (urlTextEl) {
+                        urlTextEl.textContent = '未設定';
+                    }
+                    if (urlLinkEl) {
+                        urlLinkEl.classList.add('hidden');
+                    }
+                    if (statusEl) {
+                        statusEl.className = 'rounded-xl border border-gray-200 bg-gray-50 px-4 py-4';
+                    }
+                    if (authIndicator) {
+                        authIndicator.className = 'h-2 w-2 rounded-full bg-gray-400';
+                    }
+                    if (authText) {
+                        authText.textContent = '認証状態: 未設定';
+                    }
+                }
+            }
+
+            // データビューのスプレッドシート連携バナーを更新
+            function updateSheetsIntegrationBanner() {
+                if (!currentApp) return;
+                
+                const banner = document.getElementById('sheets-integration-banner');
+                const urlEl = document.getElementById('sheets-integration-url');
+                const linkEl = document.getElementById('sheets-integration-link');
+                const authIndicator = document.getElementById('sheets-integration-auth-indicator');
+                const authText = document.getElementById('sheets-integration-auth-text');
+                
+                if (currentApp.googleSheetsUrl) {
+                    // スプレッドシート連携が設定されている場合、バナーを表示
+                    if (banner) {
+                        banner.classList.remove('hidden');
+                    }
+                    if (urlEl) {
+                        urlEl.textContent = currentApp.googleSheetsUrl;
+                    }
+                    if (linkEl) {
+                        linkEl.href = currentApp.googleSheetsUrl;
+                    }
+                    
+                    // 認証状態を表示
+                    const hasAuth = currentApp.googleAccessToken || localStorage.getItem('google_access_token');
+                    if (authIndicator) {
+                        authIndicator.className = hasAuth 
+                            ? 'h-2 w-2 rounded-full bg-green-500' 
+                            : 'h-2 w-2 rounded-full bg-gray-400';
+                    }
+                    if (authText) {
+                        authText.textContent = hasAuth ? '認証済み（データ変更可能）' : '未認証（読み込み専用）';
+                    }
+                } else {
+                    // 連携が設定されていない場合、バナーを非表示
+                    if (banner) {
+                        banner.classList.add('hidden');
+                    }
+                }
+            }
+
+            // 設定サイドバーボタンのイベントリスナー
+            document.getElementById('settings-btn-general')?.addEventListener('click', () => {
+                showSettingsContent('general');
+            });
+            document.getElementById('settings-btn-api')?.addEventListener('click', () => {
+                showSettingsContent('api');
+            });
+            document.getElementById('settings-btn-ai')?.addEventListener('click', () => {
+                showSettingsContent('ai');
+            });
+
+            // アプリ読み込み時に設定画面を更新
+            if (typeof loadApp === 'function') {
+                const originalLoadApp = loadApp;
+                loadApp = async function(appId) {
+                    const result = await originalLoadApp(appId);
+                    updateSettingsContent();
+                    return result;
+                };
+            }
 
             // デフォルトで「データ」タブを選択
             setTab('data');
