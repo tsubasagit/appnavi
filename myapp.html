@@ -3167,6 +3167,71 @@
             
             // スプレッドシート同期ボタンのイベントリスナー
             document.getElementById('sheets-sync-button')?.addEventListener('click', syncDataToSpreadsheet);
+            
+            // Google認証ボタンのイベントリスナー
+            document.getElementById('sheets-auth-button')?.addEventListener('click', async () => {
+                try {
+                    // Google Identity Servicesが読み込まれているか確認
+                    if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+                        showNotification('Google認証ライブラリが読み込まれていません。ページを再読み込みしてください。', 'error');
+                        return;
+                    }
+                    
+                    // クライアントIDの優先順位: 1. localStorage 2. デフォルト値
+                    const DEFAULT_CLIENT_ID = '509155102966-d1caj0trqoakrmi2tju5mvicdlj2qb1f.apps.googleusercontent.com';
+                    const CLIENT_ID = localStorage.getItem('google_client_id') || DEFAULT_CLIENT_ID;
+                    
+                    if (!CLIENT_ID) {
+                        showNotification('Google Client IDが設定されていません。設定画面で設定してください。', 'warning');
+                        return;
+                    }
+                    
+                    // Google OAuth 2.0トークンクライアントを初期化
+                    const authClient = google.accounts.oauth2.initTokenClient({
+                        client_id: CLIENT_ID,
+                        scope: 'https://www.googleapis.com/auth/spreadsheets',
+                        callback: async (response) => {
+                            if (response.access_token) {
+                                // アクセストークンを保存
+                                localStorage.setItem('google_access_token', response.access_token);
+                                googleSheetsService.setAccessToken(response.access_token);
+                                
+                                // アプリデータにも保存（データベースに保存）
+                                if (currentApp && appId && databaseService) {
+                                    await databaseService.updateApp(appId, {
+                                        googleAccessToken: response.access_token
+                                    });
+                                    currentApp.googleAccessToken = response.access_token;
+                                }
+                                
+                                // バナーを更新
+                                updateSheetsIntegrationBanner();
+                                
+                                showNotification('Google認証に成功しました', 'success');
+                            } else if (response.error) {
+                                console.error('認証エラー:', response.error);
+                                let errorMessage = '認証に失敗しました。';
+                                if (response.error === 'redirect_uri_mismatch') {
+                                    errorMessage = 'リダイレクトURIが一致しません。Google Cloud Consoleで設定を確認してください。';
+                                } else if (response.error === 'invalid_client') {
+                                    errorMessage = 'OAuth クライアントが見つかりません。クライアントIDを確認してください。';
+                                } else if (response.error === 'access_denied') {
+                                    errorMessage = '認証がキャンセルされました。';
+                                } else {
+                                    errorMessage = '認証エラー: ' + response.error;
+                                }
+                                showNotification(errorMessage, 'error');
+                            }
+                        },
+                    });
+                    
+                    // アクセストークンをリクエスト
+                    authClient.requestAccessToken();
+                } catch (error) {
+                    console.error('認証エラー:', error);
+                    showNotification('認証中にエラーが発生しました: ' + error.message, 'error');
+                }
+            });
 
             // 設定サイドバーボタンのイベントリスナー
             document.getElementById('settings-btn-general')?.addEventListener('click', () => {
