@@ -377,6 +377,82 @@ class GoogleSheetsService {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
+                
+                // 403エラーまたはPERMISSION_DENIEDエラーの場合は常に詳細なメッセージを提供
+                const is403Error = response.status === 403 || errorData.error?.code === 403;
+                const isPermissionDenied = errorData.error?.status === 'PERMISSION_DENIED';
+                const hasServiceDisabled = errorData.error?.details?.some(detail => 
+                    detail.reason === 'SERVICE_DISABLED' || 
+                    detail['@type']?.includes('ErrorInfo')
+                );
+                
+                if (is403Error || isPermissionDenied || hasServiceDisabled) {
+                    const errorMessage = errorData.error?.message || '';
+                    const errorDetails = errorData.error?.details || [];
+                    
+                    // プロジェクト番号とアクティベーションURLを抽出
+                    let projectNumber = '';
+                    let activationUrl = '';
+                    
+                    // エラーディテールからメタデータを取得
+                    for (const detail of errorDetails) {
+                        if (detail.metadata) {
+                            const metadata = detail.metadata;
+                            // containerInfoにプロジェクト番号が含まれている
+                            if (metadata.containerInfo && !projectNumber) {
+                                projectNumber = metadata.containerInfo;
+                            }
+                            // consumerにプロジェクト番号が含まれている（projects/509155102966形式）
+                            if (metadata.consumer && !projectNumber) {
+                                projectNumber = metadata.consumer.replace('projects/', '');
+                            }
+                            // activationUrlが含まれている
+                            if (metadata.activationUrl && !activationUrl) {
+                                activationUrl = metadata.activationUrl;
+                            }
+                            // その他のメタデータからプロジェクト番号を取得
+                            if (!projectNumber) {
+                                projectNumber = metadata['service.googleapis.com/project_number'] || '';
+                            }
+                        }
+                    }
+                    
+                    // メタデータから取得できない場合は、エラーメッセージから抽出
+                    if (!projectNumber) {
+                        projectNumber = errorMessage.match(/project\s+(\d+)/i)?.[1] ||
+                                      errorMessage.match(/project\s*(\d+)/i)?.[1] ||
+                                      errorMessage.match(/(\d{12})/)?.[1] || '';
+                    }
+                    
+                    if (!activationUrl) {
+                        activationUrl = errorMessage.match(/https:\/\/console\.developers\.google\.com\/apis\/api\/sheets\.googleapis\.com\/overview\?project=\d+/)?.[0] || '';
+                    }
+                    
+                    // 403エラーの場合は常に詳細メッセージを表示
+                    let detailedMessage = 'Google Sheets APIが有効化されていません。\n\n';
+                    detailedMessage += '【解決方法】\n';
+                    
+                    if (activationUrl) {
+                        // アクティベーションURLが取得できた場合
+                        detailedMessage += `1. 以下のURLをクリックしてGoogle Sheets APIを有効化してください:\n`;
+                        detailedMessage += `   ${activationUrl}\n\n`;
+                    } else if (projectNumber) {
+                        // プロジェクト番号のみ取得できた場合
+                        detailedMessage += `1. 以下のURLにアクセスしてGoogle Sheets APIを有効化してください:\n`;
+                        detailedMessage += `   https://console.developers.google.com/apis/api/sheets.googleapis.com/overview?project=${projectNumber}\n\n`;
+                    } else {
+                        // プロジェクト番号が取得できない場合
+                        detailedMessage += `1. Google Cloud Console（https://console.cloud.google.com/）にアクセスしてください\n`;
+                        detailedMessage += `2. プロジェクトを選択してください\n`;
+                        detailedMessage += `3. 「APIとサービス」>「ライブラリ」を開いてください\n`;
+                        detailedMessage += `4. 「Google Sheets API」を検索して「有効にする」をクリックしてください\n\n`;
+                    }
+                    
+                    detailedMessage += '2. 有効化後、数分待ってから再度お試しください\n';
+                    detailedMessage += '3. それでもエラーが続く場合は、ブラウザを再読み込みしてください';
+                    throw new Error(detailedMessage);
+                }
+                
                 throw new Error(`Google Sheets API error: ${response.statusText} - ${JSON.stringify(errorData)}`);
             }
 
@@ -473,6 +549,82 @@ class GoogleSheetsService {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
+                
+                // 403エラーまたはPERMISSION_DENIEDエラーの場合は常に詳細なメッセージを提供
+                const is403Error = response.status === 403 || errorData.error?.code === 403;
+                const isPermissionDenied = errorData.error?.status === 'PERMISSION_DENIED';
+                const hasServiceDisabled = errorData.error?.details?.some(detail => 
+                    detail.reason === 'SERVICE_DISABLED' || 
+                    detail['@type']?.includes('ErrorInfo')
+                );
+                
+                if (is403Error || isPermissionDenied || hasServiceDisabled) {
+                    const errorMessage = errorData.error?.message || '';
+                    const errorDetails = errorData.error?.details || [];
+                    
+                    // プロジェクト番号とアクティベーションURLを抽出
+                    let projectNumber = '';
+                    let activationUrl = '';
+                    
+                    // エラーディテールからメタデータを取得
+                    for (const detail of errorDetails) {
+                        if (detail.metadata) {
+                            const metadata = detail.metadata;
+                            // containerInfoにプロジェクト番号が含まれている
+                            if (metadata.containerInfo && !projectNumber) {
+                                projectNumber = metadata.containerInfo;
+                            }
+                            // consumerにプロジェクト番号が含まれている（projects/509155102966形式）
+                            if (metadata.consumer && !projectNumber) {
+                                projectNumber = metadata.consumer.replace('projects/', '');
+                            }
+                            // activationUrlが含まれている
+                            if (metadata.activationUrl && !activationUrl) {
+                                activationUrl = metadata.activationUrl;
+                            }
+                            // その他のメタデータからプロジェクト番号を取得
+                            if (!projectNumber) {
+                                projectNumber = metadata['service.googleapis.com/project_number'] || '';
+                            }
+                        }
+                    }
+                    
+                    // メタデータから取得できない場合は、エラーメッセージから抽出
+                    if (!projectNumber) {
+                        projectNumber = errorMessage.match(/project\s+(\d+)/i)?.[1] ||
+                                      errorMessage.match(/project\s*(\d+)/i)?.[1] ||
+                                      errorMessage.match(/(\d{12})/)?.[1] || '';
+                    }
+                    
+                    if (!activationUrl) {
+                        activationUrl = errorMessage.match(/https:\/\/console\.developers\.google\.com\/apis\/api\/sheets\.googleapis\.com\/overview\?project=\d+/)?.[0] || '';
+                    }
+                    
+                    // 403エラーの場合は常に詳細メッセージを表示
+                    let detailedMessage = 'Google Sheets APIが有効化されていません。\n\n';
+                    detailedMessage += '【解決方法】\n';
+                    
+                    if (activationUrl) {
+                        // アクティベーションURLが取得できた場合
+                        detailedMessage += `1. 以下のURLをクリックしてGoogle Sheets APIを有効化してください:\n`;
+                        detailedMessage += `   ${activationUrl}\n\n`;
+                    } else if (projectNumber) {
+                        // プロジェクト番号のみ取得できた場合
+                        detailedMessage += `1. 以下のURLにアクセスしてGoogle Sheets APIを有効化してください:\n`;
+                        detailedMessage += `   https://console.developers.google.com/apis/api/sheets.googleapis.com/overview?project=${projectNumber}\n\n`;
+                    } else {
+                        // プロジェクト番号が取得できない場合
+                        detailedMessage += `1. Google Cloud Console（https://console.cloud.google.com/）にアクセスしてください\n`;
+                        detailedMessage += `2. プロジェクトを選択してください\n`;
+                        detailedMessage += `3. 「APIとサービス」>「ライブラリ」を開いてください\n`;
+                        detailedMessage += `4. 「Google Sheets API」を検索して「有効にする」をクリックしてください\n\n`;
+                    }
+                    
+                    detailedMessage += '2. 有効化後、数分待ってから再度お試しください\n';
+                    detailedMessage += '3. それでもエラーが続く場合は、ブラウザを再読み込みしてください';
+                    throw new Error(detailedMessage);
+                }
+                
                 throw new Error(`Google Sheets API error: ${response.statusText} - ${JSON.stringify(errorData)}`);
             }
 
@@ -577,6 +729,82 @@ class GoogleSheetsService {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
+                
+                // 403エラーまたはPERMISSION_DENIEDエラーの場合は常に詳細なメッセージを提供
+                const is403Error = response.status === 403 || errorData.error?.code === 403;
+                const isPermissionDenied = errorData.error?.status === 'PERMISSION_DENIED';
+                const hasServiceDisabled = errorData.error?.details?.some(detail => 
+                    detail.reason === 'SERVICE_DISABLED' || 
+                    detail['@type']?.includes('ErrorInfo')
+                );
+                
+                if (is403Error || isPermissionDenied || hasServiceDisabled) {
+                    const errorMessage = errorData.error?.message || '';
+                    const errorDetails = errorData.error?.details || [];
+                    
+                    // プロジェクト番号とアクティベーションURLを抽出
+                    let projectNumber = '';
+                    let activationUrl = '';
+                    
+                    // エラーディテールからメタデータを取得
+                    for (const detail of errorDetails) {
+                        if (detail.metadata) {
+                            const metadata = detail.metadata;
+                            // containerInfoにプロジェクト番号が含まれている
+                            if (metadata.containerInfo && !projectNumber) {
+                                projectNumber = metadata.containerInfo;
+                            }
+                            // consumerにプロジェクト番号が含まれている（projects/509155102966形式）
+                            if (metadata.consumer && !projectNumber) {
+                                projectNumber = metadata.consumer.replace('projects/', '');
+                            }
+                            // activationUrlが含まれている
+                            if (metadata.activationUrl && !activationUrl) {
+                                activationUrl = metadata.activationUrl;
+                            }
+                            // その他のメタデータからプロジェクト番号を取得
+                            if (!projectNumber) {
+                                projectNumber = metadata['service.googleapis.com/project_number'] || '';
+                            }
+                        }
+                    }
+                    
+                    // メタデータから取得できない場合は、エラーメッセージから抽出
+                    if (!projectNumber) {
+                        projectNumber = errorMessage.match(/project\s+(\d+)/i)?.[1] ||
+                                      errorMessage.match(/project\s*(\d+)/i)?.[1] ||
+                                      errorMessage.match(/(\d{12})/)?.[1] || '';
+                    }
+                    
+                    if (!activationUrl) {
+                        activationUrl = errorMessage.match(/https:\/\/console\.developers\.google\.com\/apis\/api\/sheets\.googleapis\.com\/overview\?project=\d+/)?.[0] || '';
+                    }
+                    
+                    // 403エラーの場合は常に詳細メッセージを表示
+                    let detailedMessage = 'Google Sheets APIが有効化されていません。\n\n';
+                    detailedMessage += '【解決方法】\n';
+                    
+                    if (activationUrl) {
+                        // アクティベーションURLが取得できた場合
+                        detailedMessage += `1. 以下のURLをクリックしてGoogle Sheets APIを有効化してください:\n`;
+                        detailedMessage += `   ${activationUrl}\n\n`;
+                    } else if (projectNumber) {
+                        // プロジェクト番号のみ取得できた場合
+                        detailedMessage += `1. 以下のURLにアクセスしてGoogle Sheets APIを有効化してください:\n`;
+                        detailedMessage += `   https://console.developers.google.com/apis/api/sheets.googleapis.com/overview?project=${projectNumber}\n\n`;
+                    } else {
+                        // プロジェクト番号が取得できない場合
+                        detailedMessage += `1. Google Cloud Console（https://console.cloud.google.com/）にアクセスしてください\n`;
+                        detailedMessage += `2. プロジェクトを選択してください\n`;
+                        detailedMessage += `3. 「APIとサービス」>「ライブラリ」を開いてください\n`;
+                        detailedMessage += `4. 「Google Sheets API」を検索して「有効にする」をクリックしてください\n\n`;
+                    }
+                    
+                    detailedMessage += '2. 有効化後、数分待ってから再度お試しください\n';
+                    detailedMessage += '3. それでもエラーが続く場合は、ブラウザを再読み込みしてください';
+                    throw new Error(detailedMessage);
+                }
+                
                 throw new Error(`Google Sheets API error: ${response.statusText} - ${JSON.stringify(errorData)}`);
             }
 
@@ -686,6 +914,82 @@ class GoogleSheetsService {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
+                
+                // 403エラーまたはPERMISSION_DENIEDエラーの場合は常に詳細なメッセージを提供
+                const is403Error = response.status === 403 || errorData.error?.code === 403;
+                const isPermissionDenied = errorData.error?.status === 'PERMISSION_DENIED';
+                const hasServiceDisabled = errorData.error?.details?.some(detail => 
+                    detail.reason === 'SERVICE_DISABLED' || 
+                    detail['@type']?.includes('ErrorInfo')
+                );
+                
+                if (is403Error || isPermissionDenied || hasServiceDisabled) {
+                    const errorMessage = errorData.error?.message || '';
+                    const errorDetails = errorData.error?.details || [];
+                    
+                    // プロジェクト番号とアクティベーションURLを抽出
+                    let projectNumber = '';
+                    let activationUrl = '';
+                    
+                    // エラーディテールからメタデータを取得
+                    for (const detail of errorDetails) {
+                        if (detail.metadata) {
+                            const metadata = detail.metadata;
+                            // containerInfoにプロジェクト番号が含まれている
+                            if (metadata.containerInfo && !projectNumber) {
+                                projectNumber = metadata.containerInfo;
+                            }
+                            // consumerにプロジェクト番号が含まれている（projects/509155102966形式）
+                            if (metadata.consumer && !projectNumber) {
+                                projectNumber = metadata.consumer.replace('projects/', '');
+                            }
+                            // activationUrlが含まれている
+                            if (metadata.activationUrl && !activationUrl) {
+                                activationUrl = metadata.activationUrl;
+                            }
+                            // その他のメタデータからプロジェクト番号を取得
+                            if (!projectNumber) {
+                                projectNumber = metadata['service.googleapis.com/project_number'] || '';
+                            }
+                        }
+                    }
+                    
+                    // メタデータから取得できない場合は、エラーメッセージから抽出
+                    if (!projectNumber) {
+                        projectNumber = errorMessage.match(/project\s+(\d+)/i)?.[1] ||
+                                      errorMessage.match(/project\s*(\d+)/i)?.[1] ||
+                                      errorMessage.match(/(\d{12})/)?.[1] || '';
+                    }
+                    
+                    if (!activationUrl) {
+                        activationUrl = errorMessage.match(/https:\/\/console\.developers\.google\.com\/apis\/api\/sheets\.googleapis\.com\/overview\?project=\d+/)?.[0] || '';
+                    }
+                    
+                    // 403エラーの場合は常に詳細メッセージを表示
+                    let detailedMessage = 'Google Sheets APIが有効化されていません。\n\n';
+                    detailedMessage += '【解決方法】\n';
+                    
+                    if (activationUrl) {
+                        // アクティベーションURLが取得できた場合
+                        detailedMessage += `1. 以下のURLをクリックしてGoogle Sheets APIを有効化してください:\n`;
+                        detailedMessage += `   ${activationUrl}\n\n`;
+                    } else if (projectNumber) {
+                        // プロジェクト番号のみ取得できた場合
+                        detailedMessage += `1. 以下のURLにアクセスしてGoogle Sheets APIを有効化してください:\n`;
+                        detailedMessage += `   https://console.developers.google.com/apis/api/sheets.googleapis.com/overview?project=${projectNumber}\n\n`;
+                    } else {
+                        // プロジェクト番号が取得できない場合
+                        detailedMessage += `1. Google Cloud Console（https://console.cloud.google.com/）にアクセスしてください\n`;
+                        detailedMessage += `2. プロジェクトを選択してください\n`;
+                        detailedMessage += `3. 「APIとサービス」>「ライブラリ」を開いてください\n`;
+                        detailedMessage += `4. 「Google Sheets API」を検索して「有効にする」をクリックしてください\n\n`;
+                    }
+                    
+                    detailedMessage += '2. 有効化後、数分待ってから再度お試しください\n';
+                    detailedMessage += '3. それでもエラーが続く場合は、ブラウザを再読み込みしてください';
+                    throw new Error(detailedMessage);
+                }
+                
                 throw new Error(`Google Sheets API error: ${response.statusText} - ${JSON.stringify(errorData)}`);
             }
 

@@ -2400,6 +2400,47 @@
                 }
             };
 
+            // 日付フォーマットを変換（スラッシュ区切り → ハイフン区切り）
+            function convertDateFormat(value) {
+                if (!value) return '';
+                // 2025/11/24 → 2025-11-24 に変換
+                if (typeof value === 'string' && value.includes('/')) {
+                    const parts = value.split('/');
+                    if (parts.length === 3) {
+                        const year = parts[0].padStart(4, '0');
+                        const month = parts[1].padStart(2, '0');
+                        const day = parts[2].padStart(2, '0');
+                        return `${year}-${month}-${day}`;
+                    }
+                }
+                return value;
+            }
+
+            // 日時フォーマットを変換（スラッシュ区切り → ハイフン区切り、時刻部分も含む）
+            function convertDateTimeFormat(value) {
+                if (!value) return '';
+                // 2025/11/24 12:30 → 2025-11-24T12:30 に変換
+                if (typeof value === 'string') {
+                    // 日付部分を変換
+                    let converted = value;
+                    if (value.includes('/')) {
+                        // 日付と時刻が分かれている場合（例: "2025/11/24 12:30"）
+                        const dateTimeMatch = value.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/);
+                        if (dateTimeMatch) {
+                            const [, year, month, day, hour, minute, second] = dateTimeMatch;
+                            const formattedDate = `${year.padStart(4, '0')}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                            const formattedTime = second ? `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}:${second.padStart(2, '0')}` : `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`;
+                            return `${formattedDate}T${formattedTime}`;
+                        }
+                        // 日付のみの場合
+                        converted = convertDateFormat(value);
+                    }
+                    // 既にハイフン区切りの場合はそのまま返す
+                    return converted;
+                }
+                return value;
+            }
+
             // データ編集機能（より使いやすいモーダル版）
             function editDataRow(index, rowData, columns) {
                 if (!currentApp || !currentApp.data || !currentApp.columns) {
@@ -2418,7 +2459,7 @@
                 let formHTML = '<div class="space-y-4">';
                 columns.forEach(col => {
                     const required = col.required ? '<span class="text-red-500">*</span>' : '';
-                    const currentValue = originalData[col.name] || '';
+                    let currentValue = originalData[col.name] || '';
                     let inputHTML = '';
                     
                     switch (col.type) {
@@ -2432,9 +2473,13 @@
                             `;
                             break;
                         case 'date':
+                            // 日付フォーマットを変換（スラッシュ区切り → ハイフン区切り）
+                            currentValue = convertDateFormat(currentValue);
                             inputHTML = `<input type="date" id="edit-field-${col.name}" value="${currentValue}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200" ${col.required ? 'required' : ''} />`;
                             break;
                         case 'datetime':
+                            // 日時フォーマットを変換（スラッシュ区切り → ハイフン区切り）
+                            currentValue = convertDateTimeFormat(currentValue);
                             inputHTML = `<input type="datetime-local" id="edit-field-${col.name}" value="${currentValue}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200" ${col.required ? 'required' : ''} />`;
                             break;
                         case 'number':
@@ -3157,7 +3202,50 @@
                     }
                 } catch (error) {
                     console.error('スプレッドシート同期エラー:', error);
-                    showNotification('データの同期に失敗しました: ' + error.message, 'error');
+                    
+                    // エラーメッセージを処理（JSON形式の場合は解析して読みやすい形式に変換）
+                    let errorMessage = error.message || '不明なエラーが発生しました';
+                    
+                    // JSON形式のエラーメッセージを解析
+                    if (errorMessage.includes('{') && errorMessage.includes('error')) {
+                        try {
+                            const errorMatch = errorMessage.match(/\{[\s\S]*\}/);
+                            if (errorMatch) {
+                                const errorJson = JSON.parse(errorMatch[0]);
+                                const apiError = errorJson.error;
+                                
+                                // Google Sheets APIのエラーメッセージを抽出
+                                if (apiError && apiError.message) {
+                                    errorMessage = apiError.message;
+                                    
+                                    // 403エラーの場合、詳細なメッセージを表示
+                                    if (apiError.code === 403 || apiError.status === 'PERMISSION_DENIED') {
+                                        // エラーメッセージに既に解決方法が含まれている場合はそのまま使用
+                                        if (errorMessage.includes('Enable it by visiting')) {
+                                            // エラーメッセージからURLを抽出して表示
+                                            const urlMatch = errorMessage.match(/https:\/\/console\.developers\.google\.com\/apis\/api\/sheets\.googleapis\.com\/overview\?project=\d+/);
+                                            if (urlMatch) {
+                                                errorMessage = `Google Sheets APIが有効化されていません。\n\n以下のURLにアクセスしてGoogle Sheets APIを有効化してください:\n${urlMatch[0]}\n\n有効化後、数分待ってから再度お試しください。`;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (parseError) {
+                            // JSON解析に失敗した場合は元のメッセージを使用
+                            console.error('エラーメッセージの解析に失敗:', parseError);
+                        }
+                    }
+                    
+                    // エラーメッセージが長い場合は改行を適切に処理
+                    if (errorMessage.includes('\n')) {
+                        // 改行を含むエラーメッセージは、最初の行だけを表示し、詳細はコンソールに出力
+                        const firstLine = errorMessage.split('\n')[0];
+                        showNotification(`データの同期に失敗しました: ${firstLine}`, 'error');
+                        console.error('詳細なエラーメッセージ:', errorMessage);
+                    } else {
+                        showNotification(`データの同期に失敗しました: ${errorMessage}`, 'error');
+                    }
                 } finally {
                     // ボタンを再有効化
                     syncButton.disabled = false;
