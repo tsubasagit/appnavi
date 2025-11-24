@@ -1947,6 +1947,143 @@
                 cellElement.textContent = originalValue;
             }
 
+            // コピー&ペースト機能
+            let selectedCells = [];
+            let isSelecting = false;
+
+            // セル選択機能
+            function initCellSelection() {
+                const tableBody = document.getElementById('table-body');
+                if (!tableBody) return;
+
+                // セルをクリックして選択
+                tableBody.addEventListener('mousedown', (e) => {
+                    const cell = e.target.closest('td');
+                    if (!cell || cell.querySelector('.editable-cell')) return;
+                    
+                    isSelecting = true;
+                    selectedCells = [cell];
+                    updateCellSelection();
+                });
+
+                // マウスドラッグで複数セル選択
+                tableBody.addEventListener('mousemove', (e) => {
+                    if (!isSelecting) return;
+                    
+                    const cell = e.target.closest('td');
+                    if (!cell || cell.querySelector('.editable-cell')) return;
+                    
+                    if (!selectedCells.includes(cell)) {
+                        selectedCells.push(cell);
+                        updateCellSelection();
+                    }
+                });
+
+                // マウスアップで選択終了
+                document.addEventListener('mouseup', () => {
+                    isSelecting = false;
+                });
+
+                // キーボードショートカット（Ctrl+C, Ctrl+V）
+                document.addEventListener('keydown', (e) => {
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+                        copySelectedCells();
+                    } else if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+                        pasteToSelectedCells();
+                    }
+                });
+            }
+
+            // セル選択の視覚的フィードバック
+            function updateCellSelection() {
+                const tableBody = document.getElementById('table-body');
+                if (!tableBody) return;
+
+                // すべてのセルの選択状態をリセット
+                tableBody.querySelectorAll('td').forEach(cell => {
+                    cell.classList.remove('bg-blue-100', 'ring-2', 'ring-blue-500');
+                });
+
+                // 選択されたセルをハイライト
+                selectedCells.forEach(cell => {
+                    cell.classList.add('bg-blue-100', 'ring-2', 'ring-blue-500');
+                });
+            }
+
+            // 選択されたセルをコピー
+            function copySelectedCells() {
+                if (selectedCells.length === 0) return;
+
+                const values = selectedCells.map(cell => {
+                    const editableCell = cell.querySelector('.editable-cell');
+                    return editableCell ? editableCell.textContent.trim() : cell.textContent.trim();
+                });
+
+                navigator.clipboard.writeText(values.join('\t')).then(() => {
+                    showNotification(`${selectedCells.length}個のセルをコピーしました`, 'success');
+                }).catch(err => {
+                    console.error('コピーに失敗しました:', err);
+                    showNotification('コピーに失敗しました', 'error');
+                });
+            }
+
+            // 選択されたセルにペースト
+            async function pasteToSelectedCells() {
+                if (selectedCells.length === 0) return;
+
+                try {
+                    const clipboardText = await navigator.clipboard.readText();
+                    const values = clipboardText.split('\t').map(v => v.trim());
+
+                    if (values.length === 0) return;
+
+                    // 選択されたセルに値をペースト
+                    selectedCells.forEach((cell, index) => {
+                        const editableCell = cell.querySelector('.editable-cell');
+                        if (editableCell && index < values.length) {
+                            const rowIndex = parseInt(editableCell.dataset.rowIndex);
+                            const colName = editableCell.dataset.colName;
+                            
+                            if (rowIndex !== undefined && colName && currentApp && currentApp.data) {
+                                currentApp.data[rowIndex][colName] = values[index];
+                                
+                                // データベースに保存
+                                if (appId && databaseService) {
+                                    databaseService.updateApp(appId, {
+                                        data: currentApp.data
+                                    }).catch(err => console.error('Error saving paste:', err));
+                                }
+                            }
+                        }
+                    });
+
+                    // テーブルを更新
+                    if (currentApp && currentApp.columns) {
+                        updateAppDataTable(currentApp.data, currentApp.columns);
+                    }
+
+                    showNotification(`${values.length}個のセルにペーストしました`, 'success');
+                } catch (err) {
+                    console.error('ペーストに失敗しました:', err);
+                    showNotification('ペーストに失敗しました', 'error');
+                }
+            }
+
+            // テーブル更新時にセル選択機能を再初期化（既存の関数をラップ）
+            if (typeof window.originalUpdateAppDataTable === 'undefined') {
+                window.originalUpdateAppDataTable = updateAppDataTable;
+                updateAppDataTable = function(data, columns) {
+                    window.originalUpdateAppDataTable(data, columns);
+                    
+                    // エクスポートボタンを追加
+                    setTimeout(() => {
+                        addExportButton();
+                        // セル選択機能を初期化
+                        initCellSelection();
+                    }, 100);
+                };
+            }
+
             // 新規アプリ作成時はフォームを自動生成
             if (isNewApp) {
                 const newAppDataStr = sessionStorage.getItem('newAppData');
