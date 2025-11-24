@@ -6,6 +6,8 @@
     <title>AppNavi</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- SheetJSライブラリ（Excelエクスポート用） -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -30,13 +32,13 @@
                     <h1 id="view-title" class="text-2xl font-bold text-slate-900">サンプルアプリ</h1>
                     </div>
                 <div id="header-controls" class="flex flex-shrink-0 items-center space-x-6">
-                    <div id="search-bar" class="relative hidden shrink-0 md:block">
+                    <div id="search-bar" class="relative shrink-0 md:block">
                         <div class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35M19.125 10.063a6.563 6.563 0 1 1-13.125 0 6.563 6.563 0 0 1 13.125 0Z" />
                             </svg>
                         </div>
-                        <input type="search" placeholder="台帳内を検索..." class="w-64 rounded-full border border-slate-200 bg-slate-50 py-2 pl-10 pr-4 text-sm text-slate-700 shadow-inner outline-none focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-200" />
+                        <input type="search" id="data-search-input" placeholder="データを検索..." class="w-64 rounded-full border border-slate-200 bg-slate-50 py-2 pl-10 pr-4 text-sm text-slate-700 shadow-inner outline-none focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-200" />
                     </div>
                     <div id="builder-actions" class="hidden shrink-0 flex items-center space-x-2">
                         <button class="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-100">プレビュー</button>
@@ -1597,9 +1599,56 @@
                 }
             }
 
-            // アプリデータをテーブルに表示
+            // グローバル変数: フィルタ、並び替え、検索の状態
+            let filteredData = null;
+            let sortColumn = null;
+            let sortDirection = 'asc';
+            let searchQuery = '';
+
+            // アクションボタンのHTMLを生成
+            function getActionButtonsHTML(rowId, rowIndex) {
+                return `
+                    <td class="px-6 py-4 text-right">
+                        <div class="flex items-center justify-end space-x-2">
+                            <button class="edit-row-btn rounded-lg border border-slate-200 px-3 py-1 text-xs text-slate-600 hover:bg-slate-100" data-row-index="${rowIndex}" title="編集">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                </svg>
+                            </button>
+                            <button class="delete-row-btn rounded-lg border border-red-200 px-3 py-1 text-xs text-red-600 hover:bg-red-50" data-row-index="${rowIndex}" title="削除">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                `;
+            }
+
+            // 検索バーのイベントリスナーを追加
+            document.addEventListener('DOMContentLoaded', () => {
+                const searchInput = document.getElementById('data-search-input');
+                if (searchInput) {
+                    searchInput.addEventListener('input', (e) => {
+                        searchQuery = e.target.value.trim();
+                        if (currentApp && currentApp.data && currentApp.columns) {
+                            updateAppDataTable(currentApp.data, currentApp.columns);
+                        }
+                    });
+                }
+            });
+
+            // アプリデータをテーブルに表示（インライン編集対応）
             function updateAppDataTable(data, columns) {
                 if (!data || !columns || data.length === 0) return;
+
+                // フィルタ・検索・並び替えを適用
+                let displayData = data;
+                if (filteredData) {
+                    displayData = filteredData;
+                } else {
+                    displayData = applyFiltersAndSearch(data, columns);
+                }
 
                 const tableTitle = document.getElementById('table-title');
                 const tableSubtitle = document.getElementById('table-subtitle');
@@ -1618,50 +1667,284 @@
 
                 // バッジを更新
                 if (tableBadges) {
+                    const totalCount = data.length;
+                    const displayCount = displayData.length;
                     tableBadges.innerHTML = `
-                        <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 font-medium text-blue-700">総数 ${data.length}</span>
+                        <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 font-medium text-blue-700">表示中 ${displayCount} / 総数 ${totalCount}</span>
                     `;
                 }
 
-                // ヘッダーを更新（カラム名を使用）
+                // ヘッダーを更新（並び替えボタン付き）
                 if (tableHead) {
                     const headerRow = tableHead.querySelector('tr');
                     if (headerRow) {
-                        headerRow.innerHTML = columns.map(col => 
-                            `<th class="px-6 py-3 text-left font-semibold">${col.name}</th>`
-                        ).join('');
+                        headerRow.innerHTML = columns.map((col, colIndex) => {
+                            const isSorted = sortColumn === col.name;
+                            const sortIcon = isSorted 
+                                ? (sortDirection === 'asc' 
+                                    ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ml-1 h-4 w-4 inline"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" /></svg>'
+                                    : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ml-1 h-4 w-4 inline"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>')
+                                : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ml-1 h-4 w-4 inline opacity-30"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9" /></svg>';
+                            return `<th class="px-6 py-3 text-left font-semibold cursor-pointer hover:bg-slate-100 select-none" data-sort-column="${col.name}" style="user-select: none;">
+                                ${col.name}${sortIcon}
+                            </th>`;
+                        }).join('') + '<th class="px-6 py-3 text-right font-semibold">操作</th>';
+                        
+                        // 並び替えイベントリスナー
+                        headerRow.querySelectorAll('[data-sort-column]').forEach(th => {
+                            th.addEventListener('click', () => {
+                                const columnName = th.dataset.sortColumn;
+                                if (sortColumn === columnName) {
+                                    sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                                } else {
+                                    sortColumn = columnName;
+                                    sortDirection = 'asc';
+                                }
+                                updateAppDataTable(data, columns);
+                            });
+                        });
                     }
                 }
 
-                // ボディを更新（編集・削除ボタン付き）
+                // ボディを更新（インライン編集対応）
                 if (tableBody) {
-                    tableBody.innerHTML = data.map((row, index) => {
-                        const cells = columns.map(col => {
+                    tableBody.innerHTML = displayData.map((row, displayIndex) => {
+                        // 元のデータ配列でのインデックスを取得
+                        const originalIndex = data.findIndex(r => r === row);
+                        const actualIndex = originalIndex !== -1 ? originalIndex : displayIndex;
+                        
+                        const cells = columns.map((col, colIndex) => {
                             const value = row[col.name] || '';
-                            return `<td class="px-6 py-4">${value}</td>`;
+                            const cellId = `cell-${actualIndex}-${colIndex}`;
+                            const editable = col.type !== 'select' || col.options; // 選択肢がある場合は編集可能
+                            
+                            // セルの内容を生成（クリック可能にする）
+                            let cellContent = '';
+                            switch (col.type) {
+                                case 'date':
+                                    cellContent = `<span class="editable-cell cursor-pointer hover:bg-blue-50 px-2 py-1 rounded" data-row-index="${actualIndex}" data-col-name="${col.name}" data-col-type="${col.type}">${value || 'クリックして編集'}</span>`;
+                                    break;
+                                case 'datetime':
+                                    cellContent = `<span class="editable-cell cursor-pointer hover:bg-blue-50 px-2 py-1 rounded" data-row-index="${actualIndex}" data-col-name="${col.name}" data-col-type="${col.type}">${value || 'クリックして編集'}</span>`;
+                                    break;
+                                case 'number':
+                                    cellContent = `<span class="editable-cell cursor-pointer hover:bg-blue-50 px-2 py-1 rounded" data-row-index="${actualIndex}" data-col-name="${col.name}" data-col-type="${col.type}">${value || '0'}</span>`;
+                                    break;
+                                case 'select':
+                                    if (col.options && col.options.length > 0) {
+                                        cellContent = `<span class="editable-cell cursor-pointer hover:bg-blue-50 px-2 py-1 rounded" data-row-index="${actualIndex}" data-col-name="${col.name}" data-col-type="${col.type}" data-options="${col.options.join(',')}">${value || '選択してください'}</span>`;
+                                    } else {
+                                        cellContent = `<span>${value}</span>`;
+                                    }
+                                    break;
+                                default:
+                                    cellContent = `<span class="editable-cell cursor-pointer hover:bg-blue-50 px-2 py-1 rounded" data-row-index="${actualIndex}" data-col-name="${col.name}" data-col-type="text">${value || 'クリックして編集'}</span>`;
+                            }
+                            
+                            return `<td class="px-6 py-4" id="${cellId}">${cellContent}</td>`;
                         });
-                        const rowId = row[columns[0]?.name] || `row-${index}`;
-                        return `<tr class="hover:bg-slate-50" data-row-id="${rowId}">
+                        
+                        const rowId = row[columns[0]?.name] || `row-${actualIndex}`;
+                        return `<tr class="hover:bg-slate-50" data-row-id="${rowId}" data-row-index="${actualIndex}">
                             ${cells.join('')}
-                            ${getActionButtonsHTML(rowId)}
+                            ${getActionButtonsHTML(rowId, actualIndex)}
                         </tr>`;
                     }).join('');
                     
-                    // イベントリスナーを追加
-                    tableBody.querySelectorAll('.edit-row-btn').forEach((btn, index) => {
-                        btn.addEventListener('click', (e) => {
+                    // インライン編集イベントリスナーを追加
+                    tableBody.querySelectorAll('.editable-cell').forEach(cell => {
+                        cell.addEventListener('click', (e) => {
                             e.stopPropagation();
-                            editDataRow(index, data[index], columns);
+                            startInlineEdit(cell);
                         });
                     });
                     
-                    tableBody.querySelectorAll('.delete-row-btn').forEach((btn, index) => {
+                    // 編集・削除ボタンのイベントリスナー
+                    tableBody.querySelectorAll('.edit-row-btn').forEach((btn) => {
+                        const rowIndex = parseInt(btn.dataset.rowIndex || btn.closest('tr')?.dataset.rowIndex || '0');
                         btn.addEventListener('click', (e) => {
                             e.stopPropagation();
-                            deleteDataRow(index, data[index]);
+                            editDataRow(rowIndex, data[rowIndex], columns);
+                        });
+                    });
+                    
+                    tableBody.querySelectorAll('.delete-row-btn').forEach((btn) => {
+                        const rowIndex = parseInt(btn.dataset.rowIndex || btn.closest('tr')?.dataset.rowIndex || '0');
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            deleteDataRow(rowIndex, data[rowIndex]);
                         });
                     });
                 }
+            }
+
+            // フィルタと検索を適用
+            function applyFiltersAndSearch(data, columns) {
+                let result = [...data];
+                
+                // 検索クエリを適用
+                if (searchQuery) {
+                    const query = searchQuery.toLowerCase();
+                    result = result.filter(row => {
+                        return columns.some(col => {
+                            const value = String(row[col.name] || '').toLowerCase();
+                            return value.includes(query);
+                        });
+                    });
+                }
+                
+                // 並び替えを適用
+                if (sortColumn) {
+                    result.sort((a, b) => {
+                        const aVal = a[sortColumn] || '';
+                        const bVal = b[sortColumn] || '';
+                        
+                        // 数値の場合は数値として比較
+                        const aNum = parseFloat(aVal);
+                        const bNum = parseFloat(bVal);
+                        if (!isNaN(aNum) && !isNaN(bNum)) {
+                            return sortDirection === 'asc' ? aNum - bNum : bNum - aNum;
+                        }
+                        
+                        // 日付の場合は日付として比較
+                        const aDate = new Date(aVal);
+                        const bDate = new Date(bVal);
+                        if (!isNaN(aDate.getTime()) && !isNaN(bDate.getTime())) {
+                            return sortDirection === 'asc' ? aDate - bDate : bDate - aDate;
+                        }
+                        
+                        // 文字列として比較
+                        const comparison = String(aVal).localeCompare(String(bVal), 'ja');
+                        return sortDirection === 'asc' ? comparison : -comparison;
+                    });
+                }
+                
+                return result;
+            }
+
+            // インライン編集を開始
+            function startInlineEdit(cellElement) {
+                const rowIndex = parseInt(cellElement.dataset.rowIndex);
+                const colName = cellElement.dataset.colName;
+                const colType = cellElement.dataset.colType || 'text';
+                const options = cellElement.dataset.options ? cellElement.dataset.options.split(',') : [];
+                const currentValue = cellElement.textContent.trim();
+                
+                if (!currentApp || !currentApp.data || !currentApp.columns) return;
+                
+                const col = currentApp.columns.find(c => c.name === colName);
+                if (!col) return;
+                
+                // 編集用の入力フィールドを作成
+                let inputHTML = '';
+                const cellId = `edit-input-${rowIndex}-${colName}`;
+                
+                switch (colType) {
+                    case 'date':
+                        const dateValue = convertDateFormat(currentValue);
+                        inputHTML = `<input type="date" id="${cellId}" value="${dateValue}" class="w-full px-2 py-1 border border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-200" />`;
+                        break;
+                    case 'datetime':
+                        const datetimeValue = convertDateTimeFormat(currentValue);
+                        inputHTML = `<input type="datetime-local" id="${cellId}" value="${datetimeValue}" class="w-full px-2 py-1 border border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-200" />`;
+                        break;
+                    case 'number':
+                        inputHTML = `<input type="number" id="${cellId}" value="${currentValue}" class="w-full px-2 py-1 border border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-200" />`;
+                        break;
+                    case 'select':
+                        if (options.length > 0) {
+                            inputHTML = `<select id="${cellId}" class="w-full px-2 py-1 border border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-200">
+                                <option value="">選択してください</option>
+                                ${options.map(opt => `<option value="${opt}" ${opt === currentValue ? 'selected' : ''}>${opt}</option>`).join('')}
+                            </select>`;
+                        } else {
+                            inputHTML = `<input type="text" id="${cellId}" value="${currentValue}" class="w-full px-2 py-1 border border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-200" />`;
+                        }
+                        break;
+                    default:
+                        inputHTML = `<input type="text" id="${cellId}" value="${currentValue}" class="w-full px-2 py-1 border border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-200" />`;
+                }
+                
+                // セルの内容を入力フィールドに置き換え
+                cellElement.innerHTML = inputHTML;
+                const input = document.getElementById(cellId);
+                if (input) {
+                    input.focus();
+                    input.select();
+                    
+                    // Enterキーで保存、Escapeキーでキャンセル
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            saveInlineEdit(rowIndex, colName, input.value, col);
+                        } else if (e.key === 'Escape') {
+                            cancelInlineEdit(cellElement, currentValue);
+                        }
+                    });
+                    
+                    // フォーカスが外れたら保存
+                    input.addEventListener('blur', () => {
+                        setTimeout(() => {
+                            if (document.getElementById(cellId)) {
+                                saveInlineEdit(rowIndex, colName, input.value, col);
+                            }
+                        }, 200);
+                    });
+                }
+            }
+
+            // インライン編集を保存
+            async function saveInlineEdit(rowIndex, colName, newValue, col) {
+                if (!currentApp || !currentApp.data) return;
+                
+                const oldValue = currentApp.data[rowIndex][colName];
+                currentApp.data[rowIndex][colName] = newValue.trim();
+                
+                // データベースに保存
+                if (appId && databaseService) {
+                    try {
+                        await databaseService.updateApp(appId, {
+                            data: currentApp.data
+                        });
+                    } catch (error) {
+                        console.error('Error saving inline edit:', error);
+                        // エラー時は元の値に戻す
+                        currentApp.data[rowIndex][colName] = oldValue;
+                        showNotification('データの保存に失敗しました', 'error');
+                        return;
+                    }
+                }
+                
+                // Google Sheetsに同期（設定されている場合）
+                if (currentApp.googleSheetsUrl) {
+                    try {
+                        if (currentApp.googleAccessToken) {
+                            googleSheetsService.setAccessToken(currentApp.googleAccessToken);
+                        }
+                        if (currentApp.googleAppsScriptUrl) {
+                            googleSheetsService.setAppsScriptUrl(currentApp.googleAppsScriptUrl);
+                        }
+                        
+                        const values = currentApp.columns.map(c => currentApp.data[rowIndex][c.name] || '');
+                        await googleSheetsService.updateSpreadsheetRow(
+                            currentApp.googleSheetsUrl,
+                            null,
+                            rowIndex,
+                            values
+                        );
+                    } catch (error) {
+                        console.error('Error syncing to spreadsheet:', error);
+                        // エラーは無視（ローカル保存は成功している）
+                    }
+                }
+                
+                // テーブルを更新
+                updateAppDataTable(currentApp.data, currentApp.columns);
+                showNotification('データを更新しました', 'success');
+            }
+
+            // インライン編集をキャンセル
+            function cancelInlineEdit(cellElement, originalValue) {
+                cellElement.textContent = originalValue;
             }
 
             // 新規アプリ作成時はフォームを自動生成
@@ -2287,9 +2570,8 @@
                 }
             });
 
-            // 検索機能の実装
+            // 検索機能の実装（既にグローバル変数として宣言済み）
             const searchInput = document.querySelector('#search-bar input[type="search"]');
-            let filteredData = null;
             
             searchInput?.addEventListener('input', (e) => {
                 const searchTerm = e.target.value.trim().toLowerCase();
@@ -2861,23 +3143,43 @@
             // エクスポート機能を追加（テーブルヘッダーにエクスポートボタンを追加）
             function addExportButton() {
                 const tableHeader = document.querySelector('#data-view .flex.items-center.justify-between');
-                if (tableHeader && !tableHeader.querySelector('#export-btn')) {
-                    const exportBtn = document.createElement('button');
-                    exportBtn.id = 'export-btn';
-                    exportBtn.className = 'inline-flex items-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm hover:bg-slate-50';
-                    exportBtn.innerHTML = `
+                if (tableHeader && !tableHeader.querySelector('#export-btn-group')) {
+                    const exportBtnGroup = document.createElement('div');
+                    exportBtnGroup.id = 'export-btn-group';
+                    exportBtnGroup.className = 'flex items-center space-x-2';
+                    
+                    // CSVエクスポートボタン
+                    const csvExportBtn = document.createElement('button');
+                    csvExportBtn.id = 'export-csv-btn';
+                    csvExportBtn.className = 'inline-flex items-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm hover:bg-slate-50';
+                    csvExportBtn.innerHTML = `
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mr-2 h-4 w-4">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
                         </svg>
-                        エクスポート
+                        CSV
                     `;
-                    exportBtn.addEventListener('click', exportData);
-                    tableHeader.appendChild(exportBtn);
+                    csvExportBtn.addEventListener('click', () => exportData('csv'));
+                    
+                    // Excelエクスポートボタン
+                    const excelExportBtn = document.createElement('button');
+                    excelExportBtn.id = 'export-excel-btn';
+                    excelExportBtn.className = 'inline-flex items-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm hover:bg-slate-50';
+                    excelExportBtn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mr-2 h-4 w-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                        </svg>
+                        Excel
+                    `;
+                    excelExportBtn.addEventListener('click', () => exportData('excel'));
+                    
+                    exportBtnGroup.appendChild(csvExportBtn);
+                    exportBtnGroup.appendChild(excelExportBtn);
+                    tableHeader.appendChild(exportBtnGroup);
                 }
             }
 
-            // データエクスポート機能
-            function exportData() {
+            // データエクスポート機能（CSV/Excel対応）
+            function exportData(format = 'csv') {
                 const data = filteredData || currentApp?.data || [];
                 const columns = currentApp?.columns || [];
                 
@@ -2888,35 +3190,68 @@
                 
                 showNotification('データをエクスポート中...', 'info');
                 
-                // CSV形式でエクスポート
                 const headers = columns.map(col => col.name);
-                const csvRows = [headers.join(',')];
                 
-                data.forEach(row => {
-                    const values = headers.map(header => {
-                        const value = row[header] || '';
-                        // カンマやダブルクォートが含まれる場合はエスケープ
-                        if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-                            return `"${String(value).replace(/"/g, '""')}"`;
-                        }
-                        return value;
+                if (format === 'csv') {
+                    // CSV形式でエクスポート
+                    const csvRows = [headers.join(',')];
+                    
+                    data.forEach(row => {
+                        const values = headers.map(header => {
+                            const value = row[header] || '';
+                            // カンマやダブルクォートが含まれる場合はエスケープ
+                            if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+                                return `"${String(value).replace(/"/g, '""')}"`;
+                            }
+                            return value;
+                        });
+                        csvRows.push(values.join(','));
                     });
-                    csvRows.push(values.join(','));
-                });
-                
-                const csvContent = csvRows.join('\n');
-                const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-                const link = document.createElement('a');
-                const url = URL.createObjectURL(blob);
-                
-                link.setAttribute('href', url);
-                link.setAttribute('download', `${currentApp?.name || 'データ'}_${new Date().toISOString().split('T')[0]}.csv`);
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                showNotification('データをエクスポートしました');
+                    
+                    const csvContent = csvRows.join('\n');
+                    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    const url = URL.createObjectURL(blob);
+                    
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', `${currentApp?.name || 'データ'}_${new Date().toISOString().split('T')[0]}.csv`);
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    showNotification('CSV形式でエクスポートしました');
+                } else if (format === 'excel') {
+                    // Excel形式でエクスポート（SheetJSライブラリを使用）
+                    if (typeof XLSX === 'undefined') {
+                        // SheetJSライブラリが読み込まれていない場合はCSVでエクスポート
+                        showNotification('Excel形式のエクスポートにはライブラリが必要です。CSV形式でエクスポートします。', 'warning');
+                        exportData('csv');
+                        return;
+                    }
+                    
+                    // Excelワークブックを作成
+                    const wb = XLSX.utils.book_new();
+                    const ws = XLSX.utils.aoa_to_sheet([
+                        headers,
+                        ...data.map(row => headers.map(header => row[header] || ''))
+                    ]);
+                    
+                    // 列幅を自動調整
+                    const colWidths = headers.map((header, index) => {
+                        const maxLength = Math.max(
+                            header.length,
+                            ...data.map(row => String(row[header] || '').length)
+                        );
+                        return { wch: Math.min(maxLength + 2, 50) };
+                    });
+                    ws['!cols'] = colWidths;
+                    
+                    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+                    XLSX.writeFile(wb, `${currentApp?.name || 'データ'}_${new Date().toISOString().split('T')[0]}.xlsx`);
+                    
+                    showNotification('Excel形式でエクスポートしました');
+                }
             }
 
             // API有効化モーダルを表示する関数
