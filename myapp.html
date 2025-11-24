@@ -1438,8 +1438,15 @@
                         currentApp = {
                             ...app,
                             createdAt: app.createdAt?.toDate ? app.createdAt.toDate().toISOString() : app.createdAt,
-                            updatedAt: app.updatedAt?.toDate ? app.updatedAt.toDate().toISOString() : app.updatedAt
+                            updatedAt: app.updatedAt?.toDate ? app.updatedAt.toDate().toISOString() : app.updatedAt,
+                            // googleSheetsUrlとgoogleAccessTokenを確実に含める
+                            googleSheetsUrl: app.googleSheetsUrl || null,
+                            googleAccessToken: app.googleAccessToken || null,
+                            googleSheetsLastSynced: app.googleSheetsLastSynced || null
                         };
+                        
+                        console.log('loadApp: 読み込んだアプリデータ', currentApp);
+                        console.log('loadApp: googleSheetsUrl', currentApp.googleSheetsUrl);
                         
                         if (viewTitle) {
                             viewTitle.textContent = currentApp.name || 'サンプルアプリ';
@@ -2998,7 +3005,13 @@
 
             // データビューのスプレッドシート連携バナーを更新
             function updateSheetsIntegrationBanner() {
-                if (!currentApp) return;
+                if (!currentApp) {
+                    console.log('updateSheetsIntegrationBanner: currentApp is null');
+                    return;
+                }
+                
+                console.log('updateSheetsIntegrationBanner: currentApp', currentApp);
+                console.log('updateSheetsIntegrationBanner: googleSheetsUrl', currentApp.googleSheetsUrl);
                 
                 const banner = document.getElementById('sheets-integration-banner');
                 const urlEl = document.getElementById('sheets-integration-url');
@@ -3007,6 +3020,7 @@
                 const authText = document.getElementById('sheets-integration-auth-text');
                 
                 if (currentApp.googleSheetsUrl) {
+                    console.log('updateSheetsIntegrationBanner: バナーを表示します');
                     // スプレッドシート連携が設定されている場合、バナーを表示
                     if (banner) {
                         banner.classList.remove('hidden');
