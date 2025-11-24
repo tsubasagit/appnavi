@@ -3050,7 +3050,9 @@
                     return;
                 }
 
-                const CLIENT_ID = localStorage.getItem('google_client_id') || '';
+                // クライアントIDの優先順位: 1. localStorage 2. デフォルト値
+                const DEFAULT_CLIENT_ID = '509155102966-d1caj0trqoakrmi2tju5mvicdlj2qb1f.apps.googleusercontent.com';
+                const CLIENT_ID = localStorage.getItem('google_client_id') || DEFAULT_CLIENT_ID;
                 
                 googleAuthClient = google.accounts.oauth2.initTokenClient({
                     client_id: CLIENT_ID,
@@ -3065,10 +3067,43 @@
                             showNotification('Google認証に成功しました', 'success');
                         } else if (response.error) {
                             console.error('認証エラー:', response.error);
-                            showNotification('認証に失敗しました: ' + response.error, 'error');
+                            handleAuthError(response.error);
                         }
                     },
                 });
+            }
+            
+            // 認証エラーの処理
+            function handleAuthError(error) {
+                let errorMessage = '認証に失敗しました。';
+                
+                if (error === 'redirect_uri_mismatch') {
+                    errorMessage = 'リダイレクトURIが一致しません。\n\n' +
+                        '【解決方法】\n' +
+                        '1. Google Cloud Console (https://console.cloud.google.com/) にアクセス\n' +
+                        '2. プロジェクトを選択\n' +
+                        '3. 「APIとサービス」>「認証情報」を開く\n' +
+                        '4. OAuth 2.0 クライアントIDをクリック\n' +
+                        '5. 「承認済みのJavaScript生成元」に以下を追加:\n' +
+                        '   - ' + window.location.origin + '\n' +
+                        '   - http://localhost:8000 (ローカル開発用)\n' +
+                        '6. 「承認済みのリダイレクトURI」に以下を追加:\n' +
+                        '   - ' + window.location.origin + '/\n' +
+                        '   - ' + window.location.origin + '/index.html\n' +
+                        '   - http://localhost:8000/\n' +
+                        '   - http://localhost:8000/index.html\n' +
+                        '7. 「保存」をクリック\n' +
+                        '8. 数分待ってから再度お試しください';
+                } else if (error === 'invalid_client') {
+                    errorMessage = 'OAuth クライアントが見つかりません。\n\nクライアントIDが正しく設定されているか確認してください。';
+                } else if (error === 'access_denied') {
+                    errorMessage = '認証がキャンセルされました。';
+                } else {
+                    errorMessage = '認証に失敗しました: ' + error;
+                }
+                
+                showNotification(errorMessage, 'error');
+                console.error('認証エラー詳細:', error);
             }
 
             // 認証状態を確認
@@ -3187,50 +3222,19 @@
 
             // ログインボタンのイベント
             document.getElementById('google-signin-btn')?.addEventListener('click', () => {
-                const CLIENT_ID = localStorage.getItem('google_client_id') || '';
+                // クライアントIDの優先順位: 1. localStorage 2. デフォルト値
+                const DEFAULT_CLIENT_ID = '509155102966-d1caj0trqoakrmi2tju5mvicdlj2qb1f.apps.googleusercontent.com';
+                const CLIENT_ID = localStorage.getItem('google_client_id') || DEFAULT_CLIENT_ID;
                 
-                if (!CLIENT_ID) {
-                    // クライアントIDが設定されていない場合の案内
-                    const setupMessage = 'Google Client IDが設定されていません。\n\n' +
-                        '【設定方法】\n' +
-                        '1. Google Cloud Console (https://console.cloud.google.com/) にアクセス\n' +
-                        '2. プロジェクトを作成または選択\n' +
-                        '3. 「APIとサービス」>「認証情報」を開く\n' +
-                        '4. 「認証情報を作成」>「OAuth 2.0 クライアント ID」を選択\n' +
-                        '5. アプリケーションの種類で「ウェブアプリケーション」を選択\n' +
-                        '6. 承認済みのJavaScript生成元に「' + window.location.origin + '」を追加\n' +
-                        '7. 作成されたクライアントIDをコピー\n' +
-                        '8. ブラウザのコンソール（F12キー）で以下を実行:\n' +
-                        '   localStorage.setItem("google_client_id", "YOUR_CLIENT_ID");\n\n' +
-                        '【簡易設定】\n' +
-                        'コンソールで直接設定する場合は、下のボタンをクリックしてください。';
-                    
-                    if (confirm(setupMessage + '\n\n今すぐ設定しますか？')) {
-                        // クライアントID入力ダイアログを表示
-                        const clientId = prompt('Google OAuth 2.0 クライアントIDを入力してください:');
-                        if (clientId && clientId.trim()) {
-                            localStorage.setItem('google_client_id', clientId.trim());
-                            showNotification('クライアントIDを設定しました。もう一度ログインボタンをクリックしてください。', 'success');
-                            // 認証を再初期化
-                            initGoogleAuth();
-                        } else {
-                            showNotification('クライアントIDが入力されませんでした。', 'warning');
-                        }
-                    }
+                // Google Identity ServicesのOAuth 2.0トークンクライアントを初期化
+                if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+                    showNotification('Google認証ライブラリが読み込まれていません。ページを再読み込みしてください。', 'error');
                     return;
                 }
                 
-                // クライアントIDが設定されている場合、認証を開始
-                if (googleAuthClient) {
-                    googleAuthClient.requestAccessToken();
-                } else {
-                    // Google Identity ServicesのOAuth 2.0トークンクライアントを初期化
-                    if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
-                        showNotification('Google認証ライブラリが読み込まれていません。ページを再読み込みしてください。', 'error');
-                        return;
-                    }
-                    
-                    try {
+                try {
+                    // 既存のクライアントがあれば再利用、なければ新規作成
+                    if (!googleAuthClient) {
                         googleAuthClient = google.accounts.oauth2.initTokenClient({
                             client_id: CLIENT_ID,
                             scope: 'https://www.googleapis.com/auth/spreadsheets',
@@ -3241,35 +3245,17 @@
                                     updateAuthStatus(true, '認証済み');
                                     showNotification('Google認証に成功しました', 'success');
                                 } else if (response.error) {
-                                    console.error('認証エラー:', response.error);
-                                    let errorMessage = '認証に失敗しました。';
-                                    
-                                    if (response.error === 'invalid_client') {
-                                        errorMessage = 'OAuth クライアントが見つかりません。\n\n' +
-                                            '【原因】\n' +
-                                            '・クライアントIDが正しくない可能性があります\n' +
-                                            '・Google Cloud ConsoleでクライアントIDが削除されている可能性があります\n\n' +
-                                            '【解決方法】\n' +
-                                            '1. ブラウザのコンソール（F12キー）を開く\n' +
-                                            '2. 以下を実行してクライアントIDを確認:\n' +
-                                            '   localStorage.getItem("google_client_id")\n' +
-                                            '3. 正しいクライアントIDを設定し直してください';
-                                    } else if (response.error === 'access_denied') {
-                                        errorMessage = '認証が拒否されました。もう一度お試しください。';
-                                    } else {
-                                        errorMessage = '認証エラー: ' + response.error;
-                                    }
-                                    
-                                    alert(errorMessage);
-                                    showNotification('認証に失敗しました', 'error');
+                                    handleAuthError(response.error);
                                 }
                             },
                         });
-                        googleAuthClient.requestAccessToken();
-                    } catch (error) {
-                        console.error('認証初期化エラー:', error);
-                        showNotification('認証の初期化に失敗しました: ' + error.message, 'error');
                     }
+                    
+                    // アクセストークンをリクエスト
+                    googleAuthClient.requestAccessToken();
+                } catch (error) {
+                    console.error('認証エラー:', error);
+                    showNotification('認証中にエラーが発生しました: ' + error.message, 'error');
                 }
             });
 

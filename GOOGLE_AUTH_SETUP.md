@@ -32,7 +32,10 @@ AppNaviでGoogleスプレッドシートにデータを書き込むには、Goog
    - カスタムドメイン: `https://yourdomain.com`
 
    **承認済みのリダイレクトURI**:
-   - 通常は設定不要（ブラウザベースのアプリの場合）
+   - GitHub Pages: `https://tsubasagit.github.io/` と `https://tsubasagit.github.io/index.html`
+   - ローカル開発: `http://localhost:8000/` と `http://localhost:8000/index.html`
+   - カスタムドメイン: `https://yourdomain.com/` と `https://yourdomain.com/index.html`
+   - **重要**: Google Identity ServicesのOAuth 2.0トークンクライアントを使用する場合、リダイレクトURIを設定する必要があります
 
 5. 「作成」をクリック
 6. 作成されたクライアントIDをコピー
@@ -88,6 +91,20 @@ localStorage.setItem('google_client_id', 'YOUR_CLIENT_ID_HERE');
 
 - クライアントIDの形式が正しいか確認（例: `123456789-abcdefghijklmnop.apps.googleusercontent.com`）
 - クライアントIDに余分なスペースが含まれていないか確認
+
+### エラー: "redirect_uri_mismatch"
+
+- **最も一般的なエラー**: Google Cloud ConsoleでリダイレクトURIが正しく設定されていない場合に発生します
+- **解決方法**:
+  1. Google Cloud ConsoleでOAuth 2.0クライアントIDを開く
+  2. 「承認済みのリダイレクトURI」に以下を追加:
+     - `https://tsubasagit.github.io/`
+     - `https://tsubasagit.github.io/index.html`
+     - `http://localhost:8000/` (ローカル開発用)
+     - `http://localhost:8000/index.html` (ローカル開発用)
+  3. 「保存」をクリック
+  4. 数分待ってから再度認証を試す
+- **注意**: リダイレクトURIは完全一致する必要があります（末尾のスラッシュも含めて）
 
 ### 認証は成功するが、スプレッドシートに書き込めない
 
