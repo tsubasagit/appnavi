@@ -3307,8 +3307,42 @@
                         } else {
                             showNotification(`データの同期に失敗しました: ${errorMessage}`, 'error');
                         }
-                    } else {
-                        // その他のエラーの場合
+                    } 
+                    // 範囲指定エラーまたは400エラーの場合
+                    else if (errorMessage.includes('範囲指定エラー') || 
+                             errorMessage.includes('Unable to parse range') ||
+                             errorMessage.includes('INVALID_ARGUMENT') ||
+                             errorMessage.includes('スプレッドシートの範囲指定エラー')) {
+                        // エラーメッセージをそのまま表示（既に詳細なメッセージが含まれている）
+                        showNotification(`データの同期に失敗しました: ${errorMessage}`, 'error');
+                    } 
+                    // その他のエラーの場合
+                    else {
+                        // JSON形式のエラーメッセージを解析
+                        if (errorMessage.includes('{') && errorMessage.includes('error')) {
+                            try {
+                                const errorMatch = errorMessage.match(/\{[\s\S]*\}/);
+                                if (errorMatch) {
+                                    const errorJson = JSON.parse(errorMatch[0]);
+                                    const apiError = errorJson.error;
+                                    
+                                    // 400エラーの場合
+                                    if (apiError && (apiError.code === 400 || apiError.status === 'INVALID_ARGUMENT')) {
+                                        if (apiError.message && apiError.message.includes('Unable to parse range')) {
+                                            errorMessage = 'スプレッドシートの範囲指定エラーが発生しました。\n\n【解決方法】\n1. スプレッドシートのシート名を確認してください（特殊文字やスペースが含まれていないか）\n2. スプレッドシートのURLを確認してください\n3. アプリの設定画面で、スプレッドシートURLを再設定してください\n4. それでもエラーが続く場合は、スプレッドシートのシート名を「Sheet1」に変更してください';
+                                        } else {
+                                            errorMessage = apiError.message || errorMessage;
+                                        }
+                                    } else {
+                                        errorMessage = apiError?.message || errorMessage;
+                                    }
+                                }
+                            } catch (parseError) {
+                                // JSON解析に失敗した場合は元のメッセージを使用
+                                console.error('エラーメッセージの解析に失敗:', parseError);
+                            }
+                        }
+                        
                         showNotification(`データの同期に失敗しました: ${errorMessage}`, 'error');
                     }
                 } finally {
