@@ -57,12 +57,19 @@
 <body class="bg-slate-100 text-slate-900">
     <div class="flex min-h-screen">
         <aside class="flex w-64 flex-col border-r border-slate-200 bg-white">
-            <div class="flex items-center space-x-2 px-6 py-5 text-slate-700">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 21h7.5m-7.5 0a3 3 0 0 1-3-3V8.25m3 12.75h-3a3 3 0 0 1-3-3V8.25a3 3 0 0 1 .879-2.121l3.75-3.75A3 3 0 0 1 10.5 1.5h3a3 3 0 0 1 2.121.879l3.75 3.75A3 3 0 0 1 21.25 8.25V18a3 3 0 0 1-3 3h-3m-7.5 0V11.25A2.25 2.25 0 0 1 9 9h6a2.25 2.25 0 0 1 2.25 2.25V21" />
-            </svg>
-                <span class="text-lg font-semibold tracking-wide">AppNavi</span>
-        </div>
+            <div class="flex items-center justify-between px-6 py-5 text-slate-700">
+                <div class="flex items-center space-x-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 21h7.5m-7.5 0a3 3 0 0 1-3-3V8.25m3 12.75h-3a3 3 0 0 1-3-3V8.25a3 3 0 0 1 .879-2.121l3.75-3.75A3 3 0 0 1 10.5 1.5h3a3 3 0 0 1 2.121.879l3.75 3.75A3 3 0 0 1 21.25 8.25V18a3 3 0 0 1-3 3h-3m-7.5 0V11.25A2.25 2.25 0 0 1 9 9h6a2.25 2.25 0 0 1 2.25 2.25V21" />
+                </svg>
+                    <span class="text-lg font-semibold tracking-wide">AppNavi</span>
+                </div>
+                <!-- Google認証状態アイコン -->
+                <div id="header-auth-status" class="flex items-center space-x-1" title="Google認証状態">
+                    <div id="header-auth-indicator" class="h-3 w-3 rounded-full bg-gray-400" title="未認証"></div>
+                    <span id="header-auth-text" class="hidden text-xs text-slate-500 md:inline">未認証</span>
+                </div>
+            </div>
             <nav class="flex-1 space-y-1 px-4 text-sm">
                 <button class="nav-menu-btn flex w-full items-center space-x-3 rounded-lg bg-blue-50 px-3 py-2 text-blue-700 shadow-sm" data-section="dashboard">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5">
@@ -85,6 +92,23 @@
                 </button>
             </nav>
             <div class="border-t border-slate-200 px-4 py-4">
+                <!-- Google認証状態 -->
+                <div id="google-auth-status" class="mb-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <div id="auth-status-indicator" class="h-2 w-2 rounded-full bg-gray-400"></div>
+                            <span id="auth-status-text" class="text-xs text-slate-600">未認証</span>
+                        </div>
+                    </div>
+                    <div id="auth-actions" class="mt-2 flex flex-col space-y-1">
+                        <button id="google-signin-btn" class="w-full rounded-lg border border-green-300 bg-white px-2 py-1 text-xs font-semibold text-green-700 hover:bg-green-50">
+                            Googleでログイン
+                        </button>
+                        <button id="google-signout-btn" class="hidden w-full rounded-lg border border-red-300 bg-white px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50">
+                            ログアウト
+                        </button>
+                    </div>
+                </div>
                 <button class="flex w-full items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-500 hover:bg-slate-100">
                     <span>ヘルプセンター</span>
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
@@ -100,9 +124,21 @@
             <!-- ヒーローセクション -->
             <div class="mb-10 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 p-8 text-white shadow-xl">
                 <div class="max-w-3xl">
-                    <h1 class="text-3xl font-bold">AppNaviへようこそ</h1>
-                    <p class="mt-3 text-lg text-blue-100">Googleスプレッドシートから、すぐに使えるWebアプリを作成できます</p>
-                    <p class="mt-3 text-sm text-blue-200">スプレッドシートのURLを入力するだけ。設定不要で始められます。</p>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h1 class="text-3xl font-bold">AppNaviへようこそ</h1>
+                            <p class="mt-3 text-lg text-blue-100">Googleスプレッドシートから、すぐに使えるWebアプリを作成できます</p>
+                            <p class="mt-3 text-sm text-blue-200">スプレッドシートのURLを入力するだけ。設定不要で始められます。</p>
+                        </div>
+                        <!-- Google認証状態バッジ -->
+                        <div id="hero-auth-badge" class="ml-4 flex flex-col items-end">
+                            <div class="flex items-center space-x-2 rounded-full border border-white/30 bg-white/10 px-4 py-2 backdrop-blur-sm">
+                                <div id="hero-auth-indicator" class="h-3 w-3 rounded-full bg-gray-400 animate-pulse"></div>
+                                <span id="hero-auth-text" class="text-sm font-semibold text-white">認証中...</span>
+                            </div>
+                            <button id="hero-auth-action-btn" class="mt-2 text-xs text-blue-200 underline hover:text-white hidden">ログイン</button>
+                        </div>
+                    </div>
                     
                     <!-- 現在のデータ保存方法の表示 -->
                     <div id="current-storage-info" class="mt-4 rounded-lg bg-white/10 border border-white/20 px-4 py-3 backdrop-blur-sm">
@@ -166,6 +202,18 @@
                     <section class="rounded-2xl border border-green-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
                         <h3 class="text-lg font-semibold text-slate-900 mb-4">Googleスプレッドシートと連携</h3>
                         <p class="text-sm text-slate-600 mb-6">スプレッドシートのURLを入力するだけで、すぐにWebアプリとして利用できます。</p>
+                        
+                        <!-- 認証状態の表示 -->
+                        <div id="sheets-auth-info" class="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <div id="sheets-auth-indicator" class="h-2 w-2 rounded-full bg-gray-400"></div>
+                                    <span id="sheets-auth-text" class="text-xs text-blue-700">認証状態: 未認証</span>
+                                </div>
+                                <span id="sheets-auth-note" class="text-xs text-blue-600">※ 認証するとデータの変更が可能になります</span>
+                            </div>
+                        </div>
+                        
                         <div class="rounded-xl border-2 border-dashed border-green-300 bg-green-50/50 p-6">
                             <p class="text-sm font-medium text-green-700 mb-3 text-center">スプレッドシートのURLを入力</p>
                             <input type="text" id="google-sheets-url-input" placeholder="https://docs.google.com/spreadsheets/d/..." class="w-full mb-4 rounded-lg border border-green-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200" />
@@ -2803,6 +2851,10 @@
                         
                         // アプリを作成
                         showNotification('アプリを作成中...', 'info');
+                        
+                        // 認証済みの場合はアクセストークンを保存
+                        const accessToken = localStorage.getItem('google_access_token');
+                        
                         const newApp = await addApp({
                             name: appName,
                             description: 'Googleスプレッドシートから作成されたアプリです。',
@@ -2811,16 +2863,33 @@
                             color: 'green',
                             storageType: databaseService?.getStorageType() || 'local',
                             googleSheetsUrl: sheetUrl,
-                            googleSheetsLastSynced: new Date().toISOString()
+                            googleSheetsLastSynced: new Date().toISOString(),
+                            googleAppsScriptUrl: null, // 後で設定可能
+                            googleAccessToken: accessToken || null // 認証済みの場合はアクセストークンを保存
                         });
                         
                         if (newApp && newApp.id) {
                             showNotification('Googleスプレッドシートと連携しました！', 'success');
                             
-                            // 作成したアプリに遷移
+                            // Google Apps Scriptの設定方法を案内
+                            const setupMessage = 'データを変更できるようにするには、Google Apps Scriptの設定が必要です。\n\n' +
+                                '1. スプレッドシートを開く\n' +
+                                '2. 拡張機能 > Apps Script をクリック\n' +
+                                '3. google-apps-script-template.js のコードをコピー&ペースト\n' +
+                                '4. 「デプロイ」>「新しいデプロイ」をクリック\n' +
+                                '5. 種類の選択で「ウェブアプリ」を選択\n' +
+                                '6. 表示されたURLをコピーして、アプリの設定に貼り付け\n\n' +
+                                '設定は後からでも可能です。';
+                            
                             setTimeout(() => {
-                                window.location.href = `myapp.html?appId=${newApp.id}`;
-                            }, 1000);
+                                if (confirm(setupMessage + '\n\n今すぐ設定しますか？')) {
+                                    // 設定画面に遷移
+                                    window.location.href = `myapp.html?appId=${newApp.id}&tab=settings`;
+                                } else {
+                                    // アプリに遷移
+                                    window.location.href = `myapp.html?appId=${newApp.id}`;
+                                }
+                            }, 2000);
                         } else {
                             throw new Error('アプリの作成に失敗しました');
                         }
@@ -2919,6 +2988,259 @@
                     }
                 }
                 });
+            }
+
+            // Google認証の実装
+            let googleAuthClient = null;
+            let isGoogleAuthenticated = false;
+
+            // Google認証の初期化
+            function initGoogleAuth() {
+                // Google Identity Servicesが読み込まれているか確認
+                if (typeof google === 'undefined' || !google.accounts) {
+                    console.warn('Google Identity Servicesが読み込まれていません');
+                    return;
+                }
+
+                // クライアントIDを設定（環境変数またはデフォルト値）
+                // 実際の使用時は、Google Cloud Consoleで取得したクライアントIDを設定してください
+                const CLIENT_ID = localStorage.getItem('google_client_id') || '';
+                
+                if (!CLIENT_ID) {
+                    console.warn('Google Client IDが設定されていません。設定画面で設定してください。');
+                    updateAuthStatus(false, '未設定');
+                    return;
+                }
+
+                google.accounts.id.initialize({
+                    client_id: CLIENT_ID,
+                    callback: handleCredentialResponse,
+                    auto_select: false,
+                    cancel_on_tap_outside: true
+                });
+
+                // 認証状態を確認
+                checkAuthStatus();
+            }
+
+            // 認証レスポンスの処理
+            function handleCredentialResponse(response) {
+                if (response.credential) {
+                    // IDトークンからアクセストークンを取得する必要があります
+                    // 実際の実装では、バックエンドサーバーでIDトークンを検証し、アクセストークンを取得します
+                    console.log('認証成功:', response);
+                    
+                    // 簡易実装: IDトークンを一時的に保存
+                    localStorage.setItem('google_id_token', response.credential);
+                    
+                    // OAuth 2.0でアクセストークンを取得
+                    requestAccessToken(response.credential);
+                }
+            }
+
+            // アクセストークンを取得（OAuth 2.0）
+            function requestAccessToken(idToken) {
+                // Google Identity ServicesのOAuth 2.0トークンクライアントを使用
+                if (typeof google === 'undefined' || !google.accounts.oauth2) {
+                    console.error('Google OAuth 2.0が利用できません');
+                    return;
+                }
+
+                const CLIENT_ID = localStorage.getItem('google_client_id') || '';
+                
+                googleAuthClient = google.accounts.oauth2.initTokenClient({
+                    client_id: CLIENT_ID,
+                    scope: 'https://www.googleapis.com/auth/spreadsheets',
+                    callback: (response) => {
+                        if (response.access_token) {
+                            // アクセストークンを保存
+                            localStorage.setItem('google_access_token', response.access_token);
+                            googleSheetsService.setAccessToken(response.access_token);
+                            
+                            updateAuthStatus(true, '認証済み');
+                            showNotification('Google認証に成功しました', 'success');
+                        } else if (response.error) {
+                            console.error('認証エラー:', response.error);
+                            showNotification('認証に失敗しました: ' + response.error, 'error');
+                        }
+                    },
+                });
+            }
+
+            // 認証状態を確認
+            function checkAuthStatus() {
+                const accessToken = localStorage.getItem('google_access_token');
+                if (accessToken) {
+                    googleSheetsService.setAccessToken(accessToken);
+                    updateAuthStatus(true, '認証済み');
+                    updateSheetsAuthInfo(true);
+                } else {
+                    updateAuthStatus(false, '未認証');
+                    updateSheetsAuthInfo(false);
+                }
+            }
+
+            // スプレッドシート連携画面の認証状態を更新
+            function updateSheetsAuthInfo(authenticated) {
+                const indicator = document.getElementById('sheets-auth-indicator');
+                const text = document.getElementById('sheets-auth-text');
+                const note = document.getElementById('sheets-auth-note');
+                
+                if (indicator) {
+                    indicator.className = authenticated 
+                        ? 'h-2 w-2 rounded-full bg-green-500' 
+                        : 'h-2 w-2 rounded-full bg-gray-400';
+                }
+                if (text) {
+                    text.textContent = authenticated ? '認証状態: 認証済み' : '認証状態: 未認証';
+                }
+                if (note) {
+                    note.textContent = authenticated 
+                        ? '※ 認証済み: データの変更が可能です' 
+                        : '※ 認証するとデータの変更が可能になります';
+                }
+            }
+
+            // 認証状態のUIを更新
+            function updateAuthStatus(authenticated, statusText) {
+                isGoogleAuthenticated = authenticated;
+                const statusIndicator = document.getElementById('auth-status-indicator');
+                const statusTextEl = document.getElementById('auth-status-text');
+                const signinBtn = document.getElementById('google-signin-btn');
+                const signoutBtn = document.getElementById('google-signout-btn');
+                
+                // ヘッダーの認証状態アイコン
+                const headerIndicator = document.getElementById('header-auth-indicator');
+                const headerText = document.getElementById('header-auth-text');
+                const headerStatus = document.getElementById('header-auth-status');
+                
+                // ヒーローセクションの認証バッジ
+                const heroIndicator = document.getElementById('hero-auth-indicator');
+                const heroText = document.getElementById('hero-auth-text');
+                const heroBadge = document.getElementById('hero-auth-badge');
+                const heroActionBtn = document.getElementById('hero-auth-action-btn');
+
+                if (statusIndicator) {
+                    statusIndicator.className = authenticated 
+                        ? 'h-2 w-2 rounded-full bg-green-500' 
+                        : 'h-2 w-2 rounded-full bg-gray-400';
+                }
+                if (statusTextEl) {
+                    statusTextEl.textContent = statusText;
+                }
+                if (signinBtn) {
+                    signinBtn.style.display = authenticated ? 'none' : 'block';
+                }
+                if (signoutBtn) {
+                    signoutBtn.style.display = authenticated ? 'block' : 'none';
+                }
+                
+                // ヘッダーの認証状態を更新
+                if (headerIndicator) {
+                    headerIndicator.className = authenticated 
+                        ? 'h-3 w-3 rounded-full bg-green-500 shadow-lg shadow-green-500/50' 
+                        : 'h-3 w-3 rounded-full bg-gray-400';
+                    headerIndicator.title = authenticated ? '認証済み' : '未認証';
+                }
+                if (headerText) {
+                    headerText.textContent = authenticated ? '認証済み' : '未認証';
+                    headerText.className = authenticated 
+                        ? 'hidden text-xs text-green-500 font-semibold md:inline' 
+                        : 'hidden text-xs text-slate-500 md:inline';
+                }
+                if (headerStatus) {
+                    headerStatus.title = authenticated ? 'Google認証済み - データの変更が可能です' : 'Google未認証 - ログインするとデータの変更が可能になります';
+                }
+                
+                // ヒーローセクションの認証バッジを更新
+                if (heroIndicator) {
+                    heroIndicator.className = authenticated 
+                        ? 'h-3 w-3 rounded-full bg-green-400 shadow-lg shadow-green-400/50' 
+                        : 'h-3 w-3 rounded-full bg-gray-400 animate-pulse';
+                }
+                if (heroText) {
+                    heroText.textContent = authenticated ? '認証済み' : '未認証';
+                    heroText.className = authenticated 
+                        ? 'text-sm font-semibold text-green-200' 
+                        : 'text-sm font-semibold text-white';
+                }
+                if (heroBadge) {
+                    heroBadge.querySelector('.rounded-full').className = authenticated 
+                        ? 'flex items-center space-x-2 rounded-full border border-green-300/50 bg-green-500/20 px-4 py-2 backdrop-blur-sm' 
+                        : 'flex items-center space-x-2 rounded-full border border-white/30 bg-white/10 px-4 py-2 backdrop-blur-sm';
+                }
+                if (heroActionBtn) {
+                    heroActionBtn.style.display = authenticated ? 'none' : 'block';
+                    heroActionBtn.textContent = authenticated ? '' : 'Googleでログイン';
+                    heroActionBtn.onclick = () => {
+                        document.getElementById('google-signin-btn')?.click();
+                    };
+                }
+                
+                // スプレッドシート連携画面の認証状態も更新
+                updateSheetsAuthInfo(authenticated);
+            }
+
+            // ログインボタンのイベント
+            document.getElementById('google-signin-btn')?.addEventListener('click', () => {
+                if (googleAuthClient) {
+                    googleAuthClient.requestAccessToken();
+                } else {
+                    // Google Identity ServicesのOne Tapまたはポップアップでログイン
+                    const CLIENT_ID = localStorage.getItem('google_client_id') || '';
+                    if (!CLIENT_ID) {
+                        alert('Google Client IDが設定されていません。\n\n設定方法:\n1. Google Cloud ConsoleでOAuth 2.0クライアントIDを作成\n2. 設定画面でクライアントIDを入力');
+                        return;
+                    }
+                    
+                    google.accounts.id.prompt((notification) => {
+                        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                            // One Tapが表示されない場合は、手動でログインボタンを表示
+                            googleAuthClient = google.accounts.oauth2.initTokenClient({
+                                client_id: CLIENT_ID,
+                                scope: 'https://www.googleapis.com/auth/spreadsheets',
+                                callback: (response) => {
+                                    if (response.access_token) {
+                                        localStorage.setItem('google_access_token', response.access_token);
+                                        googleSheetsService.setAccessToken(response.access_token);
+                                        updateAuthStatus(true, '認証済み');
+                                        showNotification('Google認証に成功しました', 'success');
+                                    } else if (response.error) {
+                                        console.error('認証エラー:', response.error);
+                                        showNotification('認証に失敗しました: ' + response.error, 'error');
+                                    }
+                                },
+                            });
+                            googleAuthClient.requestAccessToken();
+                        }
+                    });
+                }
+            });
+
+            // ログアウトボタンのイベント
+            document.getElementById('google-signout-btn')?.addEventListener('click', () => {
+                localStorage.removeItem('google_access_token');
+                localStorage.removeItem('google_id_token');
+                googleSheetsService.setAccessToken(null);
+                googleSheetsService.isAuthenticated = false;
+                updateAuthStatus(false, '未認証');
+                showNotification('ログアウトしました', 'info');
+            });
+
+            // ページ読み込み時にGoogle認証を初期化
+            if (typeof google !== 'undefined' && google.accounts) {
+                // Google Identity Servicesが読み込まれた後に初期化
+                window.addEventListener('load', () => {
+                    setTimeout(initGoogleAuth, 1000);
+                });
+            } else {
+                // Google Identity Servicesの読み込みを待つ
+                const checkGoogleLoaded = setInterval(() => {
+                    if (typeof google !== 'undefined' && google.accounts) {
+                        clearInterval(checkGoogleLoaded);
+                        initGoogleAuth();
+                    }
+                }, 100);
             }
         });
     </script>

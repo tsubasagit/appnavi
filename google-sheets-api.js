@@ -27,19 +27,86 @@ class GoogleSheetsService {
         }
     }
 
-    // Google認証を実行（公開スプレッドシート用：認証不要）
+    // Google認証を実行（OAuth 2.0）
     async signIn() {
         try {
-            // 公開スプレッドシートの場合は認証不要
-            // スプレッドシートを「リンクを知っている全員」に共有すれば、認証なしでアクセス可能
-            // 認証が必要なスプレッドシートの場合は、fetchSpreadsheetDataでエラーが発生し、
-            // ユーザーに共有設定を変更してもらうメッセージが表示される
-            this.isAuthenticated = true;
-            return true;
+            // Google Identity Services (新しい方式) を使用
+            if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
+                return await this.signInWithGoogleIdentityServices();
+            }
+            
+            // フォールバック: gapi (旧方式) を使用
+            if (typeof gapi !== 'undefined' && gapi.auth2) {
+                return await this.signInWithGapi();
+            }
+            
+            // 認証ライブラリが読み込まれていない場合
+            throw new Error('Google認証ライブラリが読み込まれていません。');
         } catch (error) {
             console.error('Error signing in:', error);
-            throw new Error('スプレッドシートの共有設定を確認してください。「リンクを知っている全員」に共有されている必要があります。');
+            throw error;
         }
+    }
+
+    // Google Identity Services (新しい方式) で認証
+    async signInWithGoogleIdentityServices() {
+        return new Promise((resolve, reject) => {
+            try {
+                const client = google.accounts.oauth2.initTokenClient({
+                    client_id: this.clientId || 'YOUR_CLIENT_ID', // クライアントIDが必要
+                    scope: 'https://www.googleapis.com/auth/spreadsheets',
+                    callback: (response) => {
+                        if (response.error) {
+                            reject(new Error(response.error));
+                            return;
+                        }
+                        this.accessToken = response.access_token;
+                        this.isAuthenticated = true;
+                        resolve(true);
+                    },
+                });
+                client.requestAccessToken();
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+
+    // gapi (旧方式) で認証
+    async signInWithGapi() {
+        return new Promise((resolve, reject) => {
+            try {
+                gapi.load('auth2', () => {
+                    gapi.auth2.init({
+                        client_id: this.clientId || 'YOUR_CLIENT_ID',
+                    }).then(() => {
+                        const authInstance = gapi.auth2.getAuthInstance();
+                        authInstance.signIn({
+                            scope: 'https://www.googleapis.com/auth/spreadsheets'
+                        }).then(() => {
+                            const user = authInstance.currentUser.get();
+                            const authResponse = user.getAuthResponse();
+                            this.accessToken = authResponse.access_token;
+                            this.isAuthenticated = true;
+                            resolve(true);
+                        }).catch(reject);
+                    }).catch(reject);
+                });
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+
+    // アクセストークンを設定（外部から設定する場合）
+    setAccessToken(token) {
+        this.accessToken = token;
+        this.isAuthenticated = true;
+    }
+
+    // クライアントIDを設定
+    setClientId(clientId) {
+        this.clientId = clientId;
     }
 
     // Google認証を解除
@@ -219,17 +286,252 @@ class GoogleSheetsService {
         }
     }
 
-    // スプレッドシートにデータを書き込み
-    async writeToSpreadsheet(spreadsheetUrl, sheetName, data, range = null) {
+    // Google Apps ScriptのWebアプリURLを設定
+    setAppsScriptUrl(url) {
+        this.appsScriptUrl = url;
+    }
+
+    // スプレッドシートにデータを書き込み（Google Sheets API直接書き込み、認証あり）
+    async writeToSpreadsheet(spreadsheetUrl, sheetName, data, rowIndex = null) {
         try {
-            if (!this.isAuthenticated) {
-                throw new Error('Google認証が必要です。');
+            // 認証がある場合はGoogle Sheets APIに直接書き込む
+            if (this.isAuthenticated && this.accessToken) {
+                return await this.writeToSpreadsheetDirect(spreadsheetUrl, sheetName, data, rowIndex);
+            }
+            
+            // 認証がない場合はGoogle Apps Script経由
+            if (this.appsScriptUrl) {
+                return await this.writeToSpreadsheetViaAppsScript(spreadsheetUrl, sheetName, data, rowIndex);
+            }
+            
+            throw new Error('認証またはGoogle Apps ScriptのURLが必要です。');
+        } catch (error) {
+            console.error('Error writing to spreadsheet:', error);
+            throw error;
+        }
+    }
+
+    // Google Sheets APIに直接書き込み（認証あり）
+    async writeToSpreadsheetDirect(spreadsheetUrl, sheetName, data, rowIndex = null) {
+        try {
+            if (!this.accessToken) {
+                throw new Error('アクセストークンが設定されていません。先にGoogle認証を実行してください。');
             }
 
             const spreadsheetId = this.extractSpreadsheetId(spreadsheetUrl);
-            const writeRange = range || `${sheetName}!A1`;
+            const sheet = sheetName || 'Sheet1';
+            const values = Array.isArray(data) ? data : Object.values(data);
             
-            const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(writeRange)}:append?valueInputOption=RAW`;
+            let url;
+            let method;
+            let body;
+
+            if (rowIndex !== null && rowIndex !== undefined) {
+                // 行を更新
+                const range = `${sheet}!A${rowIndex + 2}`; // 行番号は1から始まり、ヘッダー行を考慮して+2
+                url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`;
+                method = 'PUT';
+                body = {
+                    values: [values]
+                };
+            } else {
+                // 新しい行を追加
+                const range = `${sheet}!A:Z`;
+                url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}:append?valueInputOption=RAW`;
+                method = 'POST';
+                body = {
+                    values: [values]
+                };
+            }
+
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Authorization': `Bearer ${this.accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`Google Sheets API error: ${response.statusText} - ${JSON.stringify(errorData)}`);
+            }
+
+            const result = await response.json();
+            return {
+                success: true,
+                message: rowIndex !== null ? 'データを更新しました' : 'データを追加しました',
+                result: result
+            };
+        } catch (error) {
+            console.error('Error writing to spreadsheet directly:', error);
+            throw error;
+        }
+    }
+
+    // Google Apps Script経由で書き込み（認証不要）
+    async writeToSpreadsheetViaAppsScript(spreadsheetUrl, sheetName, data, rowIndex = null) {
+        try {
+            if (!this.appsScriptUrl) {
+                throw new Error('Google Apps ScriptのURLが設定されていません。');
+            }
+
+            const action = rowIndex !== null && rowIndex !== undefined ? 'update' : 'append';
+            const payload = {
+                action: action,
+                values: Array.isArray(data) ? data : Object.values(data),
+                rowIndex: rowIndex
+            };
+
+            const response = await fetch(this.appsScriptUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Google Apps Script error: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Error writing via Apps Script:', error);
+            throw error;
+        }
+    }
+
+    // スプレッドシートの行を更新
+    async updateSpreadsheetRow(spreadsheetUrl, sheetName, rowIndex, data) {
+        try {
+            // 認証がある場合はGoogle Sheets APIに直接書き込む
+            if (this.isAuthenticated && this.accessToken) {
+                return await this.updateSpreadsheetRowDirect(spreadsheetUrl, sheetName, rowIndex, data);
+            }
+            
+            // 認証がない場合はGoogle Apps Script経由
+            if (this.appsScriptUrl) {
+                return await this.updateSpreadsheetRowViaAppsScript(spreadsheetUrl, sheetName, rowIndex, data);
+            }
+            
+            throw new Error('認証またはGoogle Apps ScriptのURLが必要です。');
+        } catch (error) {
+            console.error('Error updating spreadsheet row:', error);
+            throw error;
+        }
+    }
+
+    // Google Sheets APIに直接行を更新（認証あり）
+    async updateSpreadsheetRowDirect(spreadsheetUrl, sheetName, rowIndex, data) {
+        try {
+            if (!this.accessToken) {
+                throw new Error('アクセストークンが設定されていません。');
+            }
+
+            const spreadsheetId = this.extractSpreadsheetId(spreadsheetUrl);
+            const sheet = sheetName || 'Sheet1';
+            const values = Array.isArray(data) ? data : Object.values(data);
+            const range = `${sheet}!A${rowIndex + 2}`; // 行番号は1から始まり、ヘッダー行を考慮して+2
+            
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`;
+            
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${this.accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    values: [values]
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`Google Sheets API error: ${response.statusText} - ${JSON.stringify(errorData)}`);
+            }
+
+            const result = await response.json();
+            return {
+                success: true,
+                message: 'データを更新しました',
+                result: result
+            };
+        } catch (error) {
+            console.error('Error updating spreadsheet row directly:', error);
+            throw error;
+        }
+    }
+
+    // Google Apps Script経由で行を更新
+    async updateSpreadsheetRowViaAppsScript(spreadsheetUrl, sheetName, rowIndex, data) {
+        try {
+            if (!this.appsScriptUrl) {
+                throw new Error('Google Apps ScriptのURLが設定されていません。');
+            }
+
+            const payload = {
+                action: 'update',
+                rowIndex: rowIndex + 1, // スプレッドシートの行番号は1から始まる
+                values: Array.isArray(data) ? data : Object.values(data)
+            };
+
+            const response = await fetch(this.appsScriptUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Google Apps Script error: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Error updating via Apps Script:', error);
+            throw error;
+        }
+    }
+
+    // スプレッドシートの行を削除
+    async deleteSpreadsheetRow(spreadsheetUrl, sheetName, rowIndex) {
+        try {
+            // 認証がある場合はGoogle Sheets APIに直接削除
+            if (this.isAuthenticated && this.accessToken) {
+                return await this.deleteSpreadsheetRowDirect(spreadsheetUrl, sheetName, rowIndex);
+            }
+            
+            // 認証がない場合はGoogle Apps Script経由
+            if (this.appsScriptUrl) {
+                return await this.deleteSpreadsheetRowViaAppsScript(spreadsheetUrl, sheetName, rowIndex);
+            }
+            
+            throw new Error('認証またはGoogle Apps ScriptのURLが必要です。');
+        } catch (error) {
+            console.error('Error deleting spreadsheet row:', error);
+            throw error;
+        }
+    }
+
+    // Google Sheets APIに直接行を削除（認証あり）
+    async deleteSpreadsheetRowDirect(spreadsheetUrl, sheetName, rowIndex) {
+        try {
+            if (!this.accessToken) {
+                throw new Error('アクセストークンが設定されていません。');
+            }
+
+            const spreadsheetId = this.extractSpreadsheetId(spreadsheetUrl);
+            const sheet = sheetName || 'Sheet1';
+            const actualRowIndex = rowIndex + 2; // 行番号は1から始まり、ヘッダー行を考慮して+2
+            
+            // Google Sheets APIで行を削除するには、batchUpdateを使用
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`;
             
             const response = await fetch(url, {
                 method: 'POST',
@@ -238,17 +540,64 @@ class GoogleSheetsService {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    values: [data] // 配列形式のデータ
+                    requests: [{
+                        deleteDimension: {
+                            range: {
+                                sheetId: 0, // 最初のシート（実際のsheetIdを取得する必要がある場合は別途実装）
+                                dimension: 'ROWS',
+                                startIndex: actualRowIndex - 1,
+                                endIndex: actualRowIndex
+                            }
+                        }
+                    }]
                 })
             });
 
             if (!response.ok) {
-                throw new Error(`Google Sheets API error: ${response.statusText}`);
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`Google Sheets API error: ${response.statusText} - ${JSON.stringify(errorData)}`);
             }
 
-            return await response.json();
+            const result = await response.json();
+            return {
+                success: true,
+                message: 'データを削除しました',
+                result: result
+            };
         } catch (error) {
-            console.error('Error writing to spreadsheet:', error);
+            console.error('Error deleting spreadsheet row directly:', error);
+            throw error;
+        }
+    }
+
+    // Google Apps Script経由で行を削除
+    async deleteSpreadsheetRowViaAppsScript(spreadsheetUrl, sheetName, rowIndex) {
+        try {
+            if (!this.appsScriptUrl) {
+                throw new Error('Google Apps ScriptのURLが設定されていません。');
+            }
+
+            const payload = {
+                action: 'delete',
+                rowIndex: rowIndex + 1 // スプレッドシートの行番号は1から始まる
+            };
+
+            const response = await fetch(this.appsScriptUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Google Apps Script error: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Error deleting via Apps Script:', error);
             throw error;
         }
     }

@@ -2410,6 +2410,35 @@
                 // データを更新
                 currentApp.data[index] = { ...currentApp.data[index], ...newRowData };
                 
+                // スプレッドシートに書き込む（設定されている場合）
+                if (currentApp.googleSheetsUrl) {
+                    try {
+                        // アクセストークンが設定されている場合は直接APIに書き込む
+                        if (currentApp.googleAccessToken) {
+                            googleSheetsService.setAccessToken(currentApp.googleAccessToken);
+                        }
+                        // Google Apps ScriptのURLが設定されている場合はそれを使用
+                        if (currentApp.googleAppsScriptUrl) {
+                            googleSheetsService.setAppsScriptUrl(currentApp.googleAppsScriptUrl);
+                        }
+                        
+                        const values = columns.map(col => newRowData[col.name] || '');
+                        const result = await googleSheetsService.updateSpreadsheetRow(
+                            currentApp.googleSheetsUrl,
+                            null,
+                            index,
+                            values
+                        );
+                        
+                        if (result && result.success) {
+                            showNotification('データをスプレッドシートに更新しました');
+                        }
+                    } catch (error) {
+                        console.error('Error updating spreadsheet:', error);
+                        showNotification('スプレッドシートへの更新に失敗しました。データはローカルに保存されました。', 'warning');
+                    }
+                }
+                
                 // データベースに保存
                 if (appId && databaseService) {
                     try {
@@ -2439,6 +2468,29 @@
                 }
                 
                 if (currentApp && currentApp.data) {
+                    // スプレッドシートから削除（設定されている場合）
+                    if (currentApp.googleSheetsUrl) {
+                        try {
+                            // アクセストークンが設定されている場合は直接APIに書き込む
+                            if (currentApp.googleAccessToken) {
+                                googleSheetsService.setAccessToken(currentApp.googleAccessToken);
+                            }
+                            // Google Apps ScriptのURLが設定されている場合はそれを使用
+                            if (currentApp.googleAppsScriptUrl) {
+                                googleSheetsService.setAppsScriptUrl(currentApp.googleAppsScriptUrl);
+                            }
+                            
+                            await googleSheetsService.deleteSpreadsheetRow(
+                                currentApp.googleSheetsUrl,
+                                null,
+                                index
+                            );
+                        } catch (error) {
+                            console.error('Error deleting from spreadsheet:', error);
+                            showNotification('スプレッドシートからの削除に失敗しました。データはローカルから削除されました。', 'warning');
+                        }
+                    }
+                    
                     currentApp.data.splice(index, 1);
                     
                     // データベースに保存
@@ -2592,6 +2644,36 @@
                     currentApp.data = [];
                 }
                 currentApp.data.push(newRow);
+                
+                // スプレッドシートに書き込む（設定されている場合）
+                if (currentApp.googleSheetsUrl) {
+                    try {
+                        // アクセストークンが設定されている場合は直接APIに書き込む
+                        if (currentApp.googleAccessToken) {
+                            googleSheetsService.setAccessToken(currentApp.googleAccessToken);
+                        }
+                        // Google Apps ScriptのURLが設定されている場合はそれを使用
+                        if (currentApp.googleAppsScriptUrl) {
+                            googleSheetsService.setAppsScriptUrl(currentApp.googleAppsScriptUrl);
+                        }
+                        
+                        const values = currentApp.columns.map(col => newRow[col.name] || '');
+                        const result = await googleSheetsService.writeToSpreadsheet(
+                            currentApp.googleSheetsUrl,
+                            null,
+                            values
+                        );
+                        
+                        if (result && result.success) {
+                            showNotification('データをスプレッドシートに追加しました');
+                        } else {
+                            showNotification('データをスプレッドシートに追加しました（ローカル保存）');
+                        }
+                    } catch (error) {
+                        console.error('Error writing to spreadsheet:', error);
+                        showNotification('スプレッドシートへの書き込みに失敗しました。データはローカルに保存されました。', 'warning');
+                    }
+                }
                 
                 // データベースに保存
                 if (appId && databaseService) {
