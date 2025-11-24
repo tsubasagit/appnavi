@@ -169,7 +169,7 @@ To use Google Sheets API and enable write operations:
 2. Enable Google Sheets API
 3. Create OAuth 2.0 credentials (Web application)
    - Set **Authorized JavaScript origins** to your domain (e.g., `https://tsubasagit.github.io` for GitHub Pages)
-   - For local development, add `http://localhost:8000`
+   - **Security Note**: Do not add `localhost` to production Client ID (create a separate Client ID for local development if needed)
 4. Set the Client ID in AppNavi:
    - Open the app settings (API & Integration Settings)
    - Enter your OAuth 2.0 Client ID
