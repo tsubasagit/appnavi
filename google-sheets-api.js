@@ -386,8 +386,44 @@ class GoogleSheetsService {
                     detail['@type']?.includes('ErrorInfo')
                 );
                 
+                // 400エラー（INVALID_ARGUMENT）の処理
+                const is400Error = response.status === 400 || errorData.error?.code === 400;
+                const isInvalidArgument = errorData.error?.status === 'INVALID_ARGUMENT';
+                const errorMessage = errorData.error?.message || '';
+                
+                if (is400Error || isInvalidArgument) {
+                    let detailedMessage = '';
+                    
+                    // 範囲パースエラーの場合
+                    if (errorMessage.includes('Unable to parse range') || errorMessage.includes('parse range')) {
+                        detailedMessage = 'スプレッドシートの範囲指定エラーが発生しました。\n\n';
+                        detailedMessage += '【原因】\n';
+                        detailedMessage += 'スプレッドシートのシート名または範囲の指定に問題があります。\n\n';
+                        detailedMessage += '【解決方法】\n';
+                        detailedMessage += '1. スプレッドシートのシート名を確認してください\n';
+                        detailedMessage += '   - シート名に特殊文字（/, ?, *, [, ], \\）が含まれていないか確認\n';
+                        detailedMessage += '   - シート名にスペースが含まれている場合は、シート名を変更してください\n';
+                        detailedMessage += '2. スプレッドシートのURLを確認してください\n';
+                        detailedMessage += '   - 正しいスプレッドシートのURLが設定されているか確認\n';
+                        detailedMessage += '   - スプレッドシートが削除されていないか確認\n';
+                        detailedMessage += '3. アプリの設定画面で、スプレッドシートURLを再設定してください\n';
+                        detailedMessage += '4. それでもエラーが続く場合は、スプレッドシートのシート名を「Sheet1」に変更してください\n';
+                    } else {
+                        // その他の400エラーの場合
+                        detailedMessage = 'Google Sheets APIでエラーが発生しました。\n\n';
+                        detailedMessage += '【エラー内容】\n';
+                        detailedMessage += `${errorMessage}\n\n`;
+                        detailedMessage += '【解決方法】\n';
+                        detailedMessage += '1. スプレッドシートのURLが正しいか確認してください\n';
+                        detailedMessage += '2. スプレッドシートへのアクセス権限があるか確認してください\n';
+                        detailedMessage += '3. スプレッドシートが削除されていないか確認してください\n';
+                        detailedMessage += '4. アプリの設定画面で、スプレッドシートURLを再設定してください\n';
+                    }
+                    
+                    throw new Error(detailedMessage);
+                }
+                
                 if (is403Error || isPermissionDenied || hasServiceDisabled) {
-                    const errorMessage = errorData.error?.message || '';
                     const errorDetails = errorData.error?.details || [];
                     
                     // プロジェクト番号とアクティベーションURLを抽出
@@ -565,8 +601,44 @@ class GoogleSheetsService {
                     detail['@type']?.includes('ErrorInfo')
                 );
                 
+                // 400エラー（INVALID_ARGUMENT）の処理
+                const is400Error = response.status === 400 || errorData.error?.code === 400;
+                const isInvalidArgument = errorData.error?.status === 'INVALID_ARGUMENT';
+                const errorMessage = errorData.error?.message || '';
+                
+                if (is400Error || isInvalidArgument) {
+                    let detailedMessage = '';
+                    
+                    // 範囲パースエラーの場合
+                    if (errorMessage.includes('Unable to parse range') || errorMessage.includes('parse range')) {
+                        detailedMessage = 'スプレッドシートの範囲指定エラーが発生しました。\n\n';
+                        detailedMessage += '【原因】\n';
+                        detailedMessage += 'スプレッドシートのシート名または範囲の指定に問題があります。\n\n';
+                        detailedMessage += '【解決方法】\n';
+                        detailedMessage += '1. スプレッドシートのシート名を確認してください\n';
+                        detailedMessage += '   - シート名に特殊文字（/, ?, *, [, ], \\）が含まれていないか確認\n';
+                        detailedMessage += '   - シート名にスペースが含まれている場合は、シート名を変更してください\n';
+                        detailedMessage += '2. スプレッドシートのURLを確認してください\n';
+                        detailedMessage += '   - 正しいスプレッドシートのURLが設定されているか確認\n';
+                        detailedMessage += '   - スプレッドシートが削除されていないか確認\n';
+                        detailedMessage += '3. アプリの設定画面で、スプレッドシートURLを再設定してください\n';
+                        detailedMessage += '4. それでもエラーが続く場合は、スプレッドシートのシート名を「Sheet1」に変更してください\n';
+                    } else {
+                        // その他の400エラーの場合
+                        detailedMessage = 'Google Sheets APIでエラーが発生しました。\n\n';
+                        detailedMessage += '【エラー内容】\n';
+                        detailedMessage += `${errorMessage}\n\n`;
+                        detailedMessage += '【解決方法】\n';
+                        detailedMessage += '1. スプレッドシートのURLが正しいか確認してください\n';
+                        detailedMessage += '2. スプレッドシートへのアクセス権限があるか確認してください\n';
+                        detailedMessage += '3. スプレッドシートが削除されていないか確認してください\n';
+                        detailedMessage += '4. アプリの設定画面で、スプレッドシートURLを再設定してください\n';
+                    }
+                    
+                    throw new Error(detailedMessage);
+                }
+                
                 if (is403Error || isPermissionDenied || hasServiceDisabled) {
-                    const errorMessage = errorData.error?.message || '';
                     const errorDetails = errorData.error?.details || [];
                     
                     // プロジェクト番号とアクティベーションURLを抽出
@@ -752,8 +824,44 @@ class GoogleSheetsService {
                     detail['@type']?.includes('ErrorInfo')
                 );
                 
+                // 400エラー（INVALID_ARGUMENT）の処理
+                const is400Error = response.status === 400 || errorData.error?.code === 400;
+                const isInvalidArgument = errorData.error?.status === 'INVALID_ARGUMENT';
+                const errorMessage = errorData.error?.message || '';
+                
+                if (is400Error || isInvalidArgument) {
+                    let detailedMessage = '';
+                    
+                    // 範囲パースエラーの場合
+                    if (errorMessage.includes('Unable to parse range') || errorMessage.includes('parse range')) {
+                        detailedMessage = 'スプレッドシートの範囲指定エラーが発生しました。\n\n';
+                        detailedMessage += '【原因】\n';
+                        detailedMessage += 'スプレッドシートのシート名または範囲の指定に問題があります。\n\n';
+                        detailedMessage += '【解決方法】\n';
+                        detailedMessage += '1. スプレッドシートのシート名を確認してください\n';
+                        detailedMessage += '   - シート名に特殊文字（/, ?, *, [, ], \\）が含まれていないか確認\n';
+                        detailedMessage += '   - シート名にスペースが含まれている場合は、シート名を変更してください\n';
+                        detailedMessage += '2. スプレッドシートのURLを確認してください\n';
+                        detailedMessage += '   - 正しいスプレッドシートのURLが設定されているか確認\n';
+                        detailedMessage += '   - スプレッドシートが削除されていないか確認\n';
+                        detailedMessage += '3. アプリの設定画面で、スプレッドシートURLを再設定してください\n';
+                        detailedMessage += '4. それでもエラーが続く場合は、スプレッドシートのシート名を「Sheet1」に変更してください\n';
+                    } else {
+                        // その他の400エラーの場合
+                        detailedMessage = 'Google Sheets APIでエラーが発生しました。\n\n';
+                        detailedMessage += '【エラー内容】\n';
+                        detailedMessage += `${errorMessage}\n\n`;
+                        detailedMessage += '【解決方法】\n';
+                        detailedMessage += '1. スプレッドシートのURLが正しいか確認してください\n';
+                        detailedMessage += '2. スプレッドシートへのアクセス権限があるか確認してください\n';
+                        detailedMessage += '3. スプレッドシートが削除されていないか確認してください\n';
+                        detailedMessage += '4. アプリの設定画面で、スプレッドシートURLを再設定してください\n';
+                    }
+                    
+                    throw new Error(detailedMessage);
+                }
+                
                 if (is403Error || isPermissionDenied || hasServiceDisabled) {
-                    const errorMessage = errorData.error?.message || '';
                     const errorDetails = errorData.error?.details || [];
                     
                     // プロジェクト番号とアクティベーションURLを抽出
@@ -961,8 +1069,44 @@ class GoogleSheetsService {
                     detail['@type']?.includes('ErrorInfo')
                 );
                 
+                // 400エラー（INVALID_ARGUMENT）の処理
+                const is400Error = response.status === 400 || errorData.error?.code === 400;
+                const isInvalidArgument = errorData.error?.status === 'INVALID_ARGUMENT';
+                const errorMessage = errorData.error?.message || '';
+                
+                if (is400Error || isInvalidArgument) {
+                    let detailedMessage = '';
+                    
+                    // 範囲パースエラーの場合
+                    if (errorMessage.includes('Unable to parse range') || errorMessage.includes('parse range')) {
+                        detailedMessage = 'スプレッドシートの範囲指定エラーが発生しました。\n\n';
+                        detailedMessage += '【原因】\n';
+                        detailedMessage += 'スプレッドシートのシート名または範囲の指定に問題があります。\n\n';
+                        detailedMessage += '【解決方法】\n';
+                        detailedMessage += '1. スプレッドシートのシート名を確認してください\n';
+                        detailedMessage += '   - シート名に特殊文字（/, ?, *, [, ], \\）が含まれていないか確認\n';
+                        detailedMessage += '   - シート名にスペースが含まれている場合は、シート名を変更してください\n';
+                        detailedMessage += '2. スプレッドシートのURLを確認してください\n';
+                        detailedMessage += '   - 正しいスプレッドシートのURLが設定されているか確認\n';
+                        detailedMessage += '   - スプレッドシートが削除されていないか確認\n';
+                        detailedMessage += '3. アプリの設定画面で、スプレッドシートURLを再設定してください\n';
+                        detailedMessage += '4. それでもエラーが続く場合は、スプレッドシートのシート名を「Sheet1」に変更してください\n';
+                    } else {
+                        // その他の400エラーの場合
+                        detailedMessage = 'Google Sheets APIでエラーが発生しました。\n\n';
+                        detailedMessage += '【エラー内容】\n';
+                        detailedMessage += `${errorMessage}\n\n`;
+                        detailedMessage += '【解決方法】\n';
+                        detailedMessage += '1. スプレッドシートのURLが正しいか確認してください\n';
+                        detailedMessage += '2. スプレッドシートへのアクセス権限があるか確認してください\n';
+                        detailedMessage += '3. スプレッドシートが削除されていないか確認してください\n';
+                        detailedMessage += '4. アプリの設定画面で、スプレッドシートURLを再設定してください\n';
+                    }
+                    
+                    throw new Error(detailedMessage);
+                }
+                
                 if (is403Error || isPermissionDenied || hasServiceDisabled) {
-                    const errorMessage = errorData.error?.message || '';
                     const errorDetails = errorData.error?.details || [];
                     
                     // プロジェクト番号とアクティベーションURLを抽出
