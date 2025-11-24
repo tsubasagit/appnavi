@@ -3019,21 +3019,36 @@
                 const authIndicator = document.getElementById('sheets-integration-auth-indicator');
                 const authText = document.getElementById('sheets-integration-auth-text');
                 
-                if (currentApp.googleSheetsUrl) {
+                // バナー要素の存在確認
+                if (!banner) {
+                    console.error('updateSheetsIntegrationBanner: バナー要素が見つかりません');
+                    return;
+                }
+                
+                // googleSheetsUrlが設定されているか確認（null、undefined、空文字列をチェック）
+                const hasSheetsUrl = currentApp.googleSheetsUrl && 
+                                     currentApp.googleSheetsUrl.trim().length > 0;
+                
+                console.log('updateSheetsIntegrationBanner: hasSheetsUrl', hasSheetsUrl);
+                console.log('updateSheetsIntegrationBanner: banner.classList', banner.classList.toString());
+                
+                if (hasSheetsUrl) {
                     console.log('updateSheetsIntegrationBanner: バナーを表示します');
                     // スプレッドシート連携が設定されている場合、バナーを表示
-                    if (banner) {
-                        banner.classList.remove('hidden');
-                    }
+                    banner.classList.remove('hidden');
+                    
                     if (urlEl) {
                         urlEl.textContent = currentApp.googleSheetsUrl;
                     }
                     if (linkEl) {
                         linkEl.href = currentApp.googleSheetsUrl;
+                        linkEl.classList.remove('hidden');
                     }
                     
                     // 認証状態を表示
                     const hasAuth = currentApp.googleAccessToken || localStorage.getItem('google_access_token');
+                    console.log('updateSheetsIntegrationBanner: hasAuth', hasAuth);
+                    
                     if (authIndicator) {
                         authIndicator.className = hasAuth 
                             ? 'h-2 w-2 rounded-full bg-green-500' 
@@ -3045,6 +3060,7 @@
                     
                     // 更新ボタンの有効/無効を設定
                     const syncButton = document.getElementById('sheets-sync-button');
+                    console.log('updateSheetsIntegrationBanner: syncButton', syncButton);
                     if (syncButton) {
                         syncButton.disabled = !hasAuth;
                         if (!hasAuth) {
@@ -3052,12 +3068,14 @@
                         } else {
                             syncButton.title = 'スプレッドシートにデータを反映します';
                         }
+                        console.log('updateSheetsIntegrationBanner: syncButton.disabled', syncButton.disabled);
+                    } else {
+                        console.error('updateSheetsIntegrationBanner: 更新ボタンが見つかりません');
                     }
                 } else {
+                    console.log('updateSheetsIntegrationBanner: googleSheetsUrlが設定されていないため、バナーを非表示にします');
                     // 連携が設定されていない場合、バナーを非表示
-                    if (banner) {
-                        banner.classList.add('hidden');
-                    }
+                    banner.classList.add('hidden');
                 }
             }
             
