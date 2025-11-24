@@ -918,8 +918,25 @@ class GoogleSheetsService {
                 ...dataRows.map(row => headers.map(header => row[header] || '')) // データ行
             ];
             
-            // 範囲を指定（A1から始まる）
-            const range = `${sheet}!A1`;
+            // 列名を生成する関数（A-Z, AA-ZZ, AAA-ZZZなどに対応）
+            const getColumnName = (colIndex) => {
+                let result = '';
+                colIndex++; // 0ベースから1ベースに変換
+                while (colIndex > 0) {
+                    colIndex--;
+                    result = String.fromCharCode(65 + (colIndex % 26)) + result;
+                    colIndex = Math.floor(colIndex / 26);
+                }
+                return result;
+            };
+            
+            // 範囲を指定（A1から始まり、データの行数と列数に基づいて範囲を決定）
+            // シート名に特殊文字が含まれている場合はシングルクォートで囲む
+            const columnCount = headers.length;
+            const lastColumn = getColumnName(columnCount - 1); // 0ベースなので-1
+            const rowCount = allRows.length;
+            // シート名をシングルクォートで囲む（特殊文字やスペースを含む場合に対応）
+            const range = `'${sheet}'!A1:${lastColumn}${rowCount}`;
             const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`;
             
             const response = await fetch(url, {
