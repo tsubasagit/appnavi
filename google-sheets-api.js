@@ -429,17 +429,24 @@ class GoogleSheetsService {
                     }
                     
                     // 403エラーの場合は常に詳細メッセージを表示
-                    let detailedMessage = 'Google Sheets APIが有効化されていません。\n\n';
-                    detailedMessage += '【解決方法】\n';
+                    // アクティベーションURLが取得できた場合は、それを含める
+                    if (!activationUrl && projectNumber) {
+                        activationUrl = `https://console.developers.google.com/apis/api/sheets.googleapis.com/overview?project=${projectNumber}`;
+                    }
+                    
+                    let detailedMessage = 'Google Sheets APIが有効化されていません。';
+                    
+                    // アクティベーションURLを含める（フロントエンドで抽出できるように）
+                    if (activationUrl) {
+                        detailedMessage += ` ACTIVATION_URL:${activationUrl}`;
+                    }
+                    
+                    detailedMessage += '\n\n【解決方法】\n';
                     
                     if (activationUrl) {
                         // アクティベーションURLが取得できた場合
                         detailedMessage += `1. 以下のURLをクリックしてGoogle Sheets APIを有効化してください:\n`;
                         detailedMessage += `   ${activationUrl}\n\n`;
-                    } else if (projectNumber) {
-                        // プロジェクト番号のみ取得できた場合
-                        detailedMessage += `1. 以下のURLにアクセスしてGoogle Sheets APIを有効化してください:\n`;
-                        detailedMessage += `   https://console.developers.google.com/apis/api/sheets.googleapis.com/overview?project=${projectNumber}\n\n`;
                     } else {
                         // プロジェクト番号が取得できない場合
                         detailedMessage += `1. Google Cloud Console（https://console.cloud.google.com/）にアクセスしてください\n`;
@@ -601,17 +608,24 @@ class GoogleSheetsService {
                     }
                     
                     // 403エラーの場合は常に詳細メッセージを表示
-                    let detailedMessage = 'Google Sheets APIが有効化されていません。\n\n';
-                    detailedMessage += '【解決方法】\n';
+                    // アクティベーションURLが取得できた場合は、それを含める
+                    if (!activationUrl && projectNumber) {
+                        activationUrl = `https://console.developers.google.com/apis/api/sheets.googleapis.com/overview?project=${projectNumber}`;
+                    }
+                    
+                    let detailedMessage = 'Google Sheets APIが有効化されていません。';
+                    
+                    // アクティベーションURLを含める（フロントエンドで抽出できるように）
+                    if (activationUrl) {
+                        detailedMessage += ` ACTIVATION_URL:${activationUrl}`;
+                    }
+                    
+                    detailedMessage += '\n\n【解決方法】\n';
                     
                     if (activationUrl) {
                         // アクティベーションURLが取得できた場合
                         detailedMessage += `1. 以下のURLをクリックしてGoogle Sheets APIを有効化してください:\n`;
                         detailedMessage += `   ${activationUrl}\n\n`;
-                    } else if (projectNumber) {
-                        // プロジェクト番号のみ取得できた場合
-                        detailedMessage += `1. 以下のURLにアクセスしてGoogle Sheets APIを有効化してください:\n`;
-                        detailedMessage += `   https://console.developers.google.com/apis/api/sheets.googleapis.com/overview?project=${projectNumber}\n\n`;
                     } else {
                         // プロジェクト番号が取得できない場合
                         detailedMessage += `1. Google Cloud Console（https://console.cloud.google.com/）にアクセスしてください\n`;
@@ -781,17 +795,24 @@ class GoogleSheetsService {
                     }
                     
                     // 403エラーの場合は常に詳細メッセージを表示
-                    let detailedMessage = 'Google Sheets APIが有効化されていません。\n\n';
-                    detailedMessage += '【解決方法】\n';
+                    // アクティベーションURLが取得できた場合は、それを含める
+                    if (!activationUrl && projectNumber) {
+                        activationUrl = `https://console.developers.google.com/apis/api/sheets.googleapis.com/overview?project=${projectNumber}`;
+                    }
+                    
+                    let detailedMessage = 'Google Sheets APIが有効化されていません。';
+                    
+                    // アクティベーションURLを含める（フロントエンドで抽出できるように）
+                    if (activationUrl) {
+                        detailedMessage += ` ACTIVATION_URL:${activationUrl}`;
+                    }
+                    
+                    detailedMessage += '\n\n【解決方法】\n';
                     
                     if (activationUrl) {
                         // アクティベーションURLが取得できた場合
                         detailedMessage += `1. 以下のURLをクリックしてGoogle Sheets APIを有効化してください:\n`;
                         detailedMessage += `   ${activationUrl}\n\n`;
-                    } else if (projectNumber) {
-                        // プロジェクト番号のみ取得できた場合
-                        detailedMessage += `1. 以下のURLにアクセスしてGoogle Sheets APIを有効化してください:\n`;
-                        detailedMessage += `   https://console.developers.google.com/apis/api/sheets.googleapis.com/overview?project=${projectNumber}\n\n`;
                     } else {
                         // プロジェクト番号が取得できない場合
                         detailedMessage += `1. Google Cloud Console（https://console.cloud.google.com/）にアクセスしてください\n`;
@@ -966,17 +987,24 @@ class GoogleSheetsService {
                     }
                     
                     // 403エラーの場合は常に詳細メッセージを表示
-                    let detailedMessage = 'Google Sheets APIが有効化されていません。\n\n';
-                    detailedMessage += '【解決方法】\n';
+                    // アクティベーションURLが取得できた場合は、それを含める
+                    if (!activationUrl && projectNumber) {
+                        activationUrl = `https://console.developers.google.com/apis/api/sheets.googleapis.com/overview?project=${projectNumber}`;
+                    }
+                    
+                    let detailedMessage = 'Google Sheets APIが有効化されていません。';
+                    
+                    // アクティベーションURLを含める（フロントエンドで抽出できるように）
+                    if (activationUrl) {
+                        detailedMessage += ` ACTIVATION_URL:${activationUrl}`;
+                    }
+                    
+                    detailedMessage += '\n\n【解決方法】\n';
                     
                     if (activationUrl) {
                         // アクティベーションURLが取得できた場合
                         detailedMessage += `1. 以下のURLをクリックしてGoogle Sheets APIを有効化してください:\n`;
                         detailedMessage += `   ${activationUrl}\n\n`;
-                    } else if (projectNumber) {
-                        // プロジェクト番号のみ取得できた場合
-                        detailedMessage += `1. 以下のURLにアクセスしてGoogle Sheets APIを有効化してください:\n`;
-                        detailedMessage += `   https://console.developers.google.com/apis/api/sheets.googleapis.com/overview?project=${projectNumber}\n\n`;
                     } else {
                         // プロジェクト番号が取得できない場合
                         detailedMessage += `1. Google Cloud Console（https://console.cloud.google.com/）にアクセスしてください\n`;
