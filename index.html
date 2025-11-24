@@ -2638,14 +2638,20 @@
                         showNotification('アプリを作成中...', 'info');
                         
                         try {
-                            const newApp = await addApp({
+                            // 認証済みの場合はアクセストークンを取得
+                            const accessToken = localStorage.getItem('google_access_token');
+                            
+                            const newApp = await databaseService.addApp({
                                 name: appName,
                                 description: 'Googleスプレッドシートから作成されたアプリです。',
                                 columns: columns,
                                 data: rows,
                                 color: 'green',
+                                storageType: databaseService?.getStorageType() || 'local',
                                 googleSheetsUrl: sheetUrl,
-                                googleSheetsLastSynced: new Date().toISOString()
+                                googleSheetsLastSynced: new Date().toISOString(),
+                                googleAppsScriptUrl: null, // 後で設定可能
+                                googleAccessToken: accessToken || null // 認証済みの場合はアクセストークンを保存
                             });
                             
                             if (newApp && newApp.id) {

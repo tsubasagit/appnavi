@@ -201,7 +201,12 @@ class DatabaseService {
                 columns: appData.columns || [],
                 data: appData.data || [],
                 userId: userId,
-                storageType: storageType // 保存方法を記録（変更不可）
+                storageType: storageType, // 保存方法を記録（変更不可）
+                // Googleスプレッドシート連携情報
+                googleSheetsUrl: appData.googleSheetsUrl || null,
+                googleAccessToken: appData.googleAccessToken || null,
+                googleSheetsLastSynced: appData.googleSheetsLastSynced || null,
+                googleAppsScriptUrl: appData.googleAppsScriptUrl || null
             };
 
             // storageTypeに基づいて保存先を決定
@@ -237,7 +242,12 @@ class DatabaseService {
                     updatedAt: timestamp,
                     columns: appData.columns || [],
                     data: appData.data || [],
-                    storageType: 'local'
+                    storageType: 'local',
+                    // Googleスプレッドシート連携情報
+                    googleSheetsUrl: appData.googleSheetsUrl || null,
+                    googleAccessToken: appData.googleAccessToken || null,
+                    googleSheetsLastSynced: appData.googleSheetsLastSynced || null,
+                    googleAppsScriptUrl: appData.googleAppsScriptUrl || null
                 };
                 return this.addAppToLocalStorage(newApp);
             }
