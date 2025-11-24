@@ -2861,7 +2861,7 @@
                         // 認証済みの場合はアクセストークンを保存
                         const accessToken = localStorage.getItem('google_access_token');
                         
-                        const newApp = await addApp({
+                        const newApp = await databaseService.addApp({
                             name: appName,
                             description: 'Googleスプレッドシートから作成されたアプリです。',
                             columns: columns,
