@@ -52,8 +52,19 @@ class GoogleSheetsService {
     async signInWithGoogleIdentityServices() {
         return new Promise((resolve, reject) => {
             try {
+                // クライアントIDの優先順位: 1. this.clientId 2. localStorage 3. デフォルト値
+                const DEFAULT_CLIENT_ID = '509155102966-d1caj0trqoakrmi2tju5mvicdlj2qb1f.apps.googleusercontent.com';
+                const clientId = this.clientId || 
+                                localStorage.getItem('google_client_id') || 
+                                DEFAULT_CLIENT_ID;
+                
+                if (!clientId || clientId === 'YOUR_CLIENT_ID') {
+                    reject(new Error('Google Client IDが設定されていません。設定画面で設定してください。'));
+                    return;
+                }
+                
                 const client = google.accounts.oauth2.initTokenClient({
-                    client_id: this.clientId || 'YOUR_CLIENT_ID', // クライアントIDが必要
+                    client_id: clientId,
                     scope: 'https://www.googleapis.com/auth/spreadsheets',
                     callback: (response) => {
                         if (response.error) {
@@ -76,9 +87,20 @@ class GoogleSheetsService {
     async signInWithGapi() {
         return new Promise((resolve, reject) => {
             try {
+                // クライアントIDの優先順位: 1. this.clientId 2. localStorage 3. デフォルト値
+                const DEFAULT_CLIENT_ID = '509155102966-d1caj0trqoakrmi2tju5mvicdlj2qb1f.apps.googleusercontent.com';
+                const clientId = this.clientId || 
+                                localStorage.getItem('google_client_id') || 
+                                DEFAULT_CLIENT_ID;
+                
+                if (!clientId || clientId === 'YOUR_CLIENT_ID') {
+                    reject(new Error('Google Client IDが設定されていません。設定画面で設定してください。'));
+                    return;
+                }
+                
                 gapi.load('auth2', () => {
                     gapi.auth2.init({
-                        client_id: this.clientId || 'YOUR_CLIENT_ID',
+                        client_id: clientId,
                     }).then(() => {
                         const authInstance = gapi.auth2.getAuthInstance();
                         authInstance.signIn({

@@ -159,18 +159,37 @@ service cloud.firestore {
 
 ### 4. Google Sheets API (Optional)
 
-To use Google Sheets API:
+To use Google Sheets API and enable write operations:
+
+**Default Client ID**: A demo Client ID is pre-configured. You can use it immediately, but for production use, we recommend setting your own Client ID.
+
+**To use your own Client ID**:
 
 1. Create a project in [Google Cloud Console](https://console.cloud.google.com/)
 2. Enable Google Sheets API
 3. Create OAuth 2.0 credentials (Web application)
-4. Replace `YOUR_CLIENT_ID` in `google-sheets-api.js`
+   - Set **Authorized JavaScript origins** to your domain (e.g., `https://tsubasagit.github.io` for GitHub Pages)
+   - For local development, add `http://localhost:8000`
+4. Set the Client ID in AppNavi:
+   - Open the app settings (API & Integration Settings)
+   - Enter your OAuth 2.0 Client ID
+   - Save
+
+**Security Note for Open Source Projects**:
+- ✅ **Client ID is safe to expose**: OAuth 2.0 Client IDs are designed to be public (they're visible in browser code)
+- ❌ **Client Secret must never be exposed**: Only used in server-side applications (not needed for browser-based apps)
+- The default Client ID is configured with restricted authorized origins for security
+- Users should set their own Client ID for production use
+
+See `GOOGLE_AUTH_SETUP.md` for detailed setup instructions.
 
 **Note**: Google API Client Library is required:
 ```html
 <script src="https://apis.google.com/js/api.js"></script>
 <script src="https://apis.google.com/js/platform.js"></script>
 ```
+
+See `GOOGLE_AUTH_SETUP.md` for detailed setup instructions.
 
 ## Usage
 

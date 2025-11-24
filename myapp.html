@@ -597,6 +597,34 @@
                 <div id="settings-api" class="settings-content hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm max-w-4xl">
                         <h2 class="text-xl font-semibold text-slate-900 mb-6">外部サービスとの連携設定</h2>
                         <div class="space-y-6">
+                            <!-- Google認証設定 -->
+                            <div class="rounded-xl border border-blue-100 bg-blue-50 px-4 py-4">
+                                <p class="text-sm font-semibold text-blue-900 mb-2">Google認証設定</p>
+                                <p class="text-xs text-blue-700 mb-3">Googleスプレッドシートにデータを書き込むには、Google OAuth 2.0クライアントIDが必要です。</p>
+                                <div>
+                                    <label class="text-sm font-semibold text-slate-700 mb-2 block">OAuth 2.0 クライアントID</label>
+                                    <div class="flex items-center space-x-2">
+                                        <input type="text" id="settings-google-client-id" class="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="例: 123456789-abcdefghijklmnop.apps.googleusercontent.com" />
+                                        <button id="save-client-id-btn" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700">保存</button>
+                                    </div>
+                                    <p class="mt-2 text-xs text-blue-600">
+                                        <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="underline">Google Cloud Console</a>でクライアントIDを作成してください。
+                                    </p>
+                                    <div class="mt-2 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2">
+                                        <p class="text-xs font-semibold text-amber-900 mb-1">📌 設定手順</p>
+                                        <ol class="ml-4 list-decimal text-xs text-amber-700 space-y-1">
+                                            <li>Google Cloud Consoleにアクセス</li>
+                                            <li>プロジェクトを作成または選択</li>
+                                            <li>「APIとサービス」>「認証情報」を開く</li>
+                                            <li>「認証情報を作成」>「OAuth 2.0 クライアント ID」を選択</li>
+                                            <li>アプリケーションの種類で「ウェブアプリケーション」を選択</li>
+                                            <li>承認済みのJavaScript生成元に「<span id="current-origin" class="font-mono"></span>」を追加</li>
+                                            <li>作成されたクライアントIDをコピーして上記に入力</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <!-- 現在の連携状態を表示 -->
                             <div id="current-integration-status" class="rounded-xl border border-green-200 bg-green-50 px-4 py-4">
                                 <div class="flex items-start justify-between">
@@ -3000,9 +3028,43 @@
             });
             document.getElementById('settings-btn-api')?.addEventListener('click', () => {
                 showSettingsContent('api');
+                // クライアントIDを表示
+                const clientIdInput = document.getElementById('settings-google-client-id');
+                if (clientIdInput) {
+                    const savedClientId = localStorage.getItem('google_client_id') || '';
+                    clientIdInput.value = savedClientId;
+                    
+                    // 現在のオリジンを表示
+                    const originEl = document.getElementById('current-origin');
+                    if (originEl) {
+                        originEl.textContent = window.location.origin;
+                    }
+                }
             });
             document.getElementById('settings-btn-ai')?.addEventListener('click', () => {
                 showSettingsContent('ai');
+            });
+
+            // クライアントID保存ボタンのイベント
+            document.getElementById('save-client-id-btn')?.addEventListener('click', () => {
+                const clientIdInput = document.getElementById('settings-google-client-id');
+                if (!clientIdInput) return;
+                
+                const clientId = clientIdInput.value.trim();
+                if (!clientId) {
+                    showNotification('クライアントIDを入力してください', 'warning');
+                    return;
+                }
+                
+                // クライアントIDの形式を簡易チェック
+                if (!clientId.includes('.apps.googleusercontent.com') && !clientId.match(/^\d+-[a-zA-Z0-9]+\.apps\.googleusercontent\.com$/)) {
+                    if (!confirm('クライアントIDの形式が正しくない可能性があります。\n\n例: 123456789-abcdefghijklmnop.apps.googleusercontent.com\n\nこのまま保存しますか？')) {
+                        return;
+                    }
+                }
+                
+                localStorage.setItem('google_client_id', clientId);
+                showNotification('クライアントIDを保存しました。ページを再読み込みして認証を試してください。', 'success');
             });
 
             // アプリ読み込み時に設定画面を更新

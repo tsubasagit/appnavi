@@ -3002,9 +3002,13 @@
                     return;
                 }
 
-                // クライアントIDを設定（環境変数またはデフォルト値）
-                // 実際の使用時は、Google Cloud Consoleで取得したクライアントIDを設定してください
-                const CLIENT_ID = localStorage.getItem('google_client_id') || '';
+                // クライアントIDを設定
+                // 優先順位: 1. localStorage（ユーザー設定） 2. 環境変数（将来の拡張用） 3. デフォルト値（デモ用）
+                // 注意: クライアントIDは公開しても安全ですが、デモ用の場合は適切に制限を設定してください
+                const DEFAULT_CLIENT_ID = '509155102966-d1caj0trqoakrmi2tju5mvicdlj2qb1f.apps.googleusercontent.com';
+                const CLIENT_ID = localStorage.getItem('google_client_id') || 
+                                 (typeof GOOGLE_CLIENT_ID !== 'undefined' ? GOOGLE_CLIENT_ID : '') ||
+                                 DEFAULT_CLIENT_ID;
                 
                 if (!CLIENT_ID) {
                     console.warn('Google Client IDが設定されていません。設定画面で設定してください。');
@@ -3183,37 +3187,89 @@
 
             // ログインボタンのイベント
             document.getElementById('google-signin-btn')?.addEventListener('click', () => {
+                const CLIENT_ID = localStorage.getItem('google_client_id') || '';
+                
+                if (!CLIENT_ID) {
+                    // クライアントIDが設定されていない場合の案内
+                    const setupMessage = 'Google Client IDが設定されていません。\n\n' +
+                        '【設定方法】\n' +
+                        '1. Google Cloud Console (https://console.cloud.google.com/) にアクセス\n' +
+                        '2. プロジェクトを作成または選択\n' +
+                        '3. 「APIとサービス」>「認証情報」を開く\n' +
+                        '4. 「認証情報を作成」>「OAuth 2.0 クライアント ID」を選択\n' +
+                        '5. アプリケーションの種類で「ウェブアプリケーション」を選択\n' +
+                        '6. 承認済みのJavaScript生成元に「' + window.location.origin + '」を追加\n' +
+                        '7. 作成されたクライアントIDをコピー\n' +
+                        '8. ブラウザのコンソール（F12キー）で以下を実行:\n' +
+                        '   localStorage.setItem("google_client_id", "YOUR_CLIENT_ID");\n\n' +
+                        '【簡易設定】\n' +
+                        'コンソールで直接設定する場合は、下のボタンをクリックしてください。';
+                    
+                    if (confirm(setupMessage + '\n\n今すぐ設定しますか？')) {
+                        // クライアントID入力ダイアログを表示
+                        const clientId = prompt('Google OAuth 2.0 クライアントIDを入力してください:');
+                        if (clientId && clientId.trim()) {
+                            localStorage.setItem('google_client_id', clientId.trim());
+                            showNotification('クライアントIDを設定しました。もう一度ログインボタンをクリックしてください。', 'success');
+                            // 認証を再初期化
+                            initGoogleAuth();
+                        } else {
+                            showNotification('クライアントIDが入力されませんでした。', 'warning');
+                        }
+                    }
+                    return;
+                }
+                
+                // クライアントIDが設定されている場合、認証を開始
                 if (googleAuthClient) {
                     googleAuthClient.requestAccessToken();
                 } else {
-                    // Google Identity ServicesのOne Tapまたはポップアップでログイン
-                    const CLIENT_ID = localStorage.getItem('google_client_id') || '';
-                    if (!CLIENT_ID) {
-                        alert('Google Client IDが設定されていません。\n\n設定方法:\n1. Google Cloud ConsoleでOAuth 2.0クライアントIDを作成\n2. 設定画面でクライアントIDを入力');
+                    // Google Identity ServicesのOAuth 2.0トークンクライアントを初期化
+                    if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+                        showNotification('Google認証ライブラリが読み込まれていません。ページを再読み込みしてください。', 'error');
                         return;
                     }
                     
-                    google.accounts.id.prompt((notification) => {
-                        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-                            // One Tapが表示されない場合は、手動でログインボタンを表示
-                            googleAuthClient = google.accounts.oauth2.initTokenClient({
-                                client_id: CLIENT_ID,
-                                scope: 'https://www.googleapis.com/auth/spreadsheets',
-                                callback: (response) => {
-                                    if (response.access_token) {
-                                        localStorage.setItem('google_access_token', response.access_token);
-                                        googleSheetsService.setAccessToken(response.access_token);
-                                        updateAuthStatus(true, '認証済み');
-                                        showNotification('Google認証に成功しました', 'success');
-                                    } else if (response.error) {
-                                        console.error('認証エラー:', response.error);
-                                        showNotification('認証に失敗しました: ' + response.error, 'error');
+                    try {
+                        googleAuthClient = google.accounts.oauth2.initTokenClient({
+                            client_id: CLIENT_ID,
+                            scope: 'https://www.googleapis.com/auth/spreadsheets',
+                            callback: (response) => {
+                                if (response.access_token) {
+                                    localStorage.setItem('google_access_token', response.access_token);
+                                    googleSheetsService.setAccessToken(response.access_token);
+                                    updateAuthStatus(true, '認証済み');
+                                    showNotification('Google認証に成功しました', 'success');
+                                } else if (response.error) {
+                                    console.error('認証エラー:', response.error);
+                                    let errorMessage = '認証に失敗しました。';
+                                    
+                                    if (response.error === 'invalid_client') {
+                                        errorMessage = 'OAuth クライアントが見つかりません。\n\n' +
+                                            '【原因】\n' +
+                                            '・クライアントIDが正しくない可能性があります\n' +
+                                            '・Google Cloud ConsoleでクライアントIDが削除されている可能性があります\n\n' +
+                                            '【解決方法】\n' +
+                                            '1. ブラウザのコンソール（F12キー）を開く\n' +
+                                            '2. 以下を実行してクライアントIDを確認:\n' +
+                                            '   localStorage.getItem("google_client_id")\n' +
+                                            '3. 正しいクライアントIDを設定し直してください';
+                                    } else if (response.error === 'access_denied') {
+                                        errorMessage = '認証が拒否されました。もう一度お試しください。';
+                                    } else {
+                                        errorMessage = '認証エラー: ' + response.error;
                                     }
-                                },
-                            });
-                            googleAuthClient.requestAccessToken();
-                        }
-                    });
+                                    
+                                    alert(errorMessage);
+                                    showNotification('認証に失敗しました', 'error');
+                                }
+                            },
+                        });
+                        googleAuthClient.requestAccessToken();
+                    } catch (error) {
+                        console.error('認証初期化エラー:', error);
+                        showNotification('認証の初期化に失敗しました: ' + error.message, 'error');
+                    }
                 }
             });
 
@@ -3226,6 +3282,51 @@
                 updateAuthStatus(false, '未認証');
                 showNotification('ログアウトしました', 'info');
             });
+
+            // クライアントID保存ボタンのイベント
+            document.getElementById('save-client-id-btn')?.addEventListener('click', () => {
+                const clientIdInput = document.getElementById('settings-google-client-id');
+                if (!clientIdInput) return;
+                
+                const clientId = clientIdInput.value.trim();
+                if (!clientId) {
+                    showNotification('クライアントIDを入力してください', 'warning');
+                    return;
+                }
+                
+                // クライアントIDの形式を簡易チェック
+                if (!clientId.includes('.apps.googleusercontent.com') && !clientId.match(/^\d+-[a-zA-Z0-9]+\.apps\.googleusercontent\.com$/)) {
+                    if (!confirm('クライアントIDの形式が正しくない可能性があります。\n\n例: 123456789-abcdefghijklmnop.apps.googleusercontent.com\n\nこのまま保存しますか？')) {
+                        return;
+                    }
+                }
+                
+                localStorage.setItem('google_client_id', clientId);
+                showNotification('クライアントIDを保存しました。認証を再初期化します...', 'success');
+                
+                // 認証を再初期化
+                setTimeout(() => {
+                    initGoogleAuth();
+                }, 500);
+            });
+
+            // 設定画面を開いたときにクライアントIDを表示
+            const settingsApiBtn = document.getElementById('settings-btn-api');
+            if (settingsApiBtn) {
+                settingsApiBtn.addEventListener('click', () => {
+                    const clientIdInput = document.getElementById('settings-google-client-id');
+                    if (clientIdInput) {
+                        const savedClientId = localStorage.getItem('google_client_id') || '';
+                        clientIdInput.value = savedClientId;
+                        
+                        // 現在のオリジンを表示
+                        const originEl = document.getElementById('current-origin');
+                        if (originEl) {
+                            originEl.textContent = window.location.origin;
+                        }
+                    }
+                });
+            }
 
             // ページ読み込み時にGoogle認証を初期化
             if (typeof google !== 'undefined' && google.accounts) {
