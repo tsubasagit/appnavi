@@ -3078,20 +3078,23 @@
                 let errorMessage = '認証に失敗しました。';
                 
                 if (error === 'redirect_uri_mismatch') {
+                    const currentOrigin = window.location.origin;
+                    const isLocalhost = currentOrigin.includes('localhost');
+                    
                     errorMessage = 'リダイレクトURIが一致しません。\n\n' +
+                        '【現在のURL】: ' + currentOrigin + '\n\n' +
                         '【解決方法】\n' +
                         '1. Google Cloud Console (https://console.cloud.google.com/) にアクセス\n' +
                         '2. プロジェクトを選択\n' +
                         '3. 「APIとサービス」>「認証情報」を開く\n' +
-                        '4. OAuth 2.0 クライアントIDをクリック\n' +
+                        '4. OAuth 2.0 クライアントID（509155102966-d1caj0trqoakrmi2tju5mvicdlj2qb1f.apps.googleusercontent.com）をクリック\n' +
                         '5. 「承認済みのJavaScript生成元」に以下を追加:\n' +
-                        '   - ' + window.location.origin + '\n' +
-                        '   - http://localhost:8000 (ローカル開発用)\n' +
+                        '   - ' + currentOrigin + '\n' +
+                        (isLocalhost ? '' : '   - http://localhost:8000 (ローカル開発用)\n') +
                         '6. 「承認済みのリダイレクトURI」に以下を追加:\n' +
-                        '   - ' + window.location.origin + '/\n' +
-                        '   - ' + window.location.origin + '/index.html\n' +
-                        '   - http://localhost:8000/\n' +
-                        '   - http://localhost:8000/index.html\n' +
+                        '   - ' + currentOrigin + '/\n' +
+                        '   - ' + currentOrigin + '/index.html\n' +
+                        (isLocalhost ? '' : '   - http://localhost:8000/\n   - http://localhost:8000/index.html\n') +
                         '7. 「保存」をクリック\n' +
                         '8. 数分待ってから再度お試しください';
                 } else if (error === 'invalid_client') {

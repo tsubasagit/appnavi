@@ -29,13 +29,15 @@ AppNaviでGoogleスプレッドシートにデータを書き込むには、Goog
    **承認済みのJavaScript生成元**:
    - GitHub Pages: `https://tsubasagit.github.io`
    - カスタムドメイン: `https://yourdomain.com`
-   - **注意**: `localhost`は追加しないでください（セキュリティ上の理由）
+   - **ローカル開発用（開発・テスト時のみ）**: `http://localhost:8000`
+   - **注意**: 本番環境用のクライアントIDに`localhost`を追加する場合は、開発目的のみに使用してください
 
    **承認済みのリダイレクトURI**:
    - GitHub Pages: `https://tsubasagit.github.io/` と `https://tsubasagit.github.io/index.html`
    - カスタムドメイン: `https://yourdomain.com/` と `https://yourdomain.com/index.html`
+   - **ローカル開発用（開発・テスト時のみ）**: `http://localhost:8000/` と `http://localhost:8000/index.html`
    - **重要**: Google Identity ServicesのOAuth 2.0トークンクライアントを使用する場合、リダイレクトURIを設定する必要があります
-   - **セキュリティ**: `localhost`は追加しないでください。誰でもローカル環境でそのクライアントIDを使用できてしまいます
+   - **セキュリティ**: 本番環境用のクライアントIDに`localhost`を追加する場合は、開発目的のみに使用してください
 
 5. 「作成」をクリック
 6. 作成されたクライアントIDをコピー
@@ -97,13 +99,18 @@ localStorage.setItem('google_client_id', 'YOUR_CLIENT_ID_HERE');
 - **最も一般的なエラー**: Google Cloud ConsoleでリダイレクトURIが正しく設定されていない場合に発生します
 - **解決方法**:
   1. Google Cloud ConsoleでOAuth 2.0クライアントIDを開く
-  2. 「承認済みのリダイレクトURI」に以下を追加:
+  2. 「承認済みのJavaScript生成元」に以下を追加:
+     - `https://tsubasagit.github.io`（本番環境）
+     - `http://localhost:8000`（ローカル開発用、開発時のみ）
+  3. 「承認済みのリダイレクトURI」に以下を追加:
      - `https://tsubasagit.github.io/`
      - `https://tsubasagit.github.io/index.html`
-  3. 「保存」をクリック
-  4. 数分待ってから再度認証を試す
+     - `http://localhost:8000/`（ローカル開発用、開発時のみ）
+     - `http://localhost:8000/index.html`（ローカル開発用、開発時のみ）
+  4. 「保存」をクリック
+  5. 数分待ってから再度認証を試す
 - **注意**: リダイレクトURIは完全一致する必要があります（末尾のスラッシュも含めて）
-- **セキュリティ**: `localhost`は追加しないでください。本番用のクライアントIDは本番環境のみに制限してください
+- **ローカル開発**: ローカル環境（`http://localhost:8000`）で開発・テストする場合は、上記の`localhost`の設定を追加してください
 
 ### 認証は成功するが、スプレッドシートに書き込めない
 
