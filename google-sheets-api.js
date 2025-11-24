@@ -653,6 +653,54 @@ class GoogleSheetsService {
         }
     }
 
+    // スプレッドシートに全データを書き込み（ヘッダーとデータ行を一括更新）
+    async syncAllDataToSpreadsheet(spreadsheetUrl, sheetName, headers, dataRows) {
+        try {
+            if (!this.isAuthenticated || !this.accessToken) {
+                throw new Error('認証が必要です。先にGoogle認証を実行してください。');
+            }
+
+            const spreadsheetId = this.extractSpreadsheetId(spreadsheetUrl);
+            const sheet = sheetName || 'Sheet1';
+            
+            // ヘッダー行とデータ行を結合
+            const allRows = [
+                headers, // ヘッダー行
+                ...dataRows.map(row => headers.map(header => row[header] || '')) // データ行
+            ];
+            
+            // 範囲を指定（A1から始まる）
+            const range = `${sheet}!A1`;
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`;
+            
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${this.accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    values: allRows
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`Google Sheets API error: ${response.statusText} - ${JSON.stringify(errorData)}`);
+            }
+
+            const result = await response.json();
+            return {
+                success: true,
+                message: `データをスプレッドシートに反映しました（${dataRows.length}行）`,
+                result: result
+            };
+        } catch (error) {
+            console.error('Error syncing all data to spreadsheet:', error);
+            throw error;
+        }
+    }
+
     // データ型を検出（訪問管理記録に最適化）
     detectDataTypes(headers, rows) {
         const dataTypes = {};
