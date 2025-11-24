@@ -14,6 +14,8 @@
     <script src="firebase-config.js"></script>
     <!-- Google Sheets API -->
     <script src="google-sheets-api.js"></script>
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body class="bg-slate-100 text-slate-900">
     <div id="app-root" class="flex h-screen flex-col">
@@ -276,6 +278,12 @@
                             </div>
                         </div>
                         <div class="flex items-center space-x-2">
+                            <button id="sheets-auth-button" class="hidden rounded-lg border border-green-300 bg-white px-3 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-100" title="Google認証を実行します">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mr-1 inline h-3 w-3">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
+                                </svg>
+                                Googleでログイン
+                            </button>
                             <button id="sheets-sync-button" class="rounded-lg border border-green-300 bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed" title="スプレッドシートにデータを反映します">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mr-1 inline h-3 w-3">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
@@ -3058,20 +3066,35 @@
                         authText.textContent = hasAuth ? '認証済み（データ変更可能）' : '未認証（読み込み専用）';
                     }
                     
-                    // 更新ボタンの有効/無効を設定
+                    // 認証ボタンと更新ボタンの表示/非表示を設定
+                    const authButton = document.getElementById('sheets-auth-button');
                     const syncButton = document.getElementById('sheets-sync-button');
+                    
                     console.log('updateSheetsIntegrationBanner: syncButton', syncButton);
-                    if (syncButton) {
-                        syncButton.disabled = !hasAuth;
-                        if (!hasAuth) {
-                            syncButton.title = 'Google認証が必要です。ダッシュボードで認証してください。';
-                        } else {
+                    console.log('updateSheetsIntegrationBanner: authButton', authButton);
+                    
+                    if (hasAuth) {
+                        // 認証済みの場合
+                        if (authButton) {
+                            authButton.classList.add('hidden');
+                        }
+                        if (syncButton) {
+                            syncButton.disabled = false;
                             syncButton.title = 'スプレッドシートにデータを反映します';
                         }
-                        console.log('updateSheetsIntegrationBanner: syncButton.disabled', syncButton.disabled);
                     } else {
-                        console.error('updateSheetsIntegrationBanner: 更新ボタンが見つかりません');
+                        // 未認証の場合
+                        if (authButton) {
+                            authButton.classList.remove('hidden');
+                        }
+                        if (syncButton) {
+                            syncButton.disabled = true;
+                            syncButton.title = 'Google認証が必要です。「Googleでログイン」ボタンをクリックしてください。';
+                        }
                     }
+                    
+                    console.log('updateSheetsIntegrationBanner: syncButton.disabled', syncButton?.disabled);
+                    console.log('updateSheetsIntegrationBanner: authButton.hidden', authButton?.classList.contains('hidden'));
                 } else {
                     console.log('updateSheetsIntegrationBanner: googleSheetsUrlが設定されていないため、バナーを非表示にします');
                     // 連携が設定されていない場合、バナーを非表示
