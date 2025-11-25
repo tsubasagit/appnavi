@@ -3210,11 +3210,28 @@
 
             // ログイン必須チェック（最初に実行）
             async function checkAuth() {
+                // AppNaviIDを先にチェック（より確実）
+                if (appNaviIDService && appNaviIDService.hasAppNaviID()) {
+                    console.log('AppNaviID認証: OK');
+                    // Firebase初期化（非同期、エラーを無視）
+                    try {
+                        await initFirebase();
+                        // Firebase認証も取れている場合は同期
+                        if (auth && auth.currentUser) {
+                            appNaviIDService.setAppNaviID(auth.currentUser.uid);
+                        }
+                    } catch (error) {
+                        console.warn('Firebase初期化エラー（続行）:', error);
+                    }
+                    return true;
+                }
+
                 // Firebase初期化
                 await initFirebase();
                 
                 // Firebase認証が利用可能で、ログインしている場合はOK
                 if (auth && auth.currentUser) {
+                    console.log('Firebase認証: OK');
                     // AppNaviIDにFirebase UIDを保存（同期）
                     if (appNaviIDService) {
                         appNaviIDService.setAppNaviID(auth.currentUser.uid);
@@ -3222,12 +3239,8 @@
                     return true;
                 }
 
-                // AppNaviIDが設定されているか確認（フォールバック）
-                if (appNaviIDService && appNaviIDService.hasAppNaviID()) {
-                    return true;
-                }
-
-                // ログインが必要 - 新規登録ページにリダイレクト（戻り先を保存）
+                // どちらも認証されていない - 新規登録ページにリダイレクト（戻り先を保存）
+                console.log('認証なし: ログインページにリダイレクト');
                 const returnUrl = window.location.href;
                 window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(returnUrl)}`;
                 return false;
