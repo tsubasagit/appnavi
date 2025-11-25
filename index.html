@@ -64,20 +64,10 @@
                 </svg>
                     <span class="text-lg font-semibold tracking-wide">AppNavi</span>
                 </div>
-                <div class="flex items-center space-x-3">
-                    <!-- AppNaviについてページへのリンク -->
-                    <a href="about.html" class="text-xs text-slate-500 hover:text-slate-700 underline" title="AppNaviについて">
-                        AppNaviについて
-                    </a>
-                    <!-- LPページへのリンク -->
-                    <a href="https://tsubasagit.github.io/appnavi/" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-500 hover:text-slate-700 underline" title="LPページを開く">
-                        LPページ
-                    </a>
-                    <!-- Google認証状態アイコン -->
-                    <div id="header-auth-status" class="flex items-center space-x-1" title="Google認証状態">
-                        <div id="header-auth-indicator" class="h-3 w-3 rounded-full bg-gray-400" title="未認証"></div>
-                        <span id="header-auth-text" class="hidden text-xs text-slate-500 md:inline">未認証</span>
-                    </div>
+                <!-- Google認証状態アイコン -->
+                <div id="header-auth-status" class="flex items-center space-x-1" title="Google認証状態">
+                    <div id="header-auth-indicator" class="h-3 w-3 rounded-full bg-gray-400" title="未認証"></div>
+                    <span id="header-auth-text" class="hidden text-xs text-slate-500 md:inline">未認証</span>
                 </div>
             </div>
             <nav class="flex-1 space-y-1 px-4 text-sm">
@@ -125,6 +115,13 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75a2.25 2.25 0 1 1 4.5 0c0 1.125-.75 1.522-1.5 2.022-.75.5-1.5.897-1.5 2.228M12 17.25h.008v.008H12v-.008Z" />
                 </svg>
             </button>
+                <!-- AppNaviについてページへのリンク -->
+                <a href="about.html" class="mt-2 flex w-full items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-500 hover:bg-slate-100">
+                    <span>AppNaviについて</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                    </svg>
+                </a>
         </div>
         </aside>
 
