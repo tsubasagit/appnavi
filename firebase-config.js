@@ -1,14 +1,15 @@
 // Firebase設定ファイル
 // 注意: 実際のプロジェクトでは、これらの値を環境変数または別の設定ファイルで管理してください
 
-// Firebase設定（ここに実際のFirebaseプロジェクトの設定を追加してください）
+// Firebase設定
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyAO03XP5TKpt5E8zgnzW2p3VdsQ1eLU1-Y",
+    authDomain: "appnavi-add7e.firebaseapp.com",
+    projectId: "appnavi-add7e",
+    storageBucket: "appnavi-add7e.firebasestorage.app",
+    messagingSenderId: "917670325982",
+    appId: "1:917670325982:web:8aa33731e865529c6a5c4f",
+    measurementId: "G-BFP5JSG5RD" // Analytics用（オプション）
 };
 
 // Firebaseの初期化（Firebase SDKが読み込まれている場合）
@@ -446,60 +447,36 @@ class DatabaseService {
         return apps.find(app => app.id === appId) || null;
     }
 
-    // 現在のユーザーIDを取得（認証必須）
+    // 現在のユーザーIDを取得（AppNaviID必須）
     async getCurrentUserId() {
-        if (this.useFirebase && auth) {
-            // 認証状態を確認
-            await new Promise((resolve) => {
-                if (auth.currentUser) {
-                    resolve();
-                } else {
-                    // 認証状態の変更を待つ（最大3秒）
-                    const unsubscribe = auth.onAuthStateChanged((user) => {
-                        unsubscribe();
-                        resolve();
-                    });
-                    setTimeout(() => {
-                        unsubscribe();
-                        resolve();
-                    }, 3000);
-                }
-            });
-            
-            const user = auth.currentUser;
-            if (user) {
-                return user.uid;
-            }
+        // AppNaviIDサービスが読み込まれているか確認
+        if (typeof appNaviIDService === 'undefined') {
+            throw new Error('AppNaviIDサービスが読み込まれていません。appnavi-id.jsを読み込んでください。');
         }
-        // Firebase認証が利用できない場合、エラーを投げる（ログイン必須）
-        throw new Error('ログインが必要です。Firebase認証を設定してください。');
+
+        // AppNaviIDを取得
+        const appNaviID = appNaviIDService.getAppNaviID();
+        
+        if (!appNaviID || !appNaviIDService.isValidAppNaviID(appNaviID)) {
+            throw new Error('AppNaviIDが設定されていません。AppNaviIDを登録してください。');
+        }
+
+        return appNaviID;
     }
     
-    // 認証状態をチェック（ログイン必須）
+    // 認証状態をチェック（AppNaviID必須）
     async checkAuth() {
-        if (this.useFirebase && auth) {
-            await new Promise((resolve) => {
-                if (auth.currentUser) {
-                    resolve();
-                } else {
-                    const unsubscribe = auth.onAuthStateChanged((user) => {
-                        unsubscribe();
-                        resolve();
-                    });
-                    setTimeout(() => {
-                        unsubscribe();
-                        resolve();
-                    }, 3000);
-                }
-            });
-            
-            if (!auth.currentUser) {
-                throw new Error('ログインが必要です');
-            }
-            return true;
+        // AppNaviIDサービスが読み込まれているか確認
+        if (typeof appNaviIDService === 'undefined') {
+            throw new Error('AppNaviIDサービスが読み込まれていません。appnavi-id.jsを読み込んでください。');
         }
-        // Firebaseが設定されていない場合はエラー
-        throw new Error('Firebase認証が設定されていません。ログイン機能を使用するにはFirebase認証を設定してください。');
+
+        // AppNaviIDが設定されているか確認
+        if (!appNaviIDService.hasAppNaviID()) {
+            throw new Error('AppNaviIDが設定されていません。AppNaviIDを登録してください。');
+        }
+
+        return true;
     }
 
     // リアルタイムリスナー（Firebaseのみ、現在のユーザーのアプリのみ）

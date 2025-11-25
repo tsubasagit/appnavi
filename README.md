@@ -14,9 +14,11 @@
 
 ---
 
-## 🎯 Mission
+## 🎯 Mission & Vision
 
-**"Make data-driven decisions accessible to everyone."**
+**Mission:** "Make data-driven decisions accessible to everyone."
+
+**Vision:** "誰もがテクノロジーを使いこなし、自らの手でアイデアを形にできる社会を実現する"
 
 Transform Excel-managed data into powerful web applications in 5 minutes. No code, no cost, no server management required.
 
@@ -34,10 +36,22 @@ Transform Excel-managed data into powerful web applications in 5 minutes. No cod
 AppNavi is built on a completely serverless architecture, where all infrastructure is managed by external services:
 
 - **Hosting**: GitHub Pages (Free)
-- **Database**: Firebase Firestore (Free tier available)
-- **Authentication**: Firebase Authentication (Google Sign-In ready)
+- **Database**: Firebase Firestore (Free tier available) / localStorage (Fallback)
+- **Authentication**: AppNaviID (Required) + Firebase Authentication (Optional)
 - **Storage**: Firebase Storage (Free tier available)
 - **Integration**: Google Sheets API (Free)
+
+### AppNaviID System
+
+AppNavi uses a unique ID system called **AppNaviID** for user identification:
+
+- **Required**: AppNaviID is mandatory for all features
+- **Format**: UUID v4 format (`xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx`)
+- **Storage**: Stored in browser's localStorage
+- **Purpose**: User data isolation and security
+- **Public Code Compatible**: Works even when code is downloaded and run locally
+
+This design allows the code to be fully open source while maintaining user data separation.
 
 **Benefits for Small Business Owners:**
 - 💰 **Zero monthly cost** (free tier sufficient for small businesses)
@@ -49,6 +63,15 @@ AppNavi is built on a completely serverless architecture, where all infrastructu
 This approach allows small business owners to focus on their core business without worrying about IT infrastructure management.
 
 See `ARCHITECTURE_STRATEGY.md` for detailed architecture and cost comparison.
+
+## 📚 Documentation
+
+- **[DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)**: Development guidelines, architecture, and technical details
+- **[SPECIFICATION.md](./SPECIFICATION.md)**: Complete specification document
+- **[VISION.md](./VISION.md)**: Vision and mission statement
+- **[CONTRIBUTING.md](./CONTRIBUTING.md)**: Contribution guide for developers
+- **[FIREBASE_SETUP.md](./FIREBASE_SETUP.md)**: Firebase setup guide (optional)
+- **[QUICK_START.md](./QUICK_START.md)**: Quick start guide for users
 
 ## ✨ Features
 

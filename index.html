@@ -9,8 +9,12 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <!-- AppNaviID管理 -->
+    <script src="appnavi-id.js"></script>
     <!-- Firebase設定 -->
     <script src="firebase-config.js"></script>
+    <!-- Firebase接続状態チェック -->
+    <script src="firebase-status.js"></script>
     <!-- Google Sheets API -->
     <script src="google-sheets-api.js"></script>
     <!-- Google API Client Library -->
@@ -91,22 +95,30 @@
                     <span>テンプレート</span>
                 </button>
             </nav>
-            <div class="border-t border-slate-200 px-4 py-4">
-                <!-- Google認証状態 -->
-                <div id="google-auth-status" class="mb-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-                    <div class="flex items-center justify-between">
+                <div class="border-t border-slate-200 px-4 py-4">
+                <!-- AppNaviID表示 -->
+                <div id="appnavi-id-status" class="mb-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                    <div class="flex items-center justify-between mb-2">
                         <div class="flex items-center space-x-2">
-                            <div id="auth-status-indicator" class="h-2 w-2 rounded-full bg-gray-400"></div>
-                            <span id="auth-status-text" class="text-xs text-slate-600">未認証</span>
+                            <div id="id-status-indicator" class="h-2 w-2 rounded-full bg-green-500"></div>
+                            <span id="id-status-text" class="text-xs font-semibold text-slate-700">AppNaviID</span>
                         </div>
                     </div>
-                    <div id="auth-actions" class="mt-2 flex flex-col space-y-1">
-                        <button id="google-signin-btn" class="w-full rounded-lg border border-green-300 bg-white px-2 py-1 text-xs font-semibold text-green-700 hover:bg-green-50">
-                            Googleでログイン
+                    <div id="appnavi-id-display" class="mb-2">
+                        <input 
+                            type="text" 
+                            id="appnavi-id-value" 
+                            readonly
+                            class="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs font-mono text-slate-700"
+                        />
+                    </div>
+                    <div id="id-actions" class="flex flex-col space-y-1">
+                        <button id="copy-appnavi-id-btn" class="w-full rounded-lg border border-blue-300 bg-white px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-50">
+                            IDをコピー
                         </button>
-                        <button id="google-signout-btn" class="hidden w-full rounded-lg border border-red-300 bg-white px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50">
-                            ログアウト
-                        </button>
+                        <a href="appnavi-id-register.html" class="w-full rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 text-center">
+                            IDを変更
+                        </a>
                     </div>
                 </div>
                 <button class="flex w-full items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-500 hover:bg-slate-100">
@@ -147,6 +159,17 @@
                             <span class="text-sm font-semibold text-white">読み込み中...</span>
                         </div>
                         <p id="storage-type-description" class="text-xs text-blue-200 mt-2"></p>
+                    </div>
+                    
+                    <!-- Firebase接続状態の表示 -->
+                    <div id="firebase-status-info" class="mt-4 rounded-lg bg-white/10 border border-white/20 px-4 py-3 backdrop-blur-sm">
+                        <p class="text-xs font-semibold text-white mb-2">🔥 Firebase接続状態</p>
+                        <div id="firebase-status-display" class="space-y-1">
+                            <div class="text-xs text-blue-200">確認中...</div>
+                        </div>
+                        <button id="test-firebase-connection-btn" class="mt-2 w-full rounded-lg bg-white/20 hover:bg-white/30 px-3 py-1.5 text-xs font-semibold text-white border border-white/30">
+                            接続テストを実行
+                        </button>
                     </div>
                     
                     <!-- データ保存方法の選択（初回のみ） -->
@@ -662,8 +685,8 @@
         </main>
                                 </div>
 
-    <!-- オンボーディングモーダル -->
-    <div id="onboarding-modal" class="pointer-events-none fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 px-4 py-8">
+    <!-- オンボーディングモーダル（非表示 - AppNaviID未設定時はログインページにリダイレクト） -->
+    <div id="onboarding-modal" class="pointer-events-none fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 px-4 py-8" style="display: none !important;">
         <div class="pointer-events-auto w-full max-w-3xl rounded-2xl bg-white shadow-2xl">
             <div class="px-6 py-6">
                 <div class="text-center">
@@ -964,7 +987,12 @@
             // 初期化: アプリリストを読み込む
             async function loadApps() {
                 try {
-                    // ログインチェック（必須）
+                    // AppNaviIDチェック（必須）
+                    if (!checkAppNaviID()) {
+                        return; // リダイレクトされる
+                    }
+                    
+                    // 認証チェック（AppNaviID必須）
                     await databaseService.checkAuth();
                     
                     // データベースサービスの初期化を待つ
@@ -1001,73 +1029,20 @@
                 }
             }
             
-            // ログイン必須モーダルを表示
-            function showLoginRequiredModal() {
-                const modal = document.createElement('div');
-                modal.id = 'login-required-modal';
-                modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
-                modal.innerHTML = `
-                    <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
-                        <div class="text-center">
-                            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 mb-4">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-8 w-8 text-blue-600">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                                </svg>
-                            </div>
-                            <h3 class="text-lg font-semibold text-slate-900 mb-2">ログインが必要です</h3>
-                            <p class="text-sm text-slate-600 mb-6">AppNaviを使用するには、Firebase認証でログインしてください。</p>
-                            <div class="space-y-3">
-                                <button id="login-modal-btn" class="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700">
-                                    Firebaseでログイン
-                                </button>
-                                <p class="text-xs text-slate-500">
-                                    Firebase認証が設定されていない場合は、<br>
-                                    Firebase設定を行ってください。
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(modal);
-                
-                // ログインボタンのイベント
-                document.getElementById('login-modal-btn')?.addEventListener('click', () => {
-                    // Firebase認証を初期化してログイン
-                    initFirebaseAuth();
-                });
-            }
-            
-            // Firebase認証を初期化
-            async function initFirebaseAuth() {
-                try {
-                    await databaseService.init();
-                    if (databaseService.useFirebase && auth) {
-                        // 既にログインしている場合はモーダルを閉じる
-                        if (auth.currentUser) {
-                            document.getElementById('login-required-modal')?.remove();
-                            await loadApps();
-                            return;
-                        }
-                        
-                        // ログインモーダルを表示（Firebase UIを使用）
-                        // 簡易的な実装：認証状態の変更を監視
-                        auth.onAuthStateChanged(async (user) => {
-                            if (user) {
-                                document.getElementById('login-required-modal')?.remove();
-                                await loadApps();
-                            }
-                        });
-                        
-                        // 認証プロバイダーを設定（メール/パスワード、Googleなど）
-                        // ここでは簡易的にメール/パスワード認証を促す
-                        showNotification('Firebase認証を設定してください。Firebase Consoleで認証方法を有効化し、ログイン機能を実装してください。', 'info');
-                    } else {
-                        showNotification('Firebase認証が設定されていません。firebase-config.jsでFirebase設定を行ってください。', 'error');
-                    }
-                } catch (error) {
-                    console.error('Firebase認証初期化エラー:', error);
-                    showNotification('認証の初期化に失敗しました: ' + error.message, 'error');
+            // AppNaviID必須チェック
+            function checkAppNaviID() {
+                if (!appNaviIDService || !appNaviIDService.hasAppNaviID()) {
+                    // AppNaviID登録ページにリダイレクト
+                    window.location.href = 'appnavi-id-register.html';
+                    return false;
                 }
+                return true;
+            }
+
+            // ログイン必須モーダルを表示（AppNaviID登録ページにリダイレクト）
+            function showLoginRequiredModal() {
+                // AppNaviID登録ページにリダイレクト
+                window.location.href = 'appnavi-id-register.html';
             }
 
             // アプリを追加
@@ -1418,18 +1393,18 @@
             }
 
 
-            // オンボーディング
+            // オンボーディング（無効化 - AppNaviID未設定時はログインページにリダイレクト）
             const onboardingModal = document.getElementById('onboarding-modal');
             const onboardingStart = document.getElementById('onboarding-start');
             const onboardingSample = document.getElementById('onboarding-sample');
             const onboardingDontShow = document.getElementById('onboarding-dont-show');
 
-            // 初回表示チェック
-            const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
-            if (!hasSeenOnboarding) {
-                onboardingModal.classList.remove('hidden');
-                onboardingModal.classList.add('flex');
-            }
+            // オンボーディングモーダルは表示しない（AppNaviID未設定時はログインページにリダイレクトされる）
+            // 初回表示チェックを削除
+            // if (!hasSeenOnboarding) {
+            //     onboardingModal.classList.remove('hidden');
+            //     onboardingModal.classList.add('flex');
+            // }
 
             onboardingStart?.addEventListener('click', () => {
                 closeOnboarding();
@@ -3429,9 +3404,140 @@
                 }, 100);
             }
             
-            // ページ読み込み時にアプリを読み込む（ログイン必須）
+            // AppNaviID必須チェック（最初に実行）
+            function checkAppNaviID() {
+                if (!appNaviIDService || !appNaviIDService.hasAppNaviID()) {
+                    // AppNaviID登録ページにリダイレクト
+                    window.location.href = 'appnavi-id-register.html';
+                    return false;
+                }
+                return true;
+            }
+
+            // ログイン必須モーダルを表示（AppNaviID登録ページにリダイレクト）
+            function showLoginRequiredModal() {
+                // AppNaviID登録ページにリダイレクト
+                window.location.href = 'appnavi-id-register.html';
+            }
+            
+            // AppNaviID表示の更新
+            function updateAppNaviIDDisplay() {
+                const idValue = document.getElementById('appnavi-id-value');
+                const idStatusIndicator = document.getElementById('id-status-indicator');
+                const idStatusText = document.getElementById('id-status-text');
+                
+                if (appNaviIDService && appNaviIDService.hasAppNaviID()) {
+                    const appNaviID = appNaviIDService.getAppNaviID();
+                    if (idValue) {
+                        idValue.value = appNaviID;
+                    }
+                    if (idStatusIndicator) {
+                        idStatusIndicator.classList.remove('bg-gray-400');
+                        idStatusIndicator.classList.add('bg-green-500');
+                    }
+                    if (idStatusText) {
+                        idStatusText.textContent = 'AppNaviID';
+                    }
+                }
+            }
+            
+            // AppNaviIDコピーボタン
+            document.getElementById('copy-appnavi-id-btn')?.addEventListener('click', () => {
+                const idValue = document.getElementById('appnavi-id-value');
+                if (idValue) {
+                    idValue.select();
+                    document.execCommand('copy');
+                    showNotification('AppNaviIDをコピーしました', 'success');
+                }
+            });
+            
+            // ページ読み込み時に最初にAppNaviIDチェック（最優先）
+            if (!checkAppNaviID()) {
+                return; // リダイレクトされる
+            }
+            
+            // AppNaviID表示を更新
+            updateAppNaviIDDisplay();
+            
+            // Firebase接続状態をチェックして表示
+            async function checkAndDisplayFirebaseStatus() {
+                const statusDisplay = document.getElementById('firebase-status-display');
+                const testBtn = document.getElementById('test-firebase-connection-btn');
+                
+                if (!statusDisplay) return;
+                
+                try {
+                    // Firebase初期化を試みる
+                    await initFirebase();
+                    
+                    // 状態をチェック
+                    if (typeof firebaseStatusChecker !== 'undefined') {
+                        const status = await firebaseStatusChecker.checkAll();
+                        const report = firebaseStatusChecker.getStatusReport();
+                        
+                        // 状態を表示
+                        statusDisplay.innerHTML = `
+                            <div class="text-xs text-blue-200 space-y-1">
+                                <div>${report.sdk}</div>
+                                <div>${report.config}</div>
+                                <div>${report.initialized}</div>
+                                <div>${report.firestore}</div>
+                                <div>${report.auth}</div>
+                                <div class="mt-2 font-semibold">${report.connection}</div>
+                            </div>
+                        `;
+                        
+                        // 接続テストボタンのイベント
+                        if (testBtn) {
+                            testBtn.addEventListener('click', async () => {
+                                testBtn.disabled = true;
+                                testBtn.textContent = 'テスト中...';
+                                
+                                try {
+                                    const result = await firebaseStatusChecker.testConnection();
+                                    const report = firebaseStatusChecker.getStatusReport();
+                                    
+                                    statusDisplay.innerHTML = `
+                                        <div class="text-xs text-blue-200 space-y-1">
+                                            <div>${report.sdk}</div>
+                                            <div>${report.config}</div>
+                                            <div>${report.initialized}</div>
+                                            <div>${report.firestore}</div>
+                                            <div>${report.auth}</div>
+                                            <div class="mt-2 font-semibold">${report.connection}</div>
+                                        </div>
+                                    `;
+                                    
+                                    if (result.success) {
+                                        showNotification('Firebase接続テストに成功しました', 'success');
+                                    } else {
+                                        showNotification(`Firebase接続テストに失敗: ${result.error}`, 'error');
+                                    }
+                                } catch (error) {
+                                    showNotification(`接続テストエラー: ${error.message}`, 'error');
+                                } finally {
+                                    testBtn.disabled = false;
+                                    testBtn.textContent = '接続テストを実行';
+                                }
+                            });
+                        }
+                    } else {
+                        statusDisplay.innerHTML = '<div class="text-xs text-blue-200">Firebase状態チェッカーが読み込まれていません</div>';
+                    }
+                } catch (error) {
+                    statusDisplay.innerHTML = `<div class="text-xs text-red-200">エラー: ${error.message}</div>`;
+                }
+            }
+            
+            // Firebase接続状態をチェック
+            checkAndDisplayFirebaseStatus();
+            
+            // ページ読み込み時にアプリを読み込む（AppNaviID必須）
             loadApps().catch(error => {
                 console.error('Failed to load apps:', error);
+                if (error.message.includes('AppNaviID')) {
+                    showLoginRequiredModal();
+                }
             });
         });
     </script>
