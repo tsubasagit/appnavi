@@ -3210,13 +3210,20 @@
 
             // ログイン必須チェック（最初に実行）
             async function checkAuth() {
+                console.log('認証チェック開始');
+                console.log('appNaviIDService:', typeof appNaviIDService);
+                
                 // appNaviIDServiceが読み込まれているか確認
                 if (typeof appNaviIDService === 'undefined') {
                     console.warn('appNaviIDServiceが読み込まれていません。Firebase認証をチェックします。');
                 } else {
                     // AppNaviIDを先にチェック（より確実）
+                    const appNaviID = appNaviIDService.getAppNaviID();
+                    console.log('AppNaviID取得:', appNaviID);
+                    console.log('hasAppNaviID():', appNaviIDService.hasAppNaviID());
+                    
                     if (appNaviIDService.hasAppNaviID()) {
-                        console.log('AppNaviID認証: OK', appNaviIDService.getAppNaviID());
+                        console.log('AppNaviID認証: OK', appNaviID);
                         // Firebase初期化（非同期、エラーを無視）
                         try {
                             await initFirebase();
@@ -3229,7 +3236,8 @@
                         }
                         return true;
                     } else {
-                        console.log('AppNaviID未設定');
+                        console.log('AppNaviID未設定または無効');
+                        console.log('localStorage確認:', localStorage.getItem('appnavi_user_id'));
                     }
                 }
 
@@ -3265,10 +3273,12 @@
                 return new Promise((resolve) => {
                     // appnavi-id.jsが読み込まれているか確認
                     if (typeof appNaviIDService !== 'undefined') {
+                        console.log('appNaviIDService読み込み済み');
                         resolve();
                         return;
                     }
                     
+                    console.log('appNaviIDServiceの読み込みを待機中...');
                     // 最大5秒待機
                     let attempts = 0;
                     const maxAttempts = 50; // 100ms * 50 = 5秒
@@ -3276,6 +3286,7 @@
                         attempts++;
                         if (typeof appNaviIDService !== 'undefined') {
                             clearInterval(checkInterval);
+                            console.log('appNaviIDService読み込み完了');
                             resolve();
                         } else if (attempts >= maxAttempts) {
                             clearInterval(checkInterval);
