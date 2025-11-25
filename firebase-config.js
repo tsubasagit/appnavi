@@ -447,8 +447,18 @@ class DatabaseService {
         return apps.find(app => app.id === appId) || null;
     }
 
-    // 現在のユーザーIDを取得（AppNaviID必須）
+    // 現在のユーザーIDを取得（Firebase認証またはAppNaviID必須）
     async getCurrentUserId() {
+        // Firebase認証が利用可能で、ログインしている場合はFirebase UIDを使用
+        if (this.useFirebase && auth && auth.currentUser) {
+            const firebaseUID = auth.currentUser.uid;
+            // AppNaviIDにも保存（同期）
+            if (typeof appNaviIDService !== 'undefined') {
+                appNaviIDService.setAppNaviID(firebaseUID);
+            }
+            return firebaseUID;
+        }
+
         // AppNaviIDサービスが読み込まれているか確認
         if (typeof appNaviIDService === 'undefined') {
             throw new Error('AppNaviIDサービスが読み込まれていません。appnavi-id.jsを読み込んでください。');
@@ -457,15 +467,25 @@ class DatabaseService {
         // AppNaviIDを取得
         const appNaviID = appNaviIDService.getAppNaviID();
         
-        if (!appNaviID || !appNaviIDService.isValidAppNaviID(appNaviID)) {
-            throw new Error('AppNaviIDが設定されていません。AppNaviIDを登録してください。');
+        if (!appNaviID || !appNaviIDService.hasAppNaviID()) {
+            throw new Error('ログインが必要です。Google認証でログインしてください。');
         }
 
         return appNaviID;
     }
     
-    // 認証状態をチェック（AppNaviID必須）
+    // 認証状態をチェック（Firebase認証またはAppNaviID必須）
     async checkAuth() {
+        // Firebase認証が利用可能で、ログインしている場合はOK
+        if (this.useFirebase && auth && auth.currentUser) {
+            const firebaseUID = auth.currentUser.uid;
+            // AppNaviIDにも保存（同期）
+            if (typeof appNaviIDService !== 'undefined') {
+                appNaviIDService.setAppNaviID(firebaseUID);
+            }
+            return true;
+        }
+
         // AppNaviIDサービスが読み込まれているか確認
         if (typeof appNaviIDService === 'undefined') {
             throw new Error('AppNaviIDサービスが読み込まれていません。appnavi-id.jsを読み込んでください。');
@@ -473,7 +493,7 @@ class DatabaseService {
 
         // AppNaviIDが設定されているか確認
         if (!appNaviIDService.hasAppNaviID()) {
-            throw new Error('AppNaviIDが設定されていません。AppNaviIDを登録してください。');
+            throw new Error('ログインが必要です。Google認証でログインしてください。');
         }
 
         return true;

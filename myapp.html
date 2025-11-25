@@ -3208,43 +3208,61 @@
                 };
             }
 
-            // AppNaviID必須チェック
-            function checkAppNaviID() {
-                if (!appNaviIDService || !appNaviIDService.hasAppNaviID()) {
-                    // AppNaviID登録ページにリダイレクト（戻り先を保存）
-                    const returnUrl = window.location.href;
-                    window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(returnUrl)}`;
-                    return false;
+            // ログイン必須チェック（最初に実行）
+            async function checkAuth() {
+                // Firebase初期化
+                await initFirebase();
+                
+                // Firebase認証が利用可能で、ログインしている場合はOK
+                if (auth && auth.currentUser) {
+                    // AppNaviIDにFirebase UIDを保存（同期）
+                    if (appNaviIDService) {
+                        appNaviIDService.setAppNaviID(auth.currentUser.uid);
+                    }
+                    return true;
                 }
-                return true;
+
+                // AppNaviIDが設定されているか確認（フォールバック）
+                if (appNaviIDService && appNaviIDService.hasAppNaviID()) {
+                    return true;
+                }
+
+                // ログインが必要 - 新規登録ページにリダイレクト（戻り先を保存）
+                const returnUrl = window.location.href;
+                window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(returnUrl)}`;
+                return false;
             }
 
-            // ログイン必須モーダルを表示（AppNaviID登録ページにリダイレクト）
+            // ログイン必須モーダルを表示（新規登録ページにリダイレクト）
             function showLoginRequiredModal() {
-                // AppNaviID登録ページにリダイレクト（戻り先を保存）
+                // 新規登録ページにリダイレクト（戻り先を保存）
                 const returnUrl = window.location.href;
                 window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(returnUrl)}`;
             }
 
-            // アプリIDがある場合、アプリを読み込む
-            if (appId) {
-                // AppNaviIDチェック
-                if (!checkAppNaviID()) {
+            // 認証チェック後にアプリを読み込む
+            checkAuth().then(authenticated => {
+                if (!authenticated) {
                     return; // リダイレクトされる
                 }
                 
-                loadApp(appId).catch(error => {
-                    console.error('Failed to load app:', error);
-                    if (error.message.includes('AppNaviID') || error.message.includes('ログイン') || error.message.includes('認証')) {
-                        showLoginRequiredModal();
-                    }
-                });
-            } else {
-                // アプリIDがない場合もAppNaviIDチェック
-                if (!checkAppNaviID()) {
-                    return; // リダイレクトされる
+                // アプリIDがある場合、アプリを読み込む
+                if (appId) {
+                    loadApp(appId).catch(error => {
+                        console.error('Failed to load app:', error);
+                        if (error.message.includes('ログイン') || error.message.includes('認証')) {
+                            showLoginRequiredModal();
+                        }
+                    });
                 }
-            }
+                
+                // デフォルトで「データ」タブを選択
+                setTab('data');
+            }).catch(error => {
+                console.error('Auth check error:', error);
+                const returnUrl = window.location.href;
+                window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(returnUrl)}`;
+            });
 
             // デフォルトで「データ」タブを選択
             setTab('data');

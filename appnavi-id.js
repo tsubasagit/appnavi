@@ -21,8 +21,16 @@ class AppNaviIDService {
         return localStorage.getItem(this.storageKey);
     }
 
-    // AppNaviIDを保存
+    // AppNaviIDを保存（Firebase UIDも受け入れる）
     setAppNaviID(id) {
+        // Firebase UIDの場合はそのまま保存（形式チェックをスキップ）
+        if (id && id.length === 28 && /^[a-zA-Z0-9]+$/.test(id)) {
+            // Firebase UID形式（28文字の英数字）の場合はそのまま保存
+            localStorage.setItem(this.storageKey, id);
+            return id;
+        }
+        
+        // 通常のAppNaviID形式の場合は検証
         if (!this.isValidAppNaviID(id)) {
             throw new Error('無効なAppNaviID形式です');
         }
@@ -38,10 +46,18 @@ class AppNaviIDService {
         return this.idFormat.test(id);
     }
 
-    // AppNaviIDが設定されているか確認
+    // AppNaviIDが設定されているか確認（Firebase UIDも有効）
     hasAppNaviID() {
         const id = this.getAppNaviID();
-        return id !== null && this.isValidAppNaviID(id);
+        if (!id) return false;
+        
+        // Firebase UID形式（28文字の英数字）も有効
+        if (id.length === 28 && /^[a-zA-Z0-9]+$/.test(id)) {
+            return true;
+        }
+        
+        // 通常のAppNaviID形式
+        return this.isValidAppNaviID(id);
     }
 
     // AppNaviIDを削除（ログアウト）
