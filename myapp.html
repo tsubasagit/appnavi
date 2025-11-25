@@ -2761,40 +2761,7 @@
                 </td>`;
             }
 
-            // データテーブルの更新関数を拡張（編集・削除ボタンを追加）
-            const originalUpdateAppDataTable = updateAppDataTable;
-            updateAppDataTable = function(data, columns) {
-                originalUpdateAppDataTable(data, columns);
-                
-                // アクションボタン列を追加
-                const tableHead = document.getElementById('table-head');
-                const tableBody = document.getElementById('table-body');
-                
-                if (tableHead) {
-                    const headerRow = tableHead.querySelector('tr');
-                    if (headerRow && !headerRow.querySelector('th:last-child')?.textContent.includes('削除')) {
-                        headerRow.innerHTML += '<th class="px-6 py-3 text-left font-semibold">削除</th>';
-                    }
-                }
-                
-                if (tableBody) {
-                    // 各行に削除ボタンを追加
-                    const rows = tableBody.querySelectorAll('tr');
-                    rows.forEach((row, index) => {
-                        if (!row.querySelector('.delete-row-btn')) {
-                            const rowId = `row-${index}`;
-                            row.innerHTML += getActionButtonsHTML(rowId);
-                            
-                            // イベントリスナーを追加
-                            const deleteBtn = row.querySelector('.delete-row-btn');
-                            
-                            deleteBtn?.addEventListener('click', () => {
-                                deleteDataRow(index, data[index]);
-                            });
-                        }
-                    });
-                }
-            };
+            // updateAppDataTable関数の拡張部分を削除（既にメイン関数で削除カラムとイベントリスナーが追加されているため不要）
 
             // 日付フォーマットを変換（スラッシュ区切り → ハイフン区切り）
             function convertDateFormat(value) {
