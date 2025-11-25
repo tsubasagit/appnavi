@@ -18,16 +18,25 @@
     <script src="google-sheets-api.js"></script>
 </head>
 <body class="bg-slate-100 text-slate-900">
+    <!-- モバイルメニューオーバーレイ -->
+    <div id="mobile-menu-overlay" class="fixed inset-0 z-40 bg-black/50 hidden md:hidden"></div>
+
     <div id="app-root" class="flex h-screen flex-col">
         <header class="bg-white border-b border-slate-200">
-            <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-                <div class="flex w-72 items-center pl-4">
+            <div class="mx-auto flex max-w-7xl items-center justify-between px-4 md:px-6 py-4">
+                <div class="flex items-center">
+                    <!-- モバイル用ハンバーガーメニューボタン -->
+                    <button id="mobile-menu-toggle" class="mr-3 rounded-lg p-2 text-slate-600 hover:bg-slate-100 md:hidden">
+                        <svg id="mobile-menu-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-6 w-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                        </svg>
+                    </button>
                     <a id="back-to-dashboard-link" href="index.html" class="mr-3 inline-flex shrink-0 items-center rounded-full border border-slate-200 p-2 text-slate-700 shadow hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
                             <path stroke-linecap="round" stroke-linejoin="round" d="m15.75 19.5-7.5-7.5 7.5-7.5" />
                         </svg>
                     </a>
-                    <h1 id="view-title" class="text-2xl font-bold text-slate-900">サンプルアプリ</h1>
+                    <h1 id="view-title" class="text-xl md:text-2xl font-bold text-slate-900">サンプルアプリ</h1>
                     </div>
                 <div id="header-controls" class="flex flex-shrink-0 items-center space-x-6">
                     <div id="search-bar" class="relative hidden shrink-0 md:block">
@@ -47,8 +56,8 @@
             </div>
         </header>
         <div class="flex flex-1 overflow-hidden">
-            <!-- 最左縦タブ -->
-            <nav class="flex w-16 flex-col border-r border-slate-200 bg-slate-50">
+            <!-- 最左縦タブ（モバイルでは非表示） -->
+            <nav id="left-tabs" class="hidden md:flex w-16 flex-col border-r border-slate-200 bg-slate-50">
                 <button id="tab-data" class="tab-button flex flex-col items-center justify-center border-b border-slate-200 px-3 py-4 text-xs font-semibold text-blue-600 transition-colors hover:bg-white active:bg-blue-50" data-tab="data">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mb-1 h-6 w-6">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776" />
@@ -76,7 +85,7 @@
                 </button>
             </nav>
             <!-- サイドバーコンテンツ（データ） -->
-            <aside id="sidebar-data" class="flex w-72 flex-col border-r border-slate-200 bg-white">
+            <aside id="sidebar-data" class="fixed md:static inset-y-0 left-0 z-30 flex w-72 flex-col border-r border-slate-200 bg-white transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out md:transition-none">
                 <div class="border-b border-slate-200 px-4 py-4">
                     <button id="data-add-button" class="flex w-full items-center justify-center space-x-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5">
@@ -101,7 +110,7 @@
                 </div>
             </aside>
             <!-- サイドバーコンテンツ（UI） -->
-            <aside id="sidebar-ui" class="hidden w-72 flex-col border-r border-slate-200 bg-white">
+            <aside id="sidebar-ui" class="fixed md:static inset-y-0 left-0 z-30 hidden w-72 flex-col border-r border-slate-200 bg-white transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out md:transition-none">
                 <div class="border-b border-slate-200 px-4 py-4">
                     <button id="add-page-button" class="flex w-full items-center justify-center space-x-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5">
@@ -187,7 +196,7 @@
                 </div>
             </aside>
             <!-- サイドバーコンテンツ（グラフ） -->
-            <aside id="sidebar-chart" class="hidden w-72 flex-col border-r border-slate-200 bg-white">
+            <aside id="sidebar-chart" class="fixed md:static inset-y-0 left-0 z-30 hidden w-72 flex-col border-r border-slate-200 bg-white transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out md:transition-none">
                 <div class="flex-1 overflow-auto px-3 py-4 text-sm">
                     <section class="space-y-2">
                         <p class="px-3 text-xs font-semibold uppercase tracking-wide text-slate-400">グラフ設定</p>
@@ -226,7 +235,7 @@
                 </div>
             </aside>
             <!-- サイドバーコンテンツ（設定） -->
-            <aside id="sidebar-settings" class="hidden w-72 flex-col border-r border-slate-200 bg-white">
+            <aside id="sidebar-settings" class="fixed md:static inset-y-0 left-0 z-30 hidden w-72 flex-col border-r border-slate-200 bg-white transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out md:transition-none">
                 <div class="flex-1 overflow-auto px-3 py-4 text-sm">
                     <section class="space-y-2">
                         <p class="px-3 text-xs font-semibold uppercase tracking-wide text-slate-400">アプリ設定</p>
@@ -258,7 +267,7 @@
                     </div>
                 </div>
             </aside>
-            <main id="data-view" class="flex-1 overflow-auto px-6 py-6">
+            <main id="data-view" class="flex-1 overflow-auto px-4 md:px-6 py-6">
                 <!-- スプレッドシート連携情報バナー -->
                 <div id="sheets-integration-banner" class="mb-6 rounded-2xl border border-green-200 bg-green-50 p-4 shadow-sm hidden">
                     <div class="flex items-center justify-between">
@@ -775,6 +784,79 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // モバイルメニューの制御
+            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+            const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+            const mobileMenuIcon = document.getElementById('mobile-menu-icon');
+            const leftTabs = document.getElementById('left-tabs');
+            let isMenuOpen = false;
+
+            function toggleMobileMenu() {
+                isMenuOpen = !isMenuOpen;
+                const sidebars = [sidebarData, sidebarUI, sidebarChart, sidebarSettings];
+                
+                if (isMenuOpen) {
+                    // 左側のタブを表示
+                    if (leftTabs) {
+                        leftTabs.classList.remove('hidden');
+                        leftTabs.classList.add('fixed', 'inset-y-0', 'left-0', 'z-30', 'flex', 'w-16', 'flex-col', 'border-r', 'border-slate-200', 'bg-slate-50', 'pt-16');
+                    }
+                    // 現在表示されているサイドバーを表示
+                    sidebars.forEach(sidebar => {
+                        if (sidebar && !sidebar.classList.contains('hidden')) {
+                            sidebar.classList.remove('-translate-x-full');
+                        }
+                    });
+                    mobileMenuOverlay.classList.remove('hidden');
+                    // アイコンをXに変更
+                    if (mobileMenuIcon) {
+                        mobileMenuIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />';
+                    }
+                } else {
+                    // 左側のタブを非表示
+                    if (leftTabs) {
+                        leftTabs.classList.add('hidden');
+                        leftTabs.classList.remove('fixed', 'inset-y-0', 'left-0', 'z-30', 'flex', 'w-16', 'flex-col', 'border-r', 'border-slate-200', 'bg-slate-50', 'pt-16');
+                    }
+                    // すべてのサイドバーを非表示
+                    sidebars.forEach(sidebar => {
+                        if (sidebar) {
+                            sidebar.classList.add('-translate-x-full');
+                        }
+                    });
+                    mobileMenuOverlay.classList.add('hidden');
+                    // アイコンをハンバーガーに戻す
+                    if (mobileMenuIcon) {
+                        mobileMenuIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />';
+                    }
+                }
+            }
+
+            // サイドバー内の要素をクリックしたときにモバイルメニューを閉じる（オプション）
+            // サイドバー内のリンクやボタンをクリックしたときにメニューを閉じる
+            [sidebarData, sidebarUI, sidebarChart, sidebarSettings].forEach(sidebar => {
+                if (sidebar) {
+                    sidebar.addEventListener('click', (e) => {
+                        // リンクやボタンをクリックした場合のみメニューを閉じる
+                        if (e.target.closest('a, button') && window.innerWidth < 768 && isMenuOpen) {
+                            // 少し遅延させてから閉じる（クリックイベントが完了してから）
+                            setTimeout(() => {
+                                if (isMenuOpen) {
+                                    toggleMobileMenu();
+                                }
+                            }, 100);
+                        }
+                    });
+                }
+            });
+
+            mobileMenuToggle?.addEventListener('click', toggleMobileMenu);
+            mobileMenuOverlay?.addEventListener('click', () => {
+                if (isMenuOpen) {
+                    toggleMobileMenu();
+                }
+            });
+
             // タブ要素
             const tabButtons = document.querySelectorAll('.tab-button');
             const tabData = document.getElementById('tab-data');
@@ -877,11 +959,11 @@
                     btn.classList.add('text-slate-500');
                 });
                 
-                // すべてのサイドバーを非表示
-                sidebarData.classList.add('hidden');
-                sidebarUI.classList.add('hidden');
-                sidebarChart.classList.add('hidden');
-                sidebarSettings.classList.add('hidden');
+                // すべてのサイドバーを非表示（モバイルではtranslate-x-fullも追加）
+                sidebarData.classList.add('hidden', '-translate-x-full');
+                sidebarUI.classList.add('hidden', '-translate-x-full');
+                sidebarChart.classList.add('hidden', '-translate-x-full');
+                sidebarSettings.classList.add('hidden', '-translate-x-full');
                 
                 // すべてのビューを非表示
                 dataView.classList.add('hidden');
@@ -894,6 +976,10 @@
                     tabData.classList.remove('text-slate-500');
                     tabData.classList.add('bg-white', 'text-blue-600');
                     sidebarData.classList.remove('hidden');
+                    // モバイル表示時はサイドバーを表示（メニューが開いている場合のみ）
+                    if (window.innerWidth < 768 && isMenuOpen) {
+                        sidebarData.classList.remove('-translate-x-full');
+                    }
                     dataView.classList.remove('hidden');
                     builderActions.classList.add('hidden');
                     searchBar.classList.remove('hidden');
@@ -903,6 +989,10 @@
                     tabUI.classList.remove('text-slate-500');
                     tabUI.classList.add('bg-white', 'text-blue-600');
                     sidebarUI.classList.remove('hidden');
+                    // モバイル表示時はサイドバーを表示（メニューが開いている場合のみ）
+                    if (window.innerWidth < 768 && isMenuOpen) {
+                        sidebarUI.classList.remove('-translate-x-full');
+                    }
                     builderView.classList.remove('hidden');
                     builderActions.classList.remove('hidden');
                     searchBar.classList.add('hidden');
@@ -919,6 +1009,10 @@
                     tabChart.classList.remove('text-slate-500');
                     tabChart.classList.add('bg-white', 'text-blue-600');
                     sidebarChart.classList.remove('hidden');
+                    // モバイル表示時はサイドバーを表示（メニューが開いている場合のみ）
+                    if (window.innerWidth < 768 && isMenuOpen) {
+                        sidebarChart.classList.remove('-translate-x-full');
+                    }
                     chartView.classList.remove('hidden');
                     builderActions.classList.add('hidden');
                     searchBar.classList.remove('hidden');
@@ -933,6 +1027,10 @@
                     tabSettings.classList.remove('text-slate-500');
                     tabSettings.classList.add('bg-white', 'text-blue-600');
                     sidebarSettings.classList.remove('hidden');
+                    // モバイル表示時はサイドバーを表示（メニューが開いている場合のみ）
+                    if (window.innerWidth < 768 && isMenuOpen) {
+                        sidebarSettings.classList.remove('-translate-x-full');
+                    }
                     settingsView.classList.remove('hidden');
                     builderActions.classList.add('hidden');
                     searchBar.classList.remove('hidden');

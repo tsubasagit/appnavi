@@ -59,8 +59,26 @@
     </style>
 </head>
 <body class="bg-slate-100 text-slate-900">
+    <!-- モバイル用ハンバーガーメニューボタン -->
+    <div class="fixed top-0 left-0 right-0 z-40 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 md:hidden">
+        <div class="flex items-center space-x-2">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 21h7.5m-7.5 0a3 3 0 0 1-3-3V8.25m3 12.75h-3a3 3 0 0 1-3-3V8.25a3 3 0 0 1 .879-2.121l3.75-3.75A3 3 0 0 1 10.5 1.5h3a3 3 0 0 1 2.121.879l3.75 3.75A3 3 0 0 1 21.25 8.25V18a3 3 0 0 1-3 3h-3m-7.5 0V11.25A2.25 2.25 0 0 1 9 9h6a2.25 2.25 0 0 1 2.25 2.25V21" />
+            </svg>
+            <span class="text-lg font-semibold tracking-wide">AppNavi</span>
+        </div>
+        <button id="mobile-menu-toggle" class="rounded-lg p-2 text-slate-600 hover:bg-slate-100">
+            <svg id="mobile-menu-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-6 w-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            </svg>
+        </button>
+    </div>
+
+    <!-- モバイルメニューオーバーレイ -->
+    <div id="mobile-menu-overlay" class="fixed inset-0 z-30 bg-black/50 hidden md:hidden"></div>
+
     <div class="flex min-h-screen">
-        <aside class="flex w-64 flex-col border-r border-slate-200 bg-white">
+        <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-slate-200 bg-white transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out md:transition-none">
             <div class="flex items-center justify-between px-6 py-5 text-slate-700">
                 <div class="flex items-center space-x-2">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-6 w-6">
@@ -145,7 +163,7 @@
             </div>
         </aside>
 
-        <main class="flex-1 overflow-auto px-10 py-10">
+        <main class="flex-1 overflow-auto px-4 md:px-10 py-10 md:py-10 pt-20 md:pt-10">
             <!-- ダッシュボードセクション -->
             <section id="dashboard-section" class="section-content">
             <!-- ヒーローセクション -->
@@ -857,6 +875,44 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // モバイルメニューの制御
+            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+            const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+            const sidebar = document.getElementById('sidebar');
+            const mobileMenuIcon = document.getElementById('mobile-menu-icon');
+            let isMenuOpen = false;
+
+            function toggleMobileMenu() {
+                isMenuOpen = !isMenuOpen;
+                if (isMenuOpen) {
+                    sidebar.classList.remove('-translate-x-full');
+                    mobileMenuOverlay.classList.remove('hidden');
+                    // アイコンをXに変更
+                    mobileMenuIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />';
+                } else {
+                    sidebar.classList.add('-translate-x-full');
+                    mobileMenuOverlay.classList.add('hidden');
+                    // アイコンをハンバーガーに戻す
+                    mobileMenuIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />';
+                }
+            }
+
+            mobileMenuToggle?.addEventListener('click', toggleMobileMenu);
+            mobileMenuOverlay?.addEventListener('click', () => {
+                if (isMenuOpen) {
+                    toggleMobileMenu();
+                }
+            });
+
+            // サイドバーのメニュー項目をクリックしたときにモバイルメニューを閉じる
+            document.querySelectorAll('.nav-menu-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (window.innerWidth < 768 && isMenuOpen) {
+                        toggleMobileMenu();
+                    }
+                });
+            });
+
             // アプリ管理機能
             // データベース設計（Firebase/Supabaseを参考）
             // アプリデータ構造:
