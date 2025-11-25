@@ -145,7 +145,30 @@
                     const errorText = document.getElementById('error-text');
                     
                     let errorMessage = '新規登録に失敗しました。';
-                    if (error.code === 'auth/popup-closed-by-user') {
+                    let errorDetails = '';
+                    
+                    if (error.code === 'auth/unauthorized-domain') {
+                        const currentDomain = window.location.hostname;
+                        errorMessage = 'このドメインはFirebaseの認証済みドメインリストに登録されていません。';
+                        errorDetails = `
+                            <div class="mt-3 text-xs text-red-600 space-y-2">
+                                <p><strong>解決方法:</strong></p>
+                                <ol class="list-decimal list-inside space-y-1 ml-2">
+                                    <li>Firebase Console (<a href="https://console.firebase.google.com" target="_blank" class="underline">https://console.firebase.google.com</a>) にアクセス</li>
+                                    <li>プロジェクト「appnavi-add7e」を選択</li>
+                                    <li>「認証」→「設定」→「承認済みドメイン」タブを開く</li>
+                                    <li>「ドメインを追加」をクリック</li>
+                                    <li>以下のドメインを追加してください:</li>
+                                    <ul class="list-disc list-inside ml-4 mt-1">
+                                        <li><code class="bg-red-100 px-1 rounded">${currentDomain}</code></li>
+                                        <li><code class="bg-red-100 px-1 rounded">tsubasagit.github.io</code> (GitHub Pages)</li>
+                                        <li><code class="bg-red-100 px-1 rounded">localhost</code> (開発用)</li>
+                                    </ul>
+                                    <li>追加後、このページを再読み込みしてください</li>
+                                </ol>
+                            </div>
+                        `;
+                    } else if (error.code === 'auth/popup-closed-by-user') {
                         errorMessage = '登録ウィンドウが閉じられました。もう一度お試しください。';
                     } else if (error.code === 'auth/popup-blocked') {
                         errorMessage = 'ポップアップがブロックされました。ブラウザの設定でポップアップを許可してください。';
@@ -157,7 +180,7 @@
                         errorMessage = error.message;
                     }
                     
-                    errorText.textContent = errorMessage;
+                    errorText.innerHTML = errorMessage + errorDetails;
                     errorDiv.classList.remove('hidden');
                     
                     // ボタンを再有効化
