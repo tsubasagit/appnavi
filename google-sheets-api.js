@@ -1442,11 +1442,11 @@ class GoogleSheetsService {
                             error: retryErrorData
                         });
                         
-                        throw new Error(`認証エラーが続いています。再認証が必要です: ${retryErrorData.error?.message || retryResponse.statusText}`);
+                        throw new Error('データの同期に失敗しました。\n\n【原因】\n認証の有効期限が切れています。\n\n【解決方法】\n1. ページ上部の「Googleでログイン」ボタンをクリックしてください\n2. Googleアカウントでログインしてください\n3. ログイン後、再度「データを更新」ボタンをクリックしてください\n\n※ 設定不要で使えます。データはブラウザに自動保存されます。');
                     } catch (refreshError) {
                         console.error('【syncAllDataToSpreadsheet】トークンリフレッシュエラー:', refreshError);
                         // リフレッシュに失敗した場合は、再認証を促す
-                        throw new Error('認証の有効期限が切れました。再度ログインしてください。\n\n【解決方法】\n1. ダッシュボードで「Googleでログイン」ボタンをクリックしてください\n2. 認証後、再度お試しください');
+                        throw new Error('データの同期に失敗しました。\n\n【原因】\n認証の有効期限が切れています。\n\n【解決方法】\n1. ページ上部の「Googleでログイン」ボタンをクリックしてください\n2. Googleアカウントでログインしてください\n3. ログイン後、再度「データを更新」ボタンをクリックしてください\n\n※ 設定不要で使えます。データはブラウザに自動保存されます。');
                     }
                 }
                 
