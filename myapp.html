@@ -3208,14 +3208,22 @@
                 };
             }
 
+            // リダイレクトループを防ぐフラグ
+            let isRedirecting = false;
+
             // ログイン必須チェック（最初に実行）
             async function checkAuth() {
+                // 既にリダイレクト中の場合はスキップ
+                if (isRedirecting) {
+                    return false;
+                }
+
                 // リダイレクトループを防ぐ: 既に登録ページから来た場合はスキップ
                 const urlParams = new URLSearchParams(window.location.search);
                 const fromRegister = urlParams.get('fromRegister');
                 if (fromRegister === 'true') {
                     // 登録ページから戻ってきた場合は、認証状態を再確認する時間を与える
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                 }
 
                 // Firebase初期化
@@ -3242,8 +3250,16 @@
                     return true;
                 }
 
+                // リダイレクトループを防ぐ: URLにfromRegisterパラメータがある場合はスキップ
+                if (fromRegister === 'true') {
+                    console.warn('認証が必要ですが、リダイレクトループを防ぐため、スキップします。');
+                    // 認証なしで続行（データ保存はできないが、表示は可能）
+                    return true;
+                }
+
                 // ログインが必要 - 新規登録ページにリダイレクト（戻り先を保存）
-                const returnUrl = window.location.href;
+                isRedirecting = true;
+                const returnUrl = window.location.href.split('?')[0]; // 既存のパラメータを削除
                 window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(returnUrl)}`;
                 return false;
             }

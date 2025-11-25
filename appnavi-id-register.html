@@ -94,36 +94,49 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const returnUrl = urlParams.get('returnUrl');
                 if (returnUrl) {
-                    window.location.href = returnUrl;
+                    // returnUrlにfromRegisterパラメータを追加してリダイレクトループを防ぐ
+                    const separator = returnUrl.includes('?') ? '&' : '?';
+                    window.location.href = `${returnUrl}${separator}fromRegister=true`;
                 } else {
                     window.location.href = 'index.html';
                 }
                 return;
             }
 
+            // リダイレクト済みフラグ（onAuthStateChangedの重複実行を防ぐ）
+            let hasRedirected = false;
+
             // 認証状態の監視
             auth.onAuthStateChanged((user) => {
-                if (user) {
+                if (user && !hasRedirected) {
                     // 新規登録成功 - AppNaviIDをFirebase UIDから生成して保存
                     const userId = user.uid;
                     appNaviIDService.setAppNaviID(userId);
                     
+                    // リダイレクトフラグを設定（重複リダイレクトを防ぐ）
+                    hasRedirected = true;
+                    
                     // 成功メッセージ表示
                     const successDiv = document.getElementById('success-message');
                     const successText = document.getElementById('success-text');
-                    successDiv.classList.remove('hidden');
-                    successText.textContent = 'アカウントが正常に作成されました。ダッシュボードに移動します...';
+                    if (successDiv && successText) {
+                        successDiv.classList.remove('hidden');
+                        successText.textContent = 'アカウントが正常に作成されました。ダッシュボードに移動します...';
+                    }
                     
                     // ダッシュボードにリダイレクト（認証状態が反映されるまで少し待つ）
                     setTimeout(() => {
-                        const urlParams = new URLSearchParams(window.location.search);
-                        const returnUrl = urlParams.get('returnUrl');
-                        if (returnUrl) {
-                            // returnUrlにfromRegisterパラメータを追加してリダイレクトループを防ぐ
-                            const separator = returnUrl.includes('?') ? '&' : '?';
-                            window.location.href = `${returnUrl}${separator}fromRegister=true`;
-                        } else {
-                            window.location.href = 'index.html';
+                        // まだこのページにいる場合のみリダイレクト
+                        if (window.location.href.includes('appnavi-id-register.html')) {
+                            const urlParams = new URLSearchParams(window.location.search);
+                            const returnUrl = urlParams.get('returnUrl');
+                            if (returnUrl) {
+                                // returnUrlにfromRegisterパラメータを追加してリダイレクトループを防ぐ
+                                const separator = returnUrl.includes('?') ? '&' : '?';
+                                window.location.href = `${returnUrl}${separator}fromRegister=true`;
+                            } else {
+                                window.location.href = 'index.html';
+                            }
                         }
                     }, 1500);
                 }
