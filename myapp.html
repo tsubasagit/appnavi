@@ -3255,9 +3255,20 @@
                 }
 
                 // どちらも認証されていない - 新規登録ページにリダイレクト（戻り先を保存）
-                console.log('認証なし: ログインページにリダイレクト');
+                console.error('=== 認証失敗の詳細 ===');
+                console.error('appNaviIDService:', typeof appNaviIDService);
+                console.error('AppNaviID:', typeof appNaviIDService !== 'undefined' ? appNaviIDService.getAppNaviID() : 'N/A');
+                console.error('hasAppNaviID():', typeof appNaviIDService !== 'undefined' ? appNaviIDService.hasAppNaviID() : 'N/A');
+                console.error('localStorage appnavi_user_id:', localStorage.getItem('appnavi_user_id'));
+                console.error('Firebase auth.currentUser:', auth ? auth.currentUser : 'auth not initialized');
+                console.error('認証なし: ログインページにリダイレクト（5秒後に実行）');
+                
+                // デバッグ用：5秒待機してからリダイレクト（コンソール確認のため）
                 const returnUrl = window.location.href;
-                window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(returnUrl)}`;
+                setTimeout(() => {
+                    console.error('リダイレクト実行:', `appnavi-id-register.html?returnUrl=${encodeURIComponent(returnUrl)}`);
+                    window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(returnUrl)}`;
+                }, 5000);
                 return false;
             }
 
