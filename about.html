@@ -33,6 +33,79 @@
     <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <!-- ヒーローセクション -->
         <div class="text-center mb-12">
+            <!-- メインビジュアル -->
+            <div class="mb-8 flex justify-center">
+                <div class="relative w-full max-w-2xl">
+                    <svg viewBox="0 0 800 400" class="w-full h-auto">
+                        <!-- 背景グラデーション -->
+                        <defs>
+                            <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.1" />
+                                <stop offset="100%" style="stop-color:#6366f1;stop-opacity:0.1" />
+                            </linearGradient>
+                            <linearGradient id="dataGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#3b82f6" />
+                                <stop offset="100%" style="stop-color:#2563eb" />
+                            </linearGradient>
+                            <linearGradient id="platformGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#10b981" />
+                                <stop offset="100%" style="stop-color:#059669" />
+                            </linearGradient>
+                        </defs>
+                        
+                        <!-- データ所有権のビジュアル（左側） -->
+                        <g transform="translate(100, 100)">
+                            <!-- ロックアイコン -->
+                            <rect x="0" y="0" width="120" height="120" rx="20" fill="url(#dataGradient)" opacity="0.2"/>
+                            <path d="M60 40 L60 70 Q60 80 50 80 L30 80 Q20 80 20 70 L20 50 Q20 40 30 40 L50 40 Q60 40 60 50 Z" fill="url(#dataGradient)" transform="translate(30, 30)"/>
+                            <circle cx="60" cy="55" r="8" fill="white" transform="translate(30, 30)"/>
+                            <!-- データの流れ -->
+                            <circle cx="60" cy="60" r="4" fill="#3b82f6" transform="translate(30, 30)"/>
+                            <circle cx="60" cy="80" r="4" fill="#3b82f6" transform="translate(30, 30)"/>
+                            <circle cx="60" cy="100" r="4" fill="#3b82f6" transform="translate(30, 30)"/>
+                            <text x="60" y="150" text-anchor="middle" fill="#1e40af" font-size="16" font-weight="bold">データは個人のもの</text>
+                        </g>
+                        
+                        <!-- 中央の矢印 -->
+                        <path d="M400 200 L500 200" stroke="#6366f1" stroke-width="4" fill="none" marker-end="url(#arrowhead)"/>
+                        <defs>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                <polygon points="0 0, 10 3, 0 6" fill="#6366f1"/>
+                            </marker>
+                        </defs>
+                        
+                        <!-- プラットフォームのビジュアル（右側） -->
+                        <g transform="translate(580, 100)">
+                            <!-- コミュニティアイコン -->
+                            <rect x="0" y="0" width="120" height="120" rx="20" fill="url(#platformGradient)" opacity="0.2"/>
+                            <!-- 人々のアイコン -->
+                            <circle cx="40" cy="50" r="12" fill="url(#platformGradient)"/>
+                            <circle cx="80" cy="50" r="12" fill="url(#platformGradient)"/>
+                            <circle cx="60" cy="80" r="12" fill="url(#platformGradient)"/>
+                            <!-- 接続線 -->
+                            <line x1="40" y1="50" x2="60" y2="80" stroke="url(#platformGradient)" stroke-width="2"/>
+                            <line x1="80" y1="50" x2="60" y2="80" stroke="url(#platformGradient)" stroke-width="2"/>
+                            <line x1="40" y1="50" x2="80" y2="50" stroke="url(#platformGradient)" stroke-width="2"/>
+                            <text x="60" y="150" text-anchor="middle" fill="#065f46" font-size="16" font-weight="bold">プラットフォームはみんなに</text>
+                        </g>
+                        
+                        <!-- ExcelからWebアプリへの変換 -->
+                        <g transform="translate(200, 250)">
+                            <rect x="0" y="0" width="80" height="60" rx="8" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+                            <text x="40" y="35" text-anchor="middle" fill="#4f46e5" font-size="14" font-weight="bold">Excel</text>
+                            <path d="M80 30 L120 30" stroke="#6366f1" stroke-width="3" fill="none" marker-end="url(#arrowhead2)"/>
+                            <defs>
+                                <marker id="arrowhead2" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+                                    <polygon points="0 0, 8 3, 0 6" fill="#6366f1"/>
+                                </marker>
+                            </defs>
+                            <rect x="120" y="0" width="80" height="60" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+                            <text x="160" y="35" text-anchor="middle" fill="#1e40af" font-size="14" font-weight="bold">Web App</text>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+            
             <h1 class="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
                 AppNaviについて
             </h1>
@@ -55,15 +128,25 @@
             
             <div class="grid md:grid-cols-2 gap-6">
                 <!-- データは個人のもの -->
-                <div class="border-2 border-blue-200 rounded-xl p-6 bg-blue-50">
-                    <div class="flex items-center mb-4">
-                        <div class="h-12 w-12 rounded-full bg-blue-600 flex items-center justify-center mr-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" class="h-6 w-6">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25h-10.5a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-bold text-slate-900">データは個人のもの</h3>
+                <div class="border-2 border-blue-200 rounded-xl p-6 bg-blue-50 relative overflow-hidden">
+                    <!-- 装飾的な背景画像 -->
+                    <div class="absolute top-0 right-0 w-32 h-32 opacity-10">
+                        <svg viewBox="0 0 200 200" class="w-full h-full">
+                            <circle cx="100" cy="100" r="80" fill="none" stroke="#3b82f6" stroke-width="2" stroke-dasharray="5,5"/>
+                            <path d="M100 20 L100 180 M20 100 L180 100" stroke="#3b82f6" stroke-width="2"/>
+                            <circle cx="100" cy="100" r="40" fill="#3b82f6" opacity="0.3"/>
+                            <path d="M100 60 L100 80 L80 80 L80 100 L100 100 L100 120 L120 120 L120 100 L100 100 L100 80 L120 80 L120 60 Z" fill="#3b82f6"/>
+                        </svg>
                     </div>
+                    <div class="relative">
+                        <div class="flex items-center mb-4">
+                            <div class="h-16 w-16 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center mr-4 shadow-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" class="h-8 w-8">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25h-10.5a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                </svg>
+                            </div>
+                            <h3 class="text-xl font-bold text-slate-900">データは個人のもの</h3>
+                        </div>
                     <ul class="space-y-3 text-slate-700">
                         <li class="flex items-start">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0">
@@ -93,15 +176,28 @@
                 </div>
 
                 <!-- プラットフォームはみんなに -->
-                <div class="border-2 border-green-200 rounded-xl p-6 bg-green-50">
-                    <div class="flex items-center mb-4">
-                        <div class="h-12 w-12 rounded-full bg-green-600 flex items-center justify-center mr-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" class="h-6 w-6">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-bold text-slate-900">プラットフォームはみんなに</h3>
+                <div class="border-2 border-green-200 rounded-xl p-6 bg-green-50 relative overflow-hidden">
+                    <!-- 装飾的な背景画像 -->
+                    <div class="absolute top-0 right-0 w-32 h-32 opacity-10">
+                        <svg viewBox="0 0 200 200" class="w-full h-full">
+                            <circle cx="100" cy="100" r="80" fill="none" stroke="#10b981" stroke-width="2" stroke-dasharray="5,5"/>
+                            <circle cx="60" cy="80" r="20" fill="#10b981" opacity="0.3"/>
+                            <circle cx="140" cy="80" r="20" fill="#10b981" opacity="0.3"/>
+                            <circle cx="100" cy="120" r="20" fill="#10b981" opacity="0.3"/>
+                            <line x1="60" y1="80" x2="100" y2="120" stroke="#10b981" stroke-width="2"/>
+                            <line x1="140" y1="80" x2="100" y2="120" stroke="#10b981" stroke-width="2"/>
+                            <line x1="60" y1="80" x2="140" y2="80" stroke="#10b981" stroke-width="2"/>
+                        </svg>
                     </div>
+                    <div class="relative">
+                        <div class="flex items-center mb-4">
+                            <div class="h-16 w-16 rounded-full bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center mr-4 shadow-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" class="h-8 w-8">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+                                </svg>
+                            </div>
+                            <h3 class="text-xl font-bold text-slate-900">プラットフォームはみんなに</h3>
+                        </div>
                     <ul class="space-y-3 text-slate-700">
                         <li class="flex items-start">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0">
@@ -133,13 +229,23 @@
         </section>
 
         <!-- なぜこのコンセプトなのか -->
-        <section class="bg-white rounded-2xl shadow-lg p-8 mb-8">
-            <h2 class="text-2xl font-bold text-slate-900 mb-6 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-6 w-6 mr-2 text-indigo-600">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+        <section class="bg-white rounded-2xl shadow-lg p-8 mb-8 relative overflow-hidden">
+            <!-- 装飾的な背景 -->
+            <div class="absolute top-0 right-0 w-64 h-64 opacity-5">
+                <svg viewBox="0 0 400 400" class="w-full h-full">
+                    <circle cx="200" cy="200" r="150" fill="none" stroke="#6366f1" stroke-width="3"/>
+                    <circle cx="200" cy="200" r="100" fill="none" stroke="#6366f1" stroke-width="2"/>
+                    <circle cx="200" cy="200" r="50" fill="#6366f1" opacity="0.2"/>
+                    <path d="M200 50 L200 150 M200 250 L200 350 M50 200 L150 200 M250 200 L350 200" stroke="#6366f1" stroke-width="2"/>
                 </svg>
-                なぜこのコンセプトなのか
-            </h2>
+            </div>
+            <div class="relative">
+                <h2 class="text-2xl font-bold text-slate-900 mb-6 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-6 w-6 mr-2 text-indigo-600">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                    </svg>
+                    なぜこのコンセプトなのか
+                </h2>
             <div class="prose max-w-none text-slate-700">
                 <p class="text-lg mb-4">
                     AppNaviは、中小企業や自治体のデジタル化を支援するために生まれました。多くの企業や組織が、データ管理ツールを必要としながらも、以下の課題に直面しています：
@@ -217,12 +323,33 @@
         </section>
 
         <!-- CTA -->
-        <section class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl shadow-lg p-8 text-center text-white">
-            <h2 class="text-2xl font-bold mb-4">今すぐ始めましょう</h2>
-            <p class="text-blue-100 mb-6">Excelから、5分でWebアプリへ。コードなし、コストなし、サーバーなし。</p>
-            <a href="index.html" class="inline-block bg-white text-blue-600 font-semibold px-6 py-3 rounded-lg hover:bg-blue-50 transition-colors">
-                ダッシュボードに戻る
-            </a>
+        <section class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl shadow-lg p-8 text-center text-white relative overflow-hidden">
+            <!-- 装飾的な背景パターン -->
+            <div class="absolute inset-0 opacity-10">
+                <svg viewBox="0 0 400 200" class="w-full h-full">
+                    <defs>
+                        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" stroke-width="1"/>
+                        </pattern>
+                    </defs>
+                    <rect width="100%" height="100%" fill="url(#grid)"/>
+                    <circle cx="100" cy="100" r="60" fill="none" stroke="white" stroke-width="2"/>
+                    <circle cx="300" cy="100" r="60" fill="none" stroke="white" stroke-width="2"/>
+                    <path d="M160 100 L240 100" stroke="white" stroke-width="3" marker-end="url(#arrowWhite)"/>
+                    <defs>
+                        <marker id="arrowWhite" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                            <polygon points="0 0, 10 3, 0 6" fill="white"/>
+                        </marker>
+                    </defs>
+                </svg>
+            </div>
+            <div class="relative z-10">
+                <h2 class="text-2xl font-bold mb-4">今すぐ始めましょう</h2>
+                <p class="text-blue-100 mb-6">Excelから、5分でWebアプリへ。コードなし、コストなし、サーバーなし。</p>
+                <a href="index.html" class="inline-block bg-white text-blue-600 font-semibold px-6 py-3 rounded-lg hover:bg-blue-50 transition-colors shadow-lg">
+                    ダッシュボードに戻る
+                </a>
+            </div>
         </section>
     </main>
 
