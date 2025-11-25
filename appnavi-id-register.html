@@ -114,60 +114,49 @@
                 }
             }
 
-            // 既にログインしている場合はリダイレクト
+            // 既にログインしている場合はAppNaviIDを保存（リダイレクトはしない）
             if (auth.currentUser) {
                 // AppNaviIDをFirebase UIDから生成して保存
                 const userId = auth.currentUser.uid;
                 appNaviIDService.setAppNaviID(userId);
-                
-                const urlParams = new URLSearchParams(window.location.search);
-                const returnUrl = urlParams.get('returnUrl');
-                if (returnUrl) {
-                    // returnUrlをクリーンアップしてfromRegisterパラメータを追加
-                    const cleanReturnUrl = cleanUrlAndAddFromRegister(returnUrl);
-                    window.location.href = cleanReturnUrl;
-                } else {
-                    window.location.href = 'index.html';
-                }
-                return;
+                // リダイレクトはしない - ユーザーが手動で操作できるようにする
             }
 
-            // リダイレクト済みフラグ（onAuthStateChangedの重複実行を防ぐ）
-            let hasRedirected = false;
-
-            // 認証状態の監視
+            // 認証状態の監視（AppNaviIDの保存のみ、リダイレクトはしない）
             auth.onAuthStateChanged((user) => {
-                if (user && !hasRedirected) {
+                if (user) {
                     // 新規登録成功 - AppNaviIDをFirebase UIDから生成して保存
                     const userId = user.uid;
                     appNaviIDService.setAppNaviID(userId);
-                    
-                    // リダイレクトフラグを設定（重複リダイレクトを防ぐ）
-                    hasRedirected = true;
                     
                     // 成功メッセージ表示
                     const successDiv = document.getElementById('success-message');
                     const successText = document.getElementById('success-text');
                     if (successDiv && successText) {
                         successDiv.classList.remove('hidden');
-                        successText.textContent = 'アカウントが正常に作成されました。ダッシュボードに移動します...';
+                        
+                        // returnUrlがある場合はリンクを表示
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const returnUrl = urlParams.get('returnUrl');
+                        
+                        if (returnUrl) {
+                            // returnUrlをクリーンアップ
+                            let cleanReturnUrl = returnUrl;
+                            try {
+                                const urlObj = new URL(returnUrl);
+                                urlObj.searchParams.delete('fromRegister');
+                                cleanReturnUrl = urlObj.toString();
+                            } catch (e) {
+                                // URL解析に失敗した場合はそのまま使用
+                            }
+                            
+                            successText.innerHTML = 'アカウントが正常に作成されました。<br><a href="' + cleanReturnUrl + '" class="underline font-semibold mt-2 inline-block">アプリに移動する</a>';
+                        } else {
+                            successText.textContent = 'アカウントが正常に作成されました。';
+                        }
                     }
                     
-                    // ダッシュボードにリダイレクト（認証状態が反映されるまで少し待つ）
-                    setTimeout(() => {
-                        // まだこのページにいる場合のみリダイレクト
-                        if (window.location.href.includes('appnavi-id-register.html')) {
-                            const urlParams = new URLSearchParams(window.location.search);
-                            const returnUrl = urlParams.get('returnUrl');
-                            if (returnUrl) {
-                                // returnUrlをクリーンアップしてfromRegisterパラメータを追加
-                                const cleanReturnUrl = cleanUrlAndAddFromRegister(returnUrl);
-                                window.location.href = cleanReturnUrl;
-                            } else {
-                                window.location.href = 'index.html';
-                            }
-                        }
-                    }, 1500);
+                    // リダイレクトはしない - ユーザーが手動で操作できるようにする
                 }
             });
 
@@ -194,12 +183,7 @@
                     // 新規ユーザーかどうかを確認（初回ログイン時）
                     const isNewUser = result.additionalUserInfo?.isNewUser;
                     
-                    if (isNewUser) {
-                        successDiv.classList.remove('hidden');
-                        document.getElementById('success-text').textContent = 'アカウントが正常に作成されました。ダッシュボードに移動します...';
-                    }
-                    
-                    // 成功時はonAuthStateChangedでリダイレクトされる
+                    // 成功メッセージはonAuthStateChangedで表示される（リダイレクトはしない）
                 } catch (error) {
                     console.error('Signup error:', error);
                     const errorDiv = document.getElementById('error-message');
