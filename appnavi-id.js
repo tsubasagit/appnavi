@@ -21,13 +21,27 @@ class AppNaviIDService {
         return localStorage.getItem(this.storageKey);
     }
 
-    // AppNaviIDを保存（Firebase UIDも受け入れる）
+    // AppNaviIDを保存（Firebase UID、ゲストIDも受け入れる）
     setAppNaviID(id) {
+        if (!id || typeof id !== 'string') {
+            throw new Error('AppNaviIDが指定されていません');
+        }
+        
         // Firebase UIDの場合はそのまま保存（形式チェックをスキップ）
-        if (id && id.length === 28 && /^[a-zA-Z0-9]+$/.test(id)) {
+        if (id.length === 28 && /^[a-zA-Z0-9]+$/.test(id)) {
             // Firebase UID形式（28文字の英数字）の場合はそのまま保存
             localStorage.setItem(this.storageKey, id);
             return id;
+        }
+        
+        // ゲストID形式（guest- + UUID）の場合はそのまま保存
+        if (id.startsWith('guest-') && id.length > 6) {
+            const uuidPart = id.substring(6);
+            // UUID形式を簡易チェック（36文字、ハイフンを含む）
+            if (uuidPart.length >= 32 && /^[a-f0-9-]+$/i.test(uuidPart)) {
+                localStorage.setItem(this.storageKey, id);
+                return id;
+            }
         }
         
         // 通常のAppNaviID形式の場合は検証
@@ -46,7 +60,7 @@ class AppNaviIDService {
         return this.idFormat.test(id);
     }
 
-    // AppNaviIDが設定されているか確認（Firebase UIDも有効）
+    // AppNaviIDが設定されているか確認（Firebase UID、ゲストIDも有効）
     hasAppNaviID() {
         const id = this.getAppNaviID();
         if (!id) return false;
@@ -54,6 +68,15 @@ class AppNaviIDService {
         // Firebase UID形式（28文字の英数字）も有効
         if (id.length === 28 && /^[a-zA-Z0-9]+$/.test(id)) {
             return true;
+        }
+        
+        // ゲストID形式（guest- + UUID）も有効
+        if (id.startsWith('guest-') && id.length > 6) {
+            const uuidPart = id.substring(6);
+            // UUID形式を簡易チェック（32文字以上、英数字とハイフン）
+            if (uuidPart.length >= 32 && /^[a-f0-9-]+$/i.test(uuidPart)) {
+                return true;
+            }
         }
         
         // 通常のAppNaviID形式
