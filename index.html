@@ -3466,20 +3466,27 @@
             
             // ログイン必須チェック（最初に実行）
             async function checkAuth() {
-                // AppNaviIDを先にチェック（より確実）
-                if (appNaviIDService && appNaviIDService.hasAppNaviID()) {
-                    console.log('AppNaviID認証: OK');
-                    // Firebase初期化（非同期、エラーを無視）
-                    try {
-                        await initFirebase();
-                        // Firebase認証も取れている場合は同期
-                        if (auth && auth.currentUser) {
-                            appNaviIDService.setAppNaviID(auth.currentUser.uid);
+                // appNaviIDServiceが読み込まれているか確認
+                if (typeof appNaviIDService === 'undefined') {
+                    console.warn('appNaviIDServiceが読み込まれていません。Firebase認証をチェックします。');
+                } else {
+                    // AppNaviIDを先にチェック（より確実）
+                    if (appNaviIDService.hasAppNaviID()) {
+                        console.log('AppNaviID認証: OK', appNaviIDService.getAppNaviID());
+                        // Firebase初期化（非同期、エラーを無視）
+                        try {
+                            await initFirebase();
+                            // Firebase認証も取れている場合は同期
+                            if (auth && auth.currentUser) {
+                                appNaviIDService.setAppNaviID(auth.currentUser.uid);
+                            }
+                        } catch (error) {
+                            console.warn('Firebase初期化エラー（続行）:', error);
                         }
-                    } catch (error) {
-                        console.warn('Firebase初期化エラー（続行）:', error);
+                        return true;
+                    } else {
+                        console.log('AppNaviID未設定');
                     }
-                    return true;
                 }
 
                 // Firebase初期化
@@ -3487,9 +3494,9 @@
                 
                 // Firebase認証が利用可能で、ログインしている場合はOK
                 if (auth && auth.currentUser) {
-                    console.log('Firebase認証: OK');
+                    console.log('Firebase認証: OK', auth.currentUser.uid);
                     // AppNaviIDにFirebase UIDを保存（同期）
-                    if (appNaviIDService) {
+                    if (typeof appNaviIDService !== 'undefined') {
                         appNaviIDService.setAppNaviID(auth.currentUser.uid);
                     }
                     return true;
