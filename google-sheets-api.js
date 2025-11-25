@@ -135,8 +135,11 @@ class GoogleSheetsService {
     async refreshAccessToken() {
         // 既にリフレッシュ中の場合は、そのPromiseを返す
         if (this.refreshTokenPromise) {
+            console.log('既にリフレッシュ中のため、待機します...');
             return this.refreshTokenPromise;
         }
+
+        console.log('トークンリフレッシュを開始します...');
 
         this.refreshTokenPromise = new Promise((resolve, reject) => {
             try {
@@ -152,16 +155,27 @@ class GoogleSheetsService {
                     return;
                 }
 
+                // タイムアウトを設定（10秒）
+                const timeoutId = setTimeout(() => {
+                    this.refreshTokenPromise = null;
+                    reject(new Error('トークンリフレッシュがタイムアウトしました。再認証が必要です。'));
+                }, 10000);
+
                 // 新しいトークンクライアントを作成してリフレッシュ
                 const refreshClient = google.accounts.oauth2.initTokenClient({
                     client_id: clientId,
                     scope: 'https://www.googleapis.com/auth/spreadsheets',
                     callback: (response) => {
+                        clearTimeout(timeoutId);
+                        
                         if (response.error) {
+                            console.error('トークンリフレッシュエラー:', response.error);
                             this.refreshTokenPromise = null;
                             reject(new Error(`トークンのリフレッシュに失敗しました: ${response.error}`));
                             return;
                         }
+                        
+                        console.log('トークンリフレッシュ成功');
                         this.accessToken = response.access_token;
                         this.isAuthenticated = true;
                         this.tokenClient = refreshClient; // 新しいトークンクライアントを保存
@@ -171,8 +185,10 @@ class GoogleSheetsService {
                 });
                 
                 // リフレッシュトークンを要求（prompt: ''でサイレントリフレッシュ）
+                // サイレントリフレッシュが失敗する場合は、prompt: 'consent'で再認証を促す
                 refreshClient.requestAccessToken({ prompt: '' });
             } catch (error) {
+                console.error('トークンリフレッシュ例外:', error);
                 this.refreshTokenPromise = null;
                 reject(error);
             }
