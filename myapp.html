@@ -3260,8 +3260,36 @@
                 window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(returnUrl)}`;
             }
 
+            // スクリプトの読み込みを待ってから認証チェックを実行
+            function waitForScripts() {
+                return new Promise((resolve) => {
+                    // appnavi-id.jsが読み込まれているか確認
+                    if (typeof appNaviIDService !== 'undefined') {
+                        resolve();
+                        return;
+                    }
+                    
+                    // 最大5秒待機
+                    let attempts = 0;
+                    const maxAttempts = 50; // 100ms * 50 = 5秒
+                    const checkInterval = setInterval(() => {
+                        attempts++;
+                        if (typeof appNaviIDService !== 'undefined') {
+                            clearInterval(checkInterval);
+                            resolve();
+                        } else if (attempts >= maxAttempts) {
+                            clearInterval(checkInterval);
+                            console.warn('appNaviIDServiceの読み込みを待ちましたが、タイムアウトしました。');
+                            resolve(); // タイムアウトしても続行
+                        }
+                    }, 100);
+                });
+            }
+
             // 認証チェック後にアプリを読み込む
-            checkAuth().then(authenticated => {
+            waitForScripts().then(() => {
+                return checkAuth();
+            }).then(authenticated => {
                 if (!authenticated) {
                     // 認証されていない場合はリダイレクトされるため、ここには到達しない
                     return;
@@ -3287,9 +3315,6 @@
                 const returnUrl = window.location.href;
                 window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(returnUrl)}`;
             });
-
-            // デフォルトで「データ」タブを選択
-            setTab('data');
         });
     </script>
 </body>
