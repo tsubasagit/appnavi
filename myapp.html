@@ -832,24 +832,6 @@
                 }
             }
 
-            // サイドバー内の要素をクリックしたときにモバイルメニューを閉じる（オプション）
-            // サイドバー内のリンクやボタンをクリックしたときにメニューを閉じる
-            [sidebarData, sidebarUI, sidebarChart, sidebarSettings].forEach(sidebar => {
-                if (sidebar) {
-                    sidebar.addEventListener('click', (e) => {
-                        // リンクやボタンをクリックした場合のみメニューを閉じる
-                        if (e.target.closest('a, button') && window.innerWidth < 768 && isMenuOpen) {
-                            // 少し遅延させてから閉じる（クリックイベントが完了してから）
-                            setTimeout(() => {
-                                if (isMenuOpen) {
-                                    toggleMobileMenu();
-                                }
-                            }, 100);
-                        }
-                    });
-                }
-            });
-
             mobileMenuToggle?.addEventListener('click', toggleMobileMenu);
             mobileMenuOverlay?.addEventListener('click', () => {
                 if (isMenuOpen) {
@@ -869,6 +851,24 @@
             const sidebarUI = document.getElementById('sidebar-ui');
             const sidebarChart = document.getElementById('sidebar-chart');
             const sidebarSettings = document.getElementById('sidebar-settings');
+
+            // サイドバー内の要素をクリックしたときにモバイルメニューを閉じる（オプション）
+            // サイドバー内のリンクやボタンをクリックしたときにメニューを閉じる
+            [sidebarData, sidebarUI, sidebarChart, sidebarSettings].forEach(sidebar => {
+                if (sidebar) {
+                    sidebar.addEventListener('click', (e) => {
+                        // リンクやボタンをクリックした場合のみメニューを閉じる
+                        if (e.target.closest('a, button') && window.innerWidth < 768 && isMenuOpen) {
+                            // 少し遅延させてから閉じる（クリックイベントが完了してから）
+                            setTimeout(() => {
+                                if (isMenuOpen) {
+                                    toggleMobileMenu();
+                                }
+                            }, 100);
+                        }
+                    });
+                }
+            });
             
             // ビュー要素
             const dataView = document.getElementById('data-view');
@@ -1216,6 +1216,173 @@
                 // ヘッダータイトルも更新
                 if (viewTitle) {
                     viewTitle.textContent = data.name;
+                }
+            }
+
+            // アプリデータをテーブルに表示する関数
+            function updateAppDataTable(data, columns) {
+                if (!data || !Array.isArray(data) || data.length === 0) {
+                    console.warn('updateAppDataTable: データが空です', { data, columns });
+                    // 空のテーブルを表示
+                    const tableBody = document.getElementById('table-body');
+                    if (tableBody) {
+                        tableBody.innerHTML = '<tr><td colspan="100%" class="px-6 py-8 text-center text-slate-500">データがありません</td></tr>';
+                    }
+                    return;
+                }
+
+                if (!columns || !Array.isArray(columns) || columns.length === 0) {
+                    console.warn('updateAppDataTable: 列が空です', { data, columns });
+                    return;
+                }
+
+                console.log('updateAppDataTable: データを表示します', { dataLength: data.length, columnsLength: columns.length });
+
+                const tableTitle = document.getElementById('table-title');
+                const tableSubtitle = document.getElementById('table-subtitle');
+                const tableBadges = document.getElementById('table-badges');
+                const tableHead = document.getElementById('table-head');
+                const tableBody = document.getElementById('table-body');
+
+                // タイトルとサブタイトルを更新
+                if (tableTitle && currentApp) {
+                    tableTitle.textContent = currentApp.name || 'データテーブル';
+                }
+                if (tableSubtitle) {
+                    const lastUpdated = currentApp?.updatedAt 
+                        ? new Date(currentApp.updatedAt).toLocaleString('ja-JP')
+                        : new Date().toLocaleString('ja-JP');
+                    tableSubtitle.textContent = `最終更新: ${lastUpdated}`;
+                }
+
+                // バッジを更新（データ件数）
+                if (tableBadges) {
+                    tableBadges.innerHTML = `
+                        <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700">
+                            総件数 ${data.length}
+                        </span>
+                    `;
+                }
+
+                // ヘッダーを更新
+                if (tableHead) {
+                    const headerRow = tableHead.querySelector('tr');
+                    if (headerRow) {
+                        headerRow.innerHTML = columns.map(col => 
+                            `<th class="px-6 py-3 text-left text-xs font-semibold text-slate-500">${col.name}</th>`
+                        ).join('') + '<th class="px-6 py-3 text-left text-xs font-semibold text-slate-500">操作</th>';
+                    }
+                }
+
+                // ボディを更新
+                if (tableBody) {
+                    tableBody.innerHTML = data.map((row, index) => {
+                        const rowId = row.id || `row-${index}`;
+                        const cells = columns.map(col => {
+                            const value = row[col.name] || '';
+                            return `<td class="px-6 py-4 text-sm text-slate-700">${escapeHtml(String(value))}</td>`;
+                        }).join('');
+                        
+                        return `<tr class="hover:bg-slate-50" data-row-id="${rowId}" data-row-index="${index}">
+                            ${cells}
+                            ${getActionButtonsHTML(rowId, index)}
+                        </tr>`;
+                    }).join('');
+
+                    // イベントリスナーを追加
+                    tableBody.querySelectorAll('.edit-row-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const rowIndex = parseInt(btn.closest('tr').dataset.rowIndex);
+                            editDataRow(rowIndex);
+                        });
+                    });
+
+                    tableBody.querySelectorAll('.delete-row-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const rowIndex = parseInt(btn.closest('tr').dataset.rowIndex);
+                            deleteDataRow(rowIndex);
+                        });
+                    });
+                }
+
+                console.log('updateAppDataTable: データ表示完了', { displayedRows: data.length });
+            }
+
+            // HTMLエスケープ関数
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // アクションボタンのHTMLを生成
+            function getActionButtonsHTML(rowId, rowIndex) {
+                return `
+                    <td class="px-6 py-4">
+                        <div class="flex items-center space-x-2">
+                            <button class="edit-row-btn rounded-lg border border-blue-200 bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100" data-row-id="${rowId}" data-row-index="${rowIndex}">
+                                編集
+                            </button>
+                            <button class="delete-row-btn rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-100" data-row-id="${rowId}" data-row-index="${rowIndex}">
+                                削除
+                            </button>
+                        </div>
+                    </td>
+                `;
+            }
+
+            // データ行を編集
+            function editDataRow(rowIndex) {
+                if (!currentApp || !currentApp.data || !currentApp.columns) {
+                    showNotification('データが読み込まれていません', 'error');
+                    return;
+                }
+
+                const row = currentApp.data[rowIndex];
+                if (!row) {
+                    showNotification('行が見つかりません', 'error');
+                    return;
+                }
+
+                // 編集モーダルを表示（簡易実装）
+                const columnNames = currentApp.columns.map(col => col.name).join(', ');
+                const rowValues = currentApp.columns.map(col => `${col.name}: ${row[col.name] || ''}`).join('\n');
+                
+                const newValues = prompt(`行 ${rowIndex + 1} を編集\n\n${rowValues}\n\n※ この機能は簡易版です。完全な編集機能は今後実装予定です。`);
+                if (newValues === null) return;
+
+                showNotification('編集機能は開発中です', 'info');
+            }
+
+            // データ行を削除
+            async function deleteDataRow(rowIndex) {
+                if (!currentApp || !currentApp.data || !currentApp.columns) {
+                    showNotification('データが読み込まれていません', 'error');
+                    return;
+                }
+
+                if (!confirm(`行 ${rowIndex + 1} を削除しますか？`)) {
+                    return;
+                }
+
+                try {
+                    // データから行を削除
+                    currentApp.data.splice(rowIndex, 1);
+
+                    // データベースに保存
+                    await databaseService.updateApp(appId, {
+                        data: currentApp.data
+                    });
+
+                    // テーブルを再表示
+                    updateAppDataTable(currentApp.data, currentApp.columns);
+
+                    showNotification('データを削除しました', 'success');
+                } catch (error) {
+                    console.error('Error deleting row:', error);
+                    showNotification('データの削除に失敗しました', 'error');
                 }
             }
 
@@ -1576,6 +1743,9 @@
                             ...app,
                             createdAt: app.createdAt?.toDate ? app.createdAt.toDate().toISOString() : app.createdAt,
                             updatedAt: app.updatedAt?.toDate ? app.updatedAt.toDate().toISOString() : app.updatedAt,
+                            // データプロパティを確実に含める
+                            columns: app.columns || [],
+                            data: app.data || [],
                             // googleSheetsUrlとgoogleAccessTokenを確実に含める
                             googleSheetsUrl: app.googleSheetsUrl || null,
                             googleAccessToken: app.googleAccessToken || null,
@@ -1583,6 +1753,9 @@
                         };
                         
                         console.log('loadApp: 読み込んだアプリデータ', currentApp);
+                        console.log('loadApp: columns', currentApp.columns);
+                        console.log('loadApp: data', currentApp.data);
+                        console.log('loadApp: data.length', currentApp.data?.length || 0);
                         console.log('loadApp: googleSheetsUrl', currentApp.googleSheetsUrl);
                         
                         if (viewTitle) {
@@ -1598,15 +1771,17 @@
                                 columns: currentApp.columns,
                                 data: currentApp.data || []
                             };
-                            // データタブでデータを表示
-                            if (currentApp.data && currentApp.data.length > 0 && currentApp.columns) {
-                                updateAppDataTable(currentApp.data, currentApp.columns);
+                            // データタブでデータを表示（データが空でも表示）
+                            if (currentApp.columns && currentApp.columns.length > 0) {
+                                updateAppDataTable(currentApp.data || [], currentApp.columns);
                                 // グラフの集計方法を動的に更新
                                 updateChartGroupByOptions(currentApp.columns);
                                 // グラフを更新
                                 if (!chartView.classList.contains('hidden')) {
                                     initCharts();
                                 }
+                            } else {
+                                console.warn('loadApp: columnsが空です', currentApp);
                             }
                         }
                         
