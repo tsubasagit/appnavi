@@ -3466,8 +3466,10 @@
             
             // ログイン必須チェック（最初に実行）
             async function checkAuth() {
-                // Firebase認証が利用可能で、ログインしている場合はOK
+                // Firebase初期化
                 await initFirebase();
+                
+                // Firebase認証が利用可能で、ログインしている場合はOK
                 if (auth && auth.currentUser) {
                     // AppNaviIDにFirebase UIDを保存（同期）
                     if (appNaviIDService) {
@@ -3481,8 +3483,9 @@
                     return true;
                 }
 
-                // ログインが必要 - 新規登録ページにリダイレクト
-                window.location.href = 'appnavi-id-register.html';
+                // ログインが必要 - 新規登録ページにリダイレクト（戻り先を保存）
+                const returnUrl = window.location.href;
+                window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(returnUrl)}`;
                 return false;
             }
 
@@ -3526,13 +3529,16 @@
             // ページ読み込み時に最初にログインチェック（最優先）
             checkAuth().then(authenticated => {
                 if (!authenticated) {
-                    return; // リダイレクトされる
+                    // 認証されていない場合はリダイレクトされるため、ここには到達しない
+                    return;
                 }
                 // 認証済みの場合、続行
                 initializeAfterAuth();
             }).catch(error => {
                 console.error('Auth check error:', error);
-                window.location.href = 'appnavi-id-register.html';
+                // エラーが発生した場合はログインページにリダイレクト（戻り先を保存）
+                const returnUrl = window.location.href;
+                window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(returnUrl)}`;
             });
 
             // 認証後の初期化処理

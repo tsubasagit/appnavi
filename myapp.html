@@ -3208,39 +3208,8 @@
                 };
             }
 
-            // リダイレクトループを防ぐフラグ
-            let isRedirecting = false;
-
-            // URLパラメータをクリーンアップする関数（fromRegisterの重複を防ぐ）
-            function cleanUrlParams() {
-                const urlParams = new URLSearchParams(window.location.search);
-                const fromRegister = urlParams.get('fromRegister');
-                if (fromRegister === 'true') {
-                    // fromRegisterパラメータを削除してクリーンなURLに戻す
-                    urlParams.delete('fromRegister');
-                    const cleanUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
-                    // 履歴を更新（リロードしない）
-                    window.history.replaceState({}, '', cleanUrl);
-                }
-            }
-
             // ログイン必須チェック（最初に実行）
             async function checkAuth() {
-                // 既にリダイレクト中の場合はスキップ
-                if (isRedirecting) {
-                    return false;
-                }
-
-                // リダイレクトループを防ぐ: 既に登録ページから来た場合はスキップ
-                const urlParams = new URLSearchParams(window.location.search);
-                const fromRegister = urlParams.get('fromRegister');
-                if (fromRegister === 'true') {
-                    // URLパラメータをクリーンアップ
-                    cleanUrlParams();
-                    // 登録ページから戻ってきた場合は、認証状態を再確認する時間を与える
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                }
-
                 // Firebase初期化
                 await initFirebase();
                 
@@ -3258,27 +3227,9 @@
                     return true;
                 }
 
-                // リダイレクトループを防ぐ: 既に登録ページにリダイレクトしようとしている場合はスキップ
-                if (document.referrer && document.referrer.includes('appnavi-id-register.html')) {
-                    console.warn('認証が必要ですが、リダイレクトループを防ぐため、スキップします。');
-                    // 認証なしで続行（データ保存はできないが、表示は可能）
-                    return true;
-                }
-
-                // リダイレクトループを防ぐ: URLにfromRegisterパラメータがある場合はスキップ
-                if (fromRegister === 'true') {
-                    console.warn('認証が必要ですが、リダイレクトループを防ぐため、スキップします。');
-                    // 認証なしで続行（データ保存はできないが、表示は可能）
-                    return true;
-                }
-
                 // ログインが必要 - 新規登録ページにリダイレクト（戻り先を保存）
-                isRedirecting = true;
-                // 現在のURLからクリーンなベースURLを取得（fromRegisterパラメータを除外）
-                const currentUrl = new URL(window.location.href);
-                currentUrl.searchParams.delete('fromRegister');
-                const cleanReturnUrl = currentUrl.toString();
-                window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(cleanReturnUrl)}`;
+                const returnUrl = window.location.href;
+                window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(returnUrl)}`;
                 return false;
             }
 
@@ -3291,20 +3242,19 @@
 
             // 認証チェック後にアプリを読み込む
             checkAuth().then(authenticated => {
-                // 認証されていない場合でも、アプリの表示は可能（データ保存はできない）
                 if (!authenticated) {
-                    console.warn('認証されていません。データの表示のみ可能です。');
-                    // 認証なしでも続行（データ表示のみ）
+                    // 認証されていない場合はリダイレクトされるため、ここには到達しない
+                    return;
                 }
                 
                 // アプリIDがある場合、アプリを読み込む
                 if (appId) {
                     loadApp(appId).catch(error => {
                         console.error('Failed to load app:', error);
-                        // 認証エラーの場合でも、データ表示は試みる
                         if (error.message.includes('ログイン') || error.message.includes('認証')) {
-                            // エラーを表示するが、リダイレクトはしない
-                            console.warn('認証が必要ですが、データ表示を試みます:', error);
+                            // 認証エラーの場合はログインページにリダイレクト
+                            const returnUrl = window.location.href;
+                            window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(returnUrl)}`;
                         }
                     });
                 }
@@ -3313,18 +3263,9 @@
                 setTab('data');
             }).catch(error => {
                 console.error('Auth check error:', error);
-                // エラーが発生した場合でも、リダイレクトループを防ぐため、続行を試みる
-                console.warn('認証チェックでエラーが発生しましたが、続行します:', error);
-                
-                // アプリIDがある場合、アプリを読み込む
-                if (appId) {
-                    loadApp(appId).catch(loadError => {
-                        console.error('Failed to load app:', loadError);
-                    });
-                }
-                
-                // デフォルトで「データ」タブを選択
-                setTab('data');
+                // エラーが発生した場合はログインページにリダイレクト
+                const returnUrl = window.location.href;
+                window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(returnUrl)}`;
             });
 
             // デフォルトで「データ」タブを選択
