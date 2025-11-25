@@ -497,27 +497,35 @@ class GoogleSheetsService {
                 // 認証エラーの場合、トークンをリフレッシュして再試行
                 if (is401Error || isUnauthorized || hasInvalidAuth) {
                     try {
-                        console.log('認証エラーを検出。トークンをリフレッシュします...');
+                        console.log('認証エラーを検出。トークンをリフレッシュします...', { is401Error, isUnauthorized, hasInvalidAuth, authErrorMessage, fullAuthErrorMessage });
                         await this.refreshAccessToken();
                         
                         // リフレッシュ後、元のリクエストを再実行
                         const retryResponse = await fetch(url, {
-                            method: method,
+                            method: 'PUT',
                             headers: {
                                 'Authorization': `Bearer ${this.accessToken}`,
                                 'Content-Type': 'application/json'
                             },
-                            body: JSON.stringify(body)
+                            body: JSON.stringify({
+                                values: [values]
+                            })
                         });
                         
                         if (retryResponse.ok) {
-                            return await retryResponse.json();
+                            const retryResult = await retryResponse.json();
+                            return {
+                                success: true,
+                                message: 'データを更新しました',
+                                result: retryResult
+                            };
                         }
                         
                         // 再試行後もエラーの場合は、通常のエラーハンドリングに進む
                         const retryErrorData = await retryResponse.json().catch(() => ({}));
                         throw new Error(`認証エラーが続いています。再認証が必要です: ${retryErrorData.error?.message || retryResponse.statusText}`);
                     } catch (refreshError) {
+                        console.error('トークンリフレッシュエラー:', refreshError);
                         // リフレッシュに失敗した場合は、再認証を促す
                         throw new Error('認証の有効期限が切れました。再度ログインしてください。\n\n【解決方法】\n1. ダッシュボードで「Googleでログイン」ボタンをクリックしてください\n2. 認証後、再度お試しください');
                     }
@@ -772,27 +780,35 @@ class GoogleSheetsService {
                 // 認証エラーの場合、トークンをリフレッシュして再試行
                 if (is401Error || isUnauthorized || hasInvalidAuth) {
                     try {
-                        console.log('認証エラーを検出。トークンをリフレッシュします...');
+                        console.log('認証エラーを検出。トークンをリフレッシュします...', { is401Error, isUnauthorized, hasInvalidAuth, authErrorMessage, fullAuthErrorMessage });
                         await this.refreshAccessToken();
                         
                         // リフレッシュ後、元のリクエストを再実行
                         const retryResponse = await fetch(url, {
-                            method: method,
+                            method: 'PUT',
                             headers: {
                                 'Authorization': `Bearer ${this.accessToken}`,
                                 'Content-Type': 'application/json'
                             },
-                            body: JSON.stringify(body)
+                            body: JSON.stringify({
+                                values: [values]
+                            })
                         });
                         
                         if (retryResponse.ok) {
-                            return await retryResponse.json();
+                            const retryResult = await retryResponse.json();
+                            return {
+                                success: true,
+                                message: 'データを更新しました',
+                                result: retryResult
+                            };
                         }
                         
                         // 再試行後もエラーの場合は、通常のエラーハンドリングに進む
                         const retryErrorData = await retryResponse.json().catch(() => ({}));
                         throw new Error(`認証エラーが続いています。再認証が必要です: ${retryErrorData.error?.message || retryResponse.statusText}`);
                     } catch (refreshError) {
+                        console.error('トークンリフレッシュエラー:', refreshError);
                         // リフレッシュに失敗した場合は、再認証を促す
                         throw new Error('認証の有効期限が切れました。再度ログインしてください。\n\n【解決方法】\n1. ダッシュボードで「Googleでログイン」ボタンをクリックしてください\n2. 認証後、再度お試しください');
                     }
@@ -1055,27 +1071,35 @@ class GoogleSheetsService {
                 // 認証エラーの場合、トークンをリフレッシュして再試行
                 if (is401Error || isUnauthorized || hasInvalidAuth) {
                     try {
-                        console.log('認証エラーを検出。トークンをリフレッシュします...');
+                        console.log('認証エラーを検出。トークンをリフレッシュします...', { is401Error, isUnauthorized, hasInvalidAuth, authErrorMessage, fullAuthErrorMessage });
                         await this.refreshAccessToken();
                         
                         // リフレッシュ後、元のリクエストを再実行
                         const retryResponse = await fetch(url, {
-                            method: method,
+                            method: 'PUT',
                             headers: {
                                 'Authorization': `Bearer ${this.accessToken}`,
                                 'Content-Type': 'application/json'
                             },
-                            body: JSON.stringify(body)
+                            body: JSON.stringify({
+                                values: [values]
+                            })
                         });
                         
                         if (retryResponse.ok) {
-                            return await retryResponse.json();
+                            const retryResult = await retryResponse.json();
+                            return {
+                                success: true,
+                                message: 'データを更新しました',
+                                result: retryResult
+                            };
                         }
                         
                         // 再試行後もエラーの場合は、通常のエラーハンドリングに進む
                         const retryErrorData = await retryResponse.json().catch(() => ({}));
                         throw new Error(`認証エラーが続いています。再認証が必要です: ${retryErrorData.error?.message || retryResponse.statusText}`);
                     } catch (refreshError) {
+                        console.error('トークンリフレッシュエラー:', refreshError);
                         // リフレッシュに失敗した場合は、再認証を促す
                         throw new Error('認証の有効期限が切れました。再度ログインしてください。\n\n【解決方法】\n1. ダッシュボードで「Googleでログイン」ボタンをクリックしてください\n2. 認証後、再度お試しください');
                     }
