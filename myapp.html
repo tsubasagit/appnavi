@@ -3261,14 +3261,28 @@
                 console.error('hasAppNaviID():', typeof appNaviIDService !== 'undefined' ? appNaviIDService.hasAppNaviID() : 'N/A');
                 console.error('localStorage appnavi_user_id:', localStorage.getItem('appnavi_user_id'));
                 console.error('Firebase auth.currentUser:', auth ? auth.currentUser : 'auth not initialized');
-                console.error('認証なし: ログインページにリダイレクト（5秒後に実行）');
                 
-                // デバッグ用：5秒待機してからリダイレクト（コンソール確認のため）
+                // デバッグモードチェック（URLパラメータに?debug=1を追加するとリダイレクトを無効化）
+                const urlParams = new URLSearchParams(window.location.search);
+                const debugMode = urlParams.get('debug') === '1';
+                
+                if (debugMode) {
+                    console.error('⚠️ デバッグモード: リダイレクトを無効化しました');
+                    console.error('認証なしですが、デバッグモードのためこのページに留まります');
+                    // デバッグモードではリダイレクトしない
+                    alert('認証失敗（デバッグモード）\n\nコンソールを確認してください。\n通常モードに戻すには、URLから?debug=1を削除してください。');
+                    return false;
+                }
+                
+                console.error('認証なし: ログインページにリダイレクト（10秒後に実行）');
+                console.error('💡 デバッグ: URLに?debug=1を追加するとリダイレクトを無効化できます');
+                
+                // デバッグ用：10秒待機してからリダイレクト（コンソール確認のため）
                 const returnUrl = window.location.href;
                 setTimeout(() => {
                     console.error('リダイレクト実行:', `appnavi-id-register.html?returnUrl=${encodeURIComponent(returnUrl)}`);
                     window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(returnUrl)}`;
-                }, 5000);
+                }, 10000);
                 return false;
             }
 
