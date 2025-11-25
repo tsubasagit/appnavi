@@ -3210,7 +3210,11 @@
 
             // ログイン必須チェック（最初に実行）
             async function checkAuth() {
-                console.log('認証チェック開始');
+                // デバッグモードチェック（最初に実行してリダイレクトを防ぐ）
+                const urlParams = new URLSearchParams(window.location.search);
+                const debugMode = urlParams.get('debug') === '1';
+                
+                console.log('認証チェック開始', debugMode ? '(デバッグモード)' : '');
                 console.log('appNaviIDService:', typeof appNaviIDService);
                 
                 // appNaviIDServiceが読み込まれているか確認
@@ -3254,17 +3258,13 @@
                     return true;
                 }
 
-                // どちらも認証されていない - 新規登録ページにリダイレクト（戻り先を保存）
+                // どちらも認証されていない
                 console.error('=== 認証失敗の詳細 ===');
                 console.error('appNaviIDService:', typeof appNaviIDService);
                 console.error('AppNaviID:', typeof appNaviIDService !== 'undefined' ? appNaviIDService.getAppNaviID() : 'N/A');
                 console.error('hasAppNaviID():', typeof appNaviIDService !== 'undefined' ? appNaviIDService.hasAppNaviID() : 'N/A');
                 console.error('localStorage appnavi_user_id:', localStorage.getItem('appnavi_user_id'));
                 console.error('Firebase auth.currentUser:', auth ? auth.currentUser : 'auth not initialized');
-                
-                // デバッグモードチェック（URLパラメータに?debug=1を追加するとリダイレクトを無効化）
-                const urlParams = new URLSearchParams(window.location.search);
-                const debugMode = urlParams.get('debug') === '1';
                 
                 if (debugMode) {
                     console.error('⚠️ デバッグモード: リダイレクトを無効化しました');
@@ -3281,16 +3281,31 @@
                 const returnUrl = window.location.href;
                 setTimeout(() => {
                     console.error('リダイレクト実行:', `appnavi-id-register.html?returnUrl=${encodeURIComponent(returnUrl)}`);
-                    window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(returnUrl)}`;
+                    redirectToLogin(returnUrl);
                 }, 10000);
                 return false;
+            }
+
+            // デバッグモードかどうかをチェック
+            function isDebugMode() {
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get('debug') === '1';
+            }
+
+            // リダイレクトを実行（デバッグモードの場合は無効化）
+            function redirectToLogin(returnUrl) {
+                if (isDebugMode()) {
+                    console.warn('⚠️ デバッグモード: リダイレクトを無効化しました');
+                    return;
+                }
+                window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(returnUrl)}`;
             }
 
             // ログイン必須モーダルを表示（新規登録ページにリダイレクト）
             function showLoginRequiredModal() {
                 // 新規登録ページにリダイレクト（戻り先を保存）
                 const returnUrl = window.location.href;
-                window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(returnUrl)}`;
+                redirectToLogin(returnUrl);
             }
 
             // スクリプトの読み込みを待ってから認証チェックを実行
@@ -3338,7 +3353,7 @@
                         if (error.message.includes('ログイン') || error.message.includes('認証')) {
                             // 認証エラーの場合はログインページにリダイレクト
                             const returnUrl = window.location.href;
-                            window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(returnUrl)}`;
+                            redirectToLogin(returnUrl);
                         }
                     });
                 }
@@ -3349,7 +3364,7 @@
                 console.error('Auth check error:', error);
                 // エラーが発生した場合はログインページにリダイレクト
                 const returnUrl = window.location.href;
-                window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(returnUrl)}`;
+                redirectToLogin(returnUrl);
             });
         });
     </script>
