@@ -3665,16 +3665,27 @@
 
             // ログアウトボタンのイベントリスナー
             document.getElementById('logout-btn')?.addEventListener('click', async () => {
-                if (!confirm('ログアウトしますか？\n\nログアウトすると、このブラウザからAppNaviIDが削除され、再度ログインが必要になります。')) {
+                // AppNaviIDの種類を確認
+                const currentAppNaviID = appNaviIDService?.getAppNaviID();
+                const isGuestUser = currentAppNaviID && currentAppNaviID.startsWith('guest-');
+                const isFirebaseUser = currentAppNaviID && currentAppNaviID.length === 28 && /^[a-zA-Z0-9]+$/.test(currentAppNaviID);
+                
+                let confirmMessage = 'ログアウトしますか？\n\n';
+                if (isFirebaseUser) {
+                    confirmMessage += 'Google認証でログインした場合、再ログイン時に同じGoogleアカウントを使用すれば、マイアプリは引き継げます。\n\n';
+                    confirmMessage += '※ AppNaviID（Firebase UID）は保持されます。';
+                } else if (isGuestUser) {
+                    confirmMessage += 'ゲストユーザーの場合、ログアウトするとAppNaviIDが削除され、再度ログインが必要になります。\n\n';
+                    confirmMessage += '※ ゲストユーザーのデータは引き継げません。';
+                } else {
+                    confirmMessage += 'ログアウトすると、再度ログインが必要になります。';
+                }
+                
+                if (!confirm(confirmMessage)) {
                     return;
                 }
                 
                 try {
-                    // AppNaviIDを削除
-                    if (typeof appNaviIDService !== 'undefined') {
-                        appNaviIDService.clearAppNaviID();
-                    }
-                    
                     // Firebase認証からログアウト（認証されている場合）
                     try {
                         await initFirebase();
@@ -3687,6 +3698,12 @@
                     
                     // Googleアクセストークンを削除
                     localStorage.removeItem('google_access_token');
+                    
+                    // ゲストユーザーの場合のみAppNaviIDを削除
+                    // Firebase認証ユーザーの場合はAppNaviIDを保持（再ログイン時に引き継げるように）
+                    if (isGuestUser && typeof appNaviIDService !== 'undefined') {
+                        appNaviIDService.clearAppNaviID();
+                    }
                     
                     // ログインページにリダイレクト
                     window.location.href = 'appnavi-id-register.html';
