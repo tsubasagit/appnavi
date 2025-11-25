@@ -115,13 +115,6 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75a2.25 2.25 0 1 1 4.5 0c0 1.125-.75 1.522-1.5 2.022-.75.5-1.5.897-1.5 2.228M12 17.25h.008v.008H12v-.008Z" />
                 </svg>
             </button>
-                <!-- AppNaviについてページへのリンク -->
-                <a href="about.html" class="mt-2 flex w-full items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-500 hover:bg-slate-100">
-                    <span>AppNaviについて</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                    </svg>
-                </a>
         </div>
         </aside>
 
@@ -654,6 +647,12 @@
                         <h2 class="text-xl font-bold text-slate-900">マイ・<span class="help-tooltip" data-help="アプリケーションの略。Excelデータから自動生成される、データ管理や入力ができるツールです。">アプリ</span></h2>
                         <p class="mt-1 text-sm text-slate-500">作成した<span class="help-tooltip" data-help="アプリケーションの略。Excelデータから自動生成される、データ管理や入力ができるツールです。">アプリ</span>の一覧です。<span class="help-tooltip" data-help="アプリケーションの略。Excelデータから自動生成される、データ管理や入力ができるツールです。">アプリ</span>をクリックして編集や管理を行います。</p>
                     </div>
+                    <button id="delete-all-apps-btn" class="rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1 inline h-4 w-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                        すべて削除
+                    </button>
                 </div>
                 <div id="app-list" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     <!-- アプリカードがここに動的に追加されます -->
@@ -965,12 +964,15 @@
             // 初期化: アプリリストを読み込む
             async function loadApps() {
                 try {
+                    // ログインチェック（必須）
+                    await databaseService.checkAuth();
+                    
                     // データベースサービスの初期化を待つ
                     await databaseService.init();
                     
                     // Firebaseが利用可能な場合はリアルタイムリスナーを設定
                     if (databaseService.useFirebase) {
-                        appsUnsubscribe = databaseService.onAppsChange((updatedApps) => {
+                        appsUnsubscribe = await databaseService.onAppsChange((updatedApps) => {
                             apps = updatedApps;
                             // createdAtがTimestampの場合は文字列に変換
                             apps = apps.map(app => ({
@@ -984,34 +986,87 @@
                     } else {
                         // localStorageを使用する場合
                         apps = await databaseService.getApps();
-                        if (apps.length === 0) {
-                            // デフォルトのサンプルアプリ
-                            const sampleApp = await databaseService.addApp({
-                                name: 'サンプルアプリ',
-                                description: '施設予約システムのサンプルアプリです。',
-                                icon: 'document',
-                                color: 'violet'
-                            });
-                            apps = [sampleApp];
-                        }
                         renderApps();
                         renderRecentApps();
                     }
                 } catch (error) {
                     console.error('Error loading apps:', error);
-                    // エラー時はlocalStorageから読み込み
-                    apps = databaseService.getAppsFromLocalStorage();
-                    if (apps.length === 0) {
-                        const sampleApp = databaseService.addAppToLocalStorage({
-                            name: 'サンプルアプリ',
-                            description: '施設予約システムのサンプルアプリです。',
-                            icon: 'document',
-                            color: 'violet'
-                        });
-                        apps = [sampleApp];
+                    // ログインエラーの場合はログインモーダルを表示
+                    if (error.message.includes('ログイン') || error.message.includes('認証')) {
+                        showLoginRequiredModal();
+                        return;
                     }
-                    renderApps();
-                    renderRecentApps();
+                    // その他のエラー
+                    showNotification('アプリの読み込みに失敗しました: ' + error.message, 'error');
+                }
+            }
+            
+            // ログイン必須モーダルを表示
+            function showLoginRequiredModal() {
+                const modal = document.createElement('div');
+                modal.id = 'login-required-modal';
+                modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
+                modal.innerHTML = `
+                    <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+                        <div class="text-center">
+                            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-8 w-8 text-blue-600">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-semibold text-slate-900 mb-2">ログインが必要です</h3>
+                            <p class="text-sm text-slate-600 mb-6">AppNaviを使用するには、Firebase認証でログインしてください。</p>
+                            <div class="space-y-3">
+                                <button id="login-modal-btn" class="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700">
+                                    Firebaseでログイン
+                                </button>
+                                <p class="text-xs text-slate-500">
+                                    Firebase認証が設定されていない場合は、<br>
+                                    Firebase設定を行ってください。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                
+                // ログインボタンのイベント
+                document.getElementById('login-modal-btn')?.addEventListener('click', () => {
+                    // Firebase認証を初期化してログイン
+                    initFirebaseAuth();
+                });
+            }
+            
+            // Firebase認証を初期化
+            async function initFirebaseAuth() {
+                try {
+                    await databaseService.init();
+                    if (databaseService.useFirebase && auth) {
+                        // 既にログインしている場合はモーダルを閉じる
+                        if (auth.currentUser) {
+                            document.getElementById('login-required-modal')?.remove();
+                            await loadApps();
+                            return;
+                        }
+                        
+                        // ログインモーダルを表示（Firebase UIを使用）
+                        // 簡易的な実装：認証状態の変更を監視
+                        auth.onAuthStateChanged(async (user) => {
+                            if (user) {
+                                document.getElementById('login-required-modal')?.remove();
+                                await loadApps();
+                            }
+                        });
+                        
+                        // 認証プロバイダーを設定（メール/パスワード、Googleなど）
+                        // ここでは簡易的にメール/パスワード認証を促す
+                        showNotification('Firebase認証を設定してください。Firebase Consoleで認証方法を有効化し、ログイン機能を実装してください。', 'info');
+                    } else {
+                        showNotification('Firebase認証が設定されていません。firebase-config.jsでFirebase設定を行ってください。', 'error');
+                    }
+                } catch (error) {
+                    console.error('Firebase認証初期化エラー:', error);
+                    showNotification('認証の初期化に失敗しました: ' + error.message, 'error');
                 }
             }
 
@@ -1094,6 +1149,35 @@
                 }
             }
 
+            // すべてのアプリを削除
+            async function deleteAllApps() {
+                const appCount = apps.length;
+                if (appCount === 0) {
+                    showNotification('削除するアプリがありません', 'info');
+                    return;
+                }
+                
+                const confirmMessage = `すべてのアプリ（${appCount}件）を削除しますか？\n\nこの操作は取り消せません。`;
+                if (!confirm(confirmMessage)) {
+                    return;
+                }
+                
+                try {
+                    showNotification('すべてのアプリを削除中...', 'info');
+                    await databaseService.deleteAllApps();
+                    
+                    // アプリリストをクリア
+                    apps = [];
+                    renderApps();
+                    renderRecentApps();
+                    
+                    showNotification(`すべてのアプリ（${appCount}件）を削除しました`, 'success');
+                } catch (error) {
+                    console.error('Error deleting all apps:', error);
+                    showNotification('アプリの削除に失敗しました', 'error');
+                }
+            }
+
             // アプリ操作ボタンのイベント設定
             function setupAppActionButtons() {
                 // 削除ボタン
@@ -1114,6 +1198,11 @@
                     });
                 });
             }
+
+            // 「すべて削除」ボタンのイベントリスナー
+            document.getElementById('delete-all-apps-btn')?.addEventListener('click', async () => {
+                await deleteAllApps();
+            });
 
             // アプリ編集モーダルを開く
             let currentEditAppId = null;
@@ -2645,20 +2734,14 @@
                         showNotification('アプリを作成中...', 'info');
                         
                         try {
-                            // 認証済みの場合はアクセストークンを取得
-                            const accessToken = localStorage.getItem('google_access_token');
-                            
-                            const newApp = await databaseService.addApp({
+                            const newApp = await addApp({
                                 name: appName,
                                 description: 'Googleスプレッドシートから作成されたアプリです。',
                                 columns: columns,
                                 data: rows,
                                 color: 'green',
-                                storageType: databaseService?.getStorageType() || 'local',
                                 googleSheetsUrl: sheetUrl,
-                                googleSheetsLastSynced: new Date().toISOString(),
-                                googleAppsScriptUrl: null, // 後で設定可能
-                                googleAccessToken: accessToken || null // 認証済みの場合はアクセストークンを保存
+                                googleSheetsLastSynced: new Date().toISOString()
                             });
                             
                             if (newApp && newApp.id) {
@@ -2868,7 +2951,7 @@
                         // 認証済みの場合はアクセストークンを保存
                         const accessToken = localStorage.getItem('google_access_token');
                         
-                        const newApp = await databaseService.addApp({
+                        const newApp = await addApp({
                             name: appName,
                             description: 'Googleスプレッドシートから作成されたアプリです。',
                             columns: columns,
@@ -3345,6 +3428,11 @@
                     }
                 }, 100);
             }
+            
+            // ページ読み込み時にアプリを読み込む（ログイン必須）
+            loadApps().catch(error => {
+                console.error('Failed to load apps:', error);
+            });
         });
     </script>
 </body>

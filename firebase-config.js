@@ -139,11 +139,17 @@ class DatabaseService {
         return null;
     }
 
-    // アプリリストを取得
+    // アプリリストを取得（現在のユーザーのアプリのみ）
     async getApps() {
+        const userId = await this.getCurrentUserId();
+        
         if (this.useFirebase && db) {
             try {
-                const snapshot = await db.collection('apps').orderBy('createdAt', 'desc').get();
+                // ユーザーIDでフィルタリング
+                const snapshot = await db.collection('apps')
+                    .where('userId', '==', userId)
+                    .orderBy('createdAt', 'desc')
+                    .get();
                 return snapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
@@ -157,11 +163,14 @@ class DatabaseService {
         return this.getAppsFromLocalStorage();
     }
 
-    // localStorageからアプリリストを取得
-    getAppsFromLocalStorage() {
+    // localStorageからアプリリストを取得（現在のユーザーのアプリのみ）
+    async getAppsFromLocalStorage() {
+        const userId = await this.getCurrentUserId();
         const savedApps = localStorage.getItem('apps');
         if (savedApps) {
-            return JSON.parse(savedApps);
+            const allApps = JSON.parse(savedApps);
+            // ユーザーIDでフィルタリング
+            return allApps.filter(app => app.userId === userId);
         }
         return [];
     }
@@ -232,6 +241,7 @@ class DatabaseService {
             // エラー時はlocalStorageにフォールバック（storageTypeがlocalの場合のみ）
             if (appData.storageType === 'local' || !appData.storageType) {
                 const timestamp = new Date().toISOString();
+                const fallbackUserId = await this.getCurrentUserId();
                 const newApp = {
                     id: 'app-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
                     name: appData.name || '新しいアプリ',
@@ -242,6 +252,7 @@ class DatabaseService {
                     updatedAt: timestamp,
                     columns: appData.columns || [],
                     data: appData.data || [],
+                    userId: fallbackUserId,
                     storageType: 'local',
                     // Googleスプレッドシート連携情報
                     googleSheetsUrl: appData.googleSheetsUrl || null,
@@ -256,16 +267,18 @@ class DatabaseService {
     }
 
     // localStorageにアプリを追加
-    addAppToLocalStorage(appData) {
+    async addAppToLocalStorage(appData) {
+        const userId = await this.getCurrentUserId();
         const newApp = {
             id: 'app-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
             ...appData,
+            userId: userId,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
-        const apps = this.getAppsFromLocalStorage();
-        apps.push(newApp);
-        localStorage.setItem('apps', JSON.stringify(apps));
+        const allApps = JSON.parse(localStorage.getItem('apps') || '[]');
+        allApps.push(newApp);
+        localStorage.setItem('apps', JSON.stringify(allApps));
         return newApp;
     }
 
@@ -319,25 +332,32 @@ class DatabaseService {
         return null;
     }
 
-    // アプリを取得
+    // アプリを取得（現在のユーザーのアプリのみ）
     async getApp(appId) {
+        const userId = await this.getCurrentUserId();
+        
         // まずFirebaseから検索
         if (this.useFirebase && db) {
             try {
                 const doc = await db.collection('apps').doc(appId).get();
                 if (doc.exists) {
-                    return { id: doc.id, ...doc.data() };
+                    const app = { id: doc.id, ...doc.data() };
+                    // ユーザーIDをチェック
+                    if (app.userId === userId) {
+                        return app;
+                    }
+                    return null; // 他のユーザーのアプリは返さない
                 }
             } catch (error) {
                 console.error('Error getting app from Firestore:', error);
             }
         }
         // localStorageから検索
-        const apps = this.getAppsFromLocalStorage();
+        const apps = await this.getAppsFromLocalStorage();
         return apps.find(app => app.id === appId) || null;
     }
 
-    // アプリを削除
+    // アプリを削除（現在のユーザーのアプリのみ）
     async deleteApp(appId) {
         // アプリの現在のstorageTypeを取得
         const app = await this.getApp(appId);
@@ -361,11 +381,45 @@ class DatabaseService {
     }
 
     // localStorageからアプリを削除
-    deleteAppFromLocalStorage(appId) {
-        const apps = this.getAppsFromLocalStorage();
-        const filteredApps = apps.filter(app => app.id !== appId);
+    async deleteAppFromLocalStorage(appId) {
+        const userId = await this.getCurrentUserId();
+        const allApps = JSON.parse(localStorage.getItem('apps') || '[]');
+        // 現在のユーザーのアプリのみを保持
+        const filteredApps = allApps.filter(app => !(app.id === appId && app.userId === userId));
         localStorage.setItem('apps', JSON.stringify(filteredApps));
         return true;
+    }
+
+    // すべてのアプリを削除（現在のユーザーのアプリのみ）
+    async deleteAllApps() {
+        try {
+            const userId = await this.getCurrentUserId();
+            const allApps = await this.getApps();
+            
+            // Firebaseに保存されているアプリを削除
+            const firebaseApps = allApps.filter(app => app.storageType === 'firebase');
+            if (firebaseApps.length > 0 && db && typeof firebase !== 'undefined') {
+                const batch = db.batch();
+                firebaseApps.forEach(app => {
+                    const appRef = db.collection('apps').doc(app.id);
+                    batch.delete(appRef);
+                });
+                await batch.commit();
+            }
+            
+            // localStorageから現在のユーザーのアプリのみを削除
+            const allLocalApps = JSON.parse(localStorage.getItem('apps') || '[]');
+            const filteredApps = allLocalApps.filter(app => app.userId !== userId);
+            localStorage.setItem('apps', JSON.stringify(filteredApps));
+            
+            // 最近開いたアプリもクリア
+            localStorage.removeItem('appnavi_recent_apps');
+            
+            return true;
+        } catch (error) {
+            console.error('Error deleting all apps:', error);
+            throw error;
+        }
     }
 
     // アプリデータを取得
@@ -386,33 +440,75 @@ class DatabaseService {
         return this.getAppFromLocalStorage(appId);
     }
 
-    // localStorageからアプリを取得
-    getAppFromLocalStorage(appId) {
-        const apps = this.getAppsFromLocalStorage();
+    // localStorageからアプリを取得（現在のユーザーのアプリのみ）
+    async getAppFromLocalStorage(appId) {
+        const apps = await this.getAppsFromLocalStorage();
         return apps.find(app => app.id === appId) || null;
     }
 
-    // 現在のユーザーIDを取得（認証機能が実装された後に使用）
+    // 現在のユーザーIDを取得（認証必須）
     async getCurrentUserId() {
         if (this.useFirebase && auth) {
+            // 認証状態を確認
+            await new Promise((resolve) => {
+                if (auth.currentUser) {
+                    resolve();
+                } else {
+                    // 認証状態の変更を待つ（最大3秒）
+                    const unsubscribe = auth.onAuthStateChanged((user) => {
+                        unsubscribe();
+                        resolve();
+                    });
+                    setTimeout(() => {
+                        unsubscribe();
+                        resolve();
+                    }, 3000);
+                }
+            });
+            
             const user = auth.currentUser;
             if (user) {
                 return user.uid;
             }
         }
-        // 一時的にローカルストレージからユーザーIDを取得
-        let userId = localStorage.getItem('userId');
-        if (!userId) {
-            userId = 'user-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-            localStorage.setItem('userId', userId);
+        // Firebase認証が利用できない場合、エラーを投げる（ログイン必須）
+        throw new Error('ログインが必要です。Firebase認証を設定してください。');
+    }
+    
+    // 認証状態をチェック（ログイン必須）
+    async checkAuth() {
+        if (this.useFirebase && auth) {
+            await new Promise((resolve) => {
+                if (auth.currentUser) {
+                    resolve();
+                } else {
+                    const unsubscribe = auth.onAuthStateChanged((user) => {
+                        unsubscribe();
+                        resolve();
+                    });
+                    setTimeout(() => {
+                        unsubscribe();
+                        resolve();
+                    }, 3000);
+                }
+            });
+            
+            if (!auth.currentUser) {
+                throw new Error('ログインが必要です');
+            }
+            return true;
         }
-        return userId;
+        // Firebaseが設定されていない場合はエラー
+        throw new Error('Firebase認証が設定されていません。ログイン機能を使用するにはFirebase認証を設定してください。');
     }
 
-    // リアルタイムリスナー（Firebaseのみ）
-    onAppsChange(callback) {
+    // リアルタイムリスナー（Firebaseのみ、現在のユーザーのアプリのみ）
+    async onAppsChange(callback) {
+        const userId = await this.getCurrentUserId();
+        
         if (this.useFirebase && db) {
             return db.collection('apps')
+                .where('userId', '==', userId)
                 .orderBy('createdAt', 'desc')
                 .onSnapshot(snapshot => {
                     const apps = snapshot.docs.map(doc => ({
