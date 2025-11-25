@@ -1879,6 +1879,88 @@
                 }
             }
 
+            // 自動保存・自動同期のためのデバウンス処理
+            let autoSaveTimeout = null;
+            let autoSyncTimeout = null;
+            let pendingChanges = false;
+
+            // 自動保存関数（デバウンス処理付き）
+            async function autoSaveData() {
+                if (!currentApp || !currentApp.data || !appId) return;
+                
+                // データベースに保存
+                if (databaseService) {
+                    try {
+                        await databaseService.updateApp(appId, {
+                            data: currentApp.data
+                        });
+                        pendingChanges = false;
+                        updateSaveStatus('saved');
+                    } catch (error) {
+                        console.error('Error auto-saving data:', error);
+                        updateSaveStatus('error');
+                    }
+                } else {
+                    // localStorage fallback
+                    try {
+                        const savedApps = localStorage.getItem('apps');
+                        if (savedApps) {
+                            const apps = JSON.parse(savedApps);
+                            const appIndex = apps.findIndex(app => app.id === appId);
+                            if (appIndex !== -1) {
+                                apps[appIndex].data = currentApp.data;
+                                apps[appIndex].updatedAt = new Date().toISOString();
+                                localStorage.setItem('apps', JSON.stringify(apps));
+                                pendingChanges = false;
+                                updateSaveStatus('saved');
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error auto-saving to localStorage:', error);
+                        updateSaveStatus('error');
+                    }
+                }
+            }
+
+            // 自動同期関数（デバウンス処理付き）
+            async function autoSyncToSpreadsheet() {
+                if (!currentApp || !currentApp.data || !currentApp.googleSheetsUrl) return;
+                
+                try {
+                    if (currentApp.googleAccessToken) {
+                        googleSheetsService.setAccessToken(currentApp.googleAccessToken);
+                    }
+                    if (currentApp.googleAppsScriptUrl) {
+                        googleSheetsService.setAppsScriptUrl(currentApp.googleAppsScriptUrl);
+                    }
+                    
+                    // 全データを同期
+                    await googleSheetsService.syncAllDataToSpreadsheet(
+                        currentApp.googleSheetsUrl,
+                        null,
+                        currentApp.columns.map(c => c.name),
+                        currentApp.data.map(row => currentApp.columns.map(c => row[c.name] || ''))
+                    );
+                    
+                    updateSyncStatus('synced');
+                } catch (error) {
+                    console.error('Error auto-syncing to spreadsheet:', error);
+                    updateSyncStatus('error');
+                }
+            }
+
+            // 保存状態の視覚的フィードバック
+            function updateSaveStatus(status) {
+                // 保存状態を表示するUI要素があれば更新
+                // 例: 「保存中...」「保存済み」「エラー」
+            }
+
+            // 同期状態の視覚的フィードバック
+            function updateSyncStatus(status) {
+                // 同期状態を表示するUI要素があれば更新
+                // 例: 「同期中...」「同期済み」「エラー」
+            }
+
             // インライン編集を保存
             async function saveInlineEdit(rowIndex, colName, newValue, col) {
                 if (!currentApp || !currentApp.data) return;
@@ -1886,47 +1968,31 @@
                 const oldValue = currentApp.data[rowIndex][colName];
                 currentApp.data[rowIndex][colName] = newValue.trim();
                 
-                // データベースに保存
-                if (appId && databaseService) {
-                    try {
-                        await databaseService.updateApp(appId, {
-                            data: currentApp.data
-                        });
-                    } catch (error) {
-                        console.error('Error saving inline edit:', error);
-                        // エラー時は元の値に戻す
-                        currentApp.data[rowIndex][colName] = oldValue;
-                        showNotification('データの保存に失敗しました', 'error');
-                        return;
-                    }
-                }
+                // 即座にローカルに保存
+                updateSaveStatus('saving');
+                pendingChanges = true;
                 
-                // Google Sheetsに同期（設定されている場合）
+                // デバウンス処理: 500ms後に自動保存
+                if (autoSaveTimeout) {
+                    clearTimeout(autoSaveTimeout);
+                }
+                autoSaveTimeout = setTimeout(() => {
+                    autoSaveData();
+                }, 500);
+                
+                // Google Sheetsに同期（設定されている場合、デバウンス処理付き）
                 if (currentApp.googleSheetsUrl) {
-                    try {
-                        if (currentApp.googleAccessToken) {
-                            googleSheetsService.setAccessToken(currentApp.googleAccessToken);
-                        }
-                        if (currentApp.googleAppsScriptUrl) {
-                            googleSheetsService.setAppsScriptUrl(currentApp.googleAppsScriptUrl);
-                        }
-                        
-                        const values = currentApp.columns.map(c => currentApp.data[rowIndex][c.name] || '');
-                        await googleSheetsService.updateSpreadsheetRow(
-                            currentApp.googleSheetsUrl,
-                            null,
-                            rowIndex,
-                            values
-                        );
-                    } catch (error) {
-                        console.error('Error syncing to spreadsheet:', error);
-                        // エラーは無視（ローカル保存は成功している）
+                    if (autoSyncTimeout) {
+                        clearTimeout(autoSyncTimeout);
                     }
+                    autoSyncTimeout = setTimeout(() => {
+                        autoSyncToSpreadsheet();
+                    }, 2000); // 2秒後に自動同期
                 }
                 
                 // テーブルを更新
                 updateAppDataTable(currentApp.data, currentApp.columns);
-                showNotification('データを更新しました', 'success');
+                showNotification('データを更新しました（自動保存中...）', 'success');
             }
 
             // インライン編集をキャンセル
