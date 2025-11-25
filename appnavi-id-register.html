@@ -114,16 +114,18 @@
                     successDiv.classList.remove('hidden');
                     successText.textContent = 'アカウントが正常に作成されました。ダッシュボードに移動します...';
                     
-                    // ダッシュボードにリダイレクト
+                    // ダッシュボードにリダイレクト（認証状態が反映されるまで少し待つ）
                     setTimeout(() => {
                         const urlParams = new URLSearchParams(window.location.search);
                         const returnUrl = urlParams.get('returnUrl');
                         if (returnUrl) {
-                            window.location.href = returnUrl;
+                            // returnUrlにfromRegisterパラメータを追加してリダイレクトループを防ぐ
+                            const separator = returnUrl.includes('?') ? '&' : '?';
+                            window.location.href = `${returnUrl}${separator}fromRegister=true`;
                         } else {
                             window.location.href = 'index.html';
                         }
-                    }, 1000);
+                    }, 1500);
                 }
             });
 

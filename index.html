@@ -2921,6 +2921,32 @@
                         // 認証済みの場合はアクセストークンを保存
                         const accessToken = localStorage.getItem('google_access_token');
                         
+                        // 認証状態を確認
+                        let isAuthenticated = false;
+                        try {
+                            await initFirebase();
+                            if (auth && auth.currentUser) {
+                                isAuthenticated = true;
+                                // AppNaviIDにFirebase UIDを保存（同期）
+                                if (typeof appNaviIDService !== 'undefined' && appNaviIDService) {
+                                    appNaviIDService.setAppNaviID(auth.currentUser.uid);
+                                }
+                            } else if (typeof appNaviIDService !== 'undefined' && appNaviIDService && appNaviIDService.hasAppNaviID()) {
+                                isAuthenticated = true;
+                            }
+                        } catch (error) {
+                            console.warn('認証チェックエラー（続行します）:', error);
+                        }
+                        
+                        // 認証されていない場合は、一時的なユーザーIDを使用
+                        if (!isAuthenticated) {
+                            // 一時的なAppNaviIDを生成（認証後に正式なIDに置き換え可能）
+                            if (typeof appNaviIDService !== 'undefined' && appNaviIDService) {
+                                const tempId = 'temp-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                                appNaviIDService.setAppNaviID(tempId);
+                            }
+                        }
+                        
                         const newApp = await addApp({
                             name: appName,
                             description: 'Googleスプレッドシートから作成されたアプリです。',
@@ -2947,13 +2973,52 @@
                                 '6. 表示されたURLをコピーして、アプリの設定に貼り付け\n\n' +
                                 '設定は後からでも可能です。';
                             
-                            setTimeout(() => {
-                                if (confirm(setupMessage + '\n\n今すぐ設定しますか？')) {
-                                    // 設定画面に遷移
-                                    window.location.href = `myapp.html?appId=${newApp.id}&tab=settings`;
-                                } else {
-                                    // アプリに遷移
-                                    window.location.href = `myapp.html?appId=${newApp.id}`;
+                            // 認証状態を確認してから遷移
+                            setTimeout(async () => {
+                                try {
+                                    // Firebase初期化
+                                    await initFirebase();
+                                    
+                                    // 認証状態を確認
+                                    let isAuthenticated = false;
+                                    if (auth && auth.currentUser) {
+                                        isAuthenticated = true;
+                                        // AppNaviIDにFirebase UIDを保存（同期）
+                                        if (typeof appNaviIDService !== 'undefined' && appNaviIDService) {
+                                            appNaviIDService.setAppNaviID(auth.currentUser.uid);
+                                        }
+                                    } else if (typeof appNaviIDService !== 'undefined' && appNaviIDService && appNaviIDService.hasAppNaviID()) {
+                                        isAuthenticated = true;
+                                    }
+                                    
+                                    if (!isAuthenticated) {
+                                        // 認証されていない場合は、認証を促すメッセージを表示
+                                        if (confirm('アプリを使用するにはログインが必要です。\n\nログインページに移動しますか？')) {
+                                            window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(`myapp.html?appId=${newApp.id}`)}`;
+                                        } else {
+                                            // 認証なしで続行（データ表示のみ可能）
+                                            if (confirm(setupMessage + '\n\n今すぐ設定しますか？')) {
+                                                window.location.href = `myapp.html?appId=${newApp.id}&tab=settings`;
+                                            } else {
+                                                window.location.href = `myapp.html?appId=${newApp.id}`;
+                                            }
+                                        }
+                                    } else {
+                                        // 認証済みの場合は通常通り遷移
+                                        if (confirm(setupMessage + '\n\n今すぐ設定しますか？')) {
+                                            window.location.href = `myapp.html?appId=${newApp.id}&tab=settings`;
+                                        } else {
+                                            window.location.href = `myapp.html?appId=${newApp.id}`;
+                                        }
+                                    }
+                                } catch (error) {
+                                    console.error('認証チェックエラー:', error);
+                                    // エラーが発生した場合は、認証なしで続行
+                                    if (confirm(setupMessage + '\n\n今すぐ設定しますか？')) {
+                                        window.location.href = `myapp.html?appId=${newApp.id}&tab=settings`;
+                                    } else {
+                                        window.location.href = `myapp.html?appId=${newApp.id}`;
+                                    }
                                 }
                             }, 2000);
                         } else {
