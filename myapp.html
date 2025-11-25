@@ -959,11 +959,19 @@
                     btn.classList.add('text-slate-500');
                 });
                 
-                // すべてのサイドバーを非表示（モバイルではtranslate-x-fullも追加）
-                sidebarData.classList.add('hidden', '-translate-x-full');
-                sidebarUI.classList.add('hidden', '-translate-x-full');
-                sidebarChart.classList.add('hidden', '-translate-x-full');
-                sidebarSettings.classList.add('hidden', '-translate-x-full');
+                // すべてのサイドバーを非表示
+                sidebarData.classList.add('hidden');
+                sidebarUI.classList.add('hidden');
+                sidebarChart.classList.add('hidden');
+                sidebarSettings.classList.add('hidden');
+                
+                // モバイル表示時のみ、すべてのサイドバーにtranslate-x-fullを追加
+                if (window.innerWidth < 768) {
+                    sidebarData.classList.add('-translate-x-full');
+                    sidebarUI.classList.add('-translate-x-full');
+                    sidebarChart.classList.add('-translate-x-full');
+                    sidebarSettings.classList.add('-translate-x-full');
+                }
                 
                 // すべてのビューを非表示
                 dataView.classList.add('hidden');
@@ -977,7 +985,12 @@
                     tabData.classList.add('bg-white', 'text-blue-600');
                     sidebarData.classList.remove('hidden');
                     // モバイル表示時はサイドバーを表示（メニューが開いている場合のみ）
-                    if (window.innerWidth < 768 && isMenuOpen) {
+                    if (window.innerWidth < 768) {
+                        if (isMenuOpen) {
+                            sidebarData.classList.remove('-translate-x-full');
+                        }
+                    } else {
+                        // デスクトップ表示時はtranslate-x-fullを確実に削除
                         sidebarData.classList.remove('-translate-x-full');
                     }
                     dataView.classList.remove('hidden');
@@ -990,7 +1003,12 @@
                     tabUI.classList.add('bg-white', 'text-blue-600');
                     sidebarUI.classList.remove('hidden');
                     // モバイル表示時はサイドバーを表示（メニューが開いている場合のみ）
-                    if (window.innerWidth < 768 && isMenuOpen) {
+                    if (window.innerWidth < 768) {
+                        if (isMenuOpen) {
+                            sidebarUI.classList.remove('-translate-x-full');
+                        }
+                    } else {
+                        // デスクトップ表示時はtranslate-x-fullを確実に削除
                         sidebarUI.classList.remove('-translate-x-full');
                     }
                     builderView.classList.remove('hidden');
@@ -1010,7 +1028,12 @@
                     tabChart.classList.add('bg-white', 'text-blue-600');
                     sidebarChart.classList.remove('hidden');
                     // モバイル表示時はサイドバーを表示（メニューが開いている場合のみ）
-                    if (window.innerWidth < 768 && isMenuOpen) {
+                    if (window.innerWidth < 768) {
+                        if (isMenuOpen) {
+                            sidebarChart.classList.remove('-translate-x-full');
+                        }
+                    } else {
+                        // デスクトップ表示時はtranslate-x-fullを確実に削除
                         sidebarChart.classList.remove('-translate-x-full');
                     }
                     chartView.classList.remove('hidden');
@@ -1028,7 +1051,12 @@
                     tabSettings.classList.add('bg-white', 'text-blue-600');
                     sidebarSettings.classList.remove('hidden');
                     // モバイル表示時はサイドバーを表示（メニューが開いている場合のみ）
-                    if (window.innerWidth < 768 && isMenuOpen) {
+                    if (window.innerWidth < 768) {
+                        if (isMenuOpen) {
+                            sidebarSettings.classList.remove('-translate-x-full');
+                        }
+                    } else {
+                        // デスクトップ表示時はtranslate-x-fullを確実に削除
                         sidebarSettings.classList.remove('-translate-x-full');
                     }
                     settingsView.classList.remove('hidden');
