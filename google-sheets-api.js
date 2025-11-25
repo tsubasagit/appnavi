@@ -1349,13 +1349,20 @@ class GoogleSheetsService {
 
             if (!response.ok) {
                 // レスポンスボディをテキストとして取得（JSON解析に失敗する場合があるため）
-                const responseText = await response.clone().text().catch(() => '');
+                let responseText = '';
                 let errorData = {};
+                
                 try {
-                    errorData = JSON.parse(responseText);
+                    responseText = await response.text();
+                    try {
+                        errorData = JSON.parse(responseText);
+                    } catch (e) {
+                        // JSON解析に失敗した場合は、テキストをそのまま使用
+                        errorData = { error: { message: responseText } };
+                    }
                 } catch (e) {
-                    // JSON解析に失敗した場合は、テキストをそのまま使用
-                    errorData = { error: { message: responseText } };
+                    console.error('レスポンスボディの取得に失敗:', e);
+                    errorData = { error: { message: 'Unknown error' } };
                 }
                 
                 // 401エラー（認証エラー）の処理（エラーメッセージをより広く検索）
@@ -1372,22 +1379,31 @@ class GoogleSheetsService {
                                       fullAuthErrorMessage.includes('invalid authentication credentials') ||
                                       fullAuthErrorMessage.includes('Expected OAuth 2 access token');
                 
-                console.log('エラーレスポンス解析:', {
+                console.log('【syncAllDataToSpreadsheet】エラーレスポンス解析:', {
                     status: response.status,
                     is401Error,
                     isUnauthorized,
                     hasInvalidAuth,
-                    authErrorMessage,
-                    fullAuthErrorMessage,
-                    errorData,
-                    responseText
+                    authErrorMessage: authErrorMessage.substring(0, 200),
+                    errorData: JSON.stringify(errorData).substring(0, 200),
+                    responseText: responseText.substring(0, 200)
                 });
                 
                 // 認証エラーの場合、トークンをリフレッシュして再試行
                 if (is401Error || isUnauthorized || hasInvalidAuth) {
                     try {
-                        console.log('認証エラーを検出。トークンをリフレッシュします...', { is401Error, isUnauthorized, hasInvalidAuth, authErrorMessage, fullAuthErrorMessage });
+                        console.log('【syncAllDataToSpreadsheet】認証エラーを検出。トークンをリフレッシュします...', { 
+                            is401Error, 
+                            isUnauthorized, 
+                            hasInvalidAuth,
+                            currentToken: this.accessToken ? '存在' : 'なし'
+                        });
+                        
                         await this.refreshAccessToken();
+                        
+                        console.log('【syncAllDataToSpreadsheet】トークンリフレッシュ成功。再試行します...', {
+                            newToken: this.accessToken ? '存在' : 'なし'
+                        });
                         
                         // リフレッシュ後、元のリクエストを再実行
                         const retryResponse = await fetch(url, {
@@ -1403,6 +1419,7 @@ class GoogleSheetsService {
                         
                         if (retryResponse.ok) {
                             const retryResult = await retryResponse.json();
+                            console.log('【syncAllDataToSpreadsheet】再試行成功');
                             return {
                                 success: true,
                                 message: 'データを同期しました',
@@ -1411,10 +1428,23 @@ class GoogleSheetsService {
                         }
                         
                         // 再試行後もエラーの場合は、通常のエラーハンドリングに進む
-                        const retryErrorData = await retryResponse.json().catch(() => ({}));
+                        const retryErrorText = await retryResponse.text().catch(() => '');
+                        const retryErrorData = (() => {
+                            try {
+                                return JSON.parse(retryErrorText);
+                            } catch (e) {
+                                return { error: { message: retryErrorText } };
+                            }
+                        })();
+                        
+                        console.error('【syncAllDataToSpreadsheet】再試行後もエラー:', {
+                            status: retryResponse.status,
+                            error: retryErrorData
+                        });
+                        
                         throw new Error(`認証エラーが続いています。再認証が必要です: ${retryErrorData.error?.message || retryResponse.statusText}`);
                     } catch (refreshError) {
-                        console.error('トークンリフレッシュエラー:', refreshError);
+                        console.error('【syncAllDataToSpreadsheet】トークンリフレッシュエラー:', refreshError);
                         // リフレッシュに失敗した場合は、再認証を促す
                         throw new Error('認証の有効期限が切れました。再度ログインしてください。\n\n【解決方法】\n1. ダッシュボードで「Googleでログイン」ボタンをクリックしてください\n2. 認証後、再度お試しください');
                     }
