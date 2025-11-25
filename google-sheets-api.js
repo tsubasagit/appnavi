@@ -445,15 +445,38 @@ class GoogleSheetsService {
             });
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
+                // レスポンスボディをテキストとして取得（JSON解析に失敗する場合があるため）
+                const responseText = await response.clone().text().catch(() => '');
+                let errorData = {};
+                try {
+                    errorData = JSON.parse(responseText);
+                } catch (e) {
+                    // JSON解析に失敗した場合は、テキストをそのまま使用
+                    errorData = { error: { message: responseText } };
+                }
                 
                 // 401エラー（認証エラー）の処理
                 const is401Error = response.status === 401 || errorData.error?.code === 401;
                 const isUnauthorized = errorData.error?.status === 'UNAUTHENTICATED';
-                const hasInvalidAuth = errorData.error?.message?.includes('invalid authentication credentials') ||
-                                      errorData.error?.message?.includes('invalid_token') ||
-                                      errorData.error?.message?.includes('token expired') ||
-                                      errorData.error?.message?.includes('Request had invalid authentication credentials');
+                // エラーメッセージを複数の場所から取得
+                const authErrorMessage = errorData.error?.message || errorData.message || responseText || '';
+                const fullAuthErrorMessage = authErrorMessage + ' ' + JSON.stringify(errorData);
+                const hasInvalidAuth = authErrorMessage.includes('invalid authentication credentials') ||
+                                      authErrorMessage.includes('invalid_token') ||
+                                      authErrorMessage.includes('token expired') ||
+                                      authErrorMessage.includes('Request had invalid authentication credentials') ||
+                                      authErrorMessage.includes('Expected OAuth 2 access token') ||
+                                      fullAuthErrorMessage.includes('invalid authentication credentials') ||
+                                      fullAuthErrorMessage.includes('Expected OAuth 2 access token');
+                
+                console.log('エラーレスポンス解析:', {
+                    status: response.status,
+                    is401Error,
+                    isUnauthorized,
+                    hasInvalidAuth,
+                    authErrorMessage,
+                    errorData
+                });
                 
                 // 認証エラーの場合、トークンをリフレッシュして再試行
                 if (is401Error || isUnauthorized || hasInvalidAuth) {
@@ -495,13 +518,13 @@ class GoogleSheetsService {
                 // 400エラー（INVALID_ARGUMENT）の処理
                 const is400Error = response.status === 400 || errorData.error?.code === 400;
                 const isInvalidArgument = errorData.error?.status === 'INVALID_ARGUMENT';
-                const errorMessage = errorData.error?.message || '';
+                const invalidArgErrorMessage = errorData.error?.message || responseText || '';
                 
                 if (is400Error || isInvalidArgument) {
                     let detailedMessage = '';
                     
                     // 範囲パースエラーの場合
-                    if (errorMessage.includes('Unable to parse range') || errorMessage.includes('parse range')) {
+                    if (invalidArgErrorMessage.includes('Unable to parse range') || invalidArgErrorMessage.includes('parse range')) {
                         detailedMessage = 'スプレッドシートの範囲指定エラーが発生しました。\n\n';
                         detailedMessage += '【原因】\n';
                         detailedMessage += 'スプレッドシートのシート名または範囲の指定に問題があります。\n\n';
@@ -518,7 +541,7 @@ class GoogleSheetsService {
                         // その他の400エラーの場合
                         detailedMessage = 'Google Sheets APIでエラーが発生しました。\n\n';
                         detailedMessage += '【エラー内容】\n';
-                        detailedMessage += `${errorMessage}\n\n`;
+                        detailedMessage += `${invalidArgErrorMessage}\n\n`;
                         detailedMessage += '【解決方法】\n';
                         detailedMessage += '1. スプレッドシートのURLが正しいか確認してください\n';
                         detailedMessage += '2. スプレッドシートへのアクセス権限があるか確認してください\n';
@@ -697,15 +720,38 @@ class GoogleSheetsService {
             });
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
+                // レスポンスボディをテキストとして取得（JSON解析に失敗する場合があるため）
+                const responseText = await response.clone().text().catch(() => '');
+                let errorData = {};
+                try {
+                    errorData = JSON.parse(responseText);
+                } catch (e) {
+                    // JSON解析に失敗した場合は、テキストをそのまま使用
+                    errorData = { error: { message: responseText } };
+                }
                 
                 // 401エラー（認証エラー）の処理
                 const is401Error = response.status === 401 || errorData.error?.code === 401;
                 const isUnauthorized = errorData.error?.status === 'UNAUTHENTICATED';
-                const hasInvalidAuth = errorData.error?.message?.includes('invalid authentication credentials') ||
-                                      errorData.error?.message?.includes('invalid_token') ||
-                                      errorData.error?.message?.includes('token expired') ||
-                                      errorData.error?.message?.includes('Request had invalid authentication credentials');
+                // エラーメッセージを複数の場所から取得
+                const authErrorMessage = errorData.error?.message || errorData.message || responseText || '';
+                const fullAuthErrorMessage = authErrorMessage + ' ' + JSON.stringify(errorData);
+                const hasInvalidAuth = authErrorMessage.includes('invalid authentication credentials') ||
+                                      authErrorMessage.includes('invalid_token') ||
+                                      authErrorMessage.includes('token expired') ||
+                                      authErrorMessage.includes('Request had invalid authentication credentials') ||
+                                      authErrorMessage.includes('Expected OAuth 2 access token') ||
+                                      fullAuthErrorMessage.includes('invalid authentication credentials') ||
+                                      fullAuthErrorMessage.includes('Expected OAuth 2 access token');
+                
+                console.log('エラーレスポンス解析:', {
+                    status: response.status,
+                    is401Error,
+                    isUnauthorized,
+                    hasInvalidAuth,
+                    authErrorMessage,
+                    errorData
+                });
                 
                 // 認証エラーの場合、トークンをリフレッシュして再試行
                 if (is401Error || isUnauthorized || hasInvalidAuth) {
@@ -747,13 +793,13 @@ class GoogleSheetsService {
                 // 400エラー（INVALID_ARGUMENT）の処理
                 const is400Error = response.status === 400 || errorData.error?.code === 400;
                 const isInvalidArgument = errorData.error?.status === 'INVALID_ARGUMENT';
-                const errorMessage = errorData.error?.message || '';
+                const invalidArgErrorMessage = errorData.error?.message || responseText || '';
                 
                 if (is400Error || isInvalidArgument) {
                     let detailedMessage = '';
                     
                     // 範囲パースエラーの場合
-                    if (errorMessage.includes('Unable to parse range') || errorMessage.includes('parse range')) {
+                    if (invalidArgErrorMessage.includes('Unable to parse range') || invalidArgErrorMessage.includes('parse range')) {
                         detailedMessage = 'スプレッドシートの範囲指定エラーが発生しました。\n\n';
                         detailedMessage += '【原因】\n';
                         detailedMessage += 'スプレッドシートのシート名または範囲の指定に問題があります。\n\n';
@@ -770,7 +816,7 @@ class GoogleSheetsService {
                         // その他の400エラーの場合
                         detailedMessage = 'Google Sheets APIでエラーが発生しました。\n\n';
                         detailedMessage += '【エラー内容】\n';
-                        detailedMessage += `${errorMessage}\n\n`;
+                        detailedMessage += `${invalidArgErrorMessage}\n\n`;
                         detailedMessage += '【解決方法】\n';
                         detailedMessage += '1. スプレッドシートのURLが正しいか確認してください\n';
                         detailedMessage += '2. スプレッドシートへのアクセス権限があるか確認してください\n';
@@ -957,15 +1003,38 @@ class GoogleSheetsService {
             });
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
+                // レスポンスボディをテキストとして取得（JSON解析に失敗する場合があるため）
+                const responseText = await response.clone().text().catch(() => '');
+                let errorData = {};
+                try {
+                    errorData = JSON.parse(responseText);
+                } catch (e) {
+                    // JSON解析に失敗した場合は、テキストをそのまま使用
+                    errorData = { error: { message: responseText } };
+                }
                 
                 // 401エラー（認証エラー）の処理
                 const is401Error = response.status === 401 || errorData.error?.code === 401;
                 const isUnauthorized = errorData.error?.status === 'UNAUTHENTICATED';
-                const hasInvalidAuth = errorData.error?.message?.includes('invalid authentication credentials') ||
-                                      errorData.error?.message?.includes('invalid_token') ||
-                                      errorData.error?.message?.includes('token expired') ||
-                                      errorData.error?.message?.includes('Request had invalid authentication credentials');
+                // エラーメッセージを複数の場所から取得
+                const authErrorMessage = errorData.error?.message || errorData.message || responseText || '';
+                const fullAuthErrorMessage = authErrorMessage + ' ' + JSON.stringify(errorData);
+                const hasInvalidAuth = authErrorMessage.includes('invalid authentication credentials') ||
+                                      authErrorMessage.includes('invalid_token') ||
+                                      authErrorMessage.includes('token expired') ||
+                                      authErrorMessage.includes('Request had invalid authentication credentials') ||
+                                      authErrorMessage.includes('Expected OAuth 2 access token') ||
+                                      fullAuthErrorMessage.includes('invalid authentication credentials') ||
+                                      fullAuthErrorMessage.includes('Expected OAuth 2 access token');
+                
+                console.log('エラーレスポンス解析:', {
+                    status: response.status,
+                    is401Error,
+                    isUnauthorized,
+                    hasInvalidAuth,
+                    authErrorMessage,
+                    errorData
+                });
                 
                 // 認証エラーの場合、トークンをリフレッシュして再試行
                 if (is401Error || isUnauthorized || hasInvalidAuth) {
@@ -1007,13 +1076,13 @@ class GoogleSheetsService {
                 // 400エラー（INVALID_ARGUMENT）の処理
                 const is400Error = response.status === 400 || errorData.error?.code === 400;
                 const isInvalidArgument = errorData.error?.status === 'INVALID_ARGUMENT';
-                const errorMessage = errorData.error?.message || '';
+                const invalidArgErrorMessage = errorData.error?.message || responseText || '';
                 
                 if (is400Error || isInvalidArgument) {
                     let detailedMessage = '';
                     
                     // 範囲パースエラーの場合
-                    if (errorMessage.includes('Unable to parse range') || errorMessage.includes('parse range')) {
+                    if (invalidArgErrorMessage.includes('Unable to parse range') || invalidArgErrorMessage.includes('parse range')) {
                         detailedMessage = 'スプレッドシートの範囲指定エラーが発生しました。\n\n';
                         detailedMessage += '【原因】\n';
                         detailedMessage += 'スプレッドシートのシート名または範囲の指定に問題があります。\n\n';
@@ -1030,7 +1099,7 @@ class GoogleSheetsService {
                         // その他の400エラーの場合
                         detailedMessage = 'Google Sheets APIでエラーが発生しました。\n\n';
                         detailedMessage += '【エラー内容】\n';
-                        detailedMessage += `${errorMessage}\n\n`;
+                        detailedMessage += `${invalidArgErrorMessage}\n\n`;
                         detailedMessage += '【解決方法】\n';
                         detailedMessage += '1. スプレッドシートのURLが正しいか確認してください\n';
                         detailedMessage += '2. スプレッドシートへのアクセス権限があるか確認してください\n';
@@ -1239,23 +1308,45 @@ class GoogleSheetsService {
             });
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                const errorText = await response.text().catch(() => '');
+                // レスポンスボディをテキストとして取得（JSON解析に失敗する場合があるため）
+                const responseText = await response.clone().text().catch(() => '');
+                let errorData = {};
+                try {
+                    errorData = JSON.parse(responseText);
+                } catch (e) {
+                    // JSON解析に失敗した場合は、テキストをそのまま使用
+                    errorData = { error: { message: responseText } };
+                }
                 
                 // 401エラー（認証エラー）の処理（エラーメッセージをより広く検索）
                 const is401Error = response.status === 401 || errorData.error?.code === 401;
                 const isUnauthorized = errorData.error?.status === 'UNAUTHENTICATED';
-                const fullErrorMessage = errorData.error?.message || errorText || JSON.stringify(errorData);
-                const hasInvalidAuth = fullErrorMessage.includes('invalid authentication credentials') ||
-                                      fullErrorMessage.includes('invalid_token') ||
-                                      fullErrorMessage.includes('token expired') ||
-                                      fullErrorMessage.includes('Request had invalid authentication credentials') ||
-                                      fullErrorMessage.includes('Expected OAuth 2 access token');
+                // エラーメッセージを複数の場所から取得
+                const authErrorMessage = errorData.error?.message || errorData.message || responseText || '';
+                const fullAuthErrorMessage = authErrorMessage + ' ' + JSON.stringify(errorData);
+                const hasInvalidAuth = authErrorMessage.includes('invalid authentication credentials') ||
+                                      authErrorMessage.includes('invalid_token') ||
+                                      authErrorMessage.includes('token expired') ||
+                                      authErrorMessage.includes('Request had invalid authentication credentials') ||
+                                      authErrorMessage.includes('Expected OAuth 2 access token') ||
+                                      fullAuthErrorMessage.includes('invalid authentication credentials') ||
+                                      fullAuthErrorMessage.includes('Expected OAuth 2 access token');
+                
+                console.log('エラーレスポンス解析:', {
+                    status: response.status,
+                    is401Error,
+                    isUnauthorized,
+                    hasInvalidAuth,
+                    authErrorMessage,
+                    fullAuthErrorMessage,
+                    errorData,
+                    responseText
+                });
                 
                 // 認証エラーの場合、トークンをリフレッシュして再試行
                 if (is401Error || isUnauthorized || hasInvalidAuth) {
                     try {
-                        console.log('認証エラーを検出。トークンをリフレッシュします...', { is401Error, isUnauthorized, hasInvalidAuth, errorMessage: fullErrorMessage });
+                        console.log('認証エラーを検出。トークンをリフレッシュします...', { is401Error, isUnauthorized, hasInvalidAuth, authErrorMessage, fullAuthErrorMessage });
                         await this.refreshAccessToken();
                         
                         // リフレッシュ後、元のリクエストを再実行
@@ -1300,13 +1391,13 @@ class GoogleSheetsService {
                 // 400エラー（INVALID_ARGUMENT）の処理
                 const is400Error = response.status === 400 || errorData.error?.code === 400;
                 const isInvalidArgument = errorData.error?.status === 'INVALID_ARGUMENT';
-                const errorMessage = errorData.error?.message || '';
+                const invalidArgErrorMessage = errorData.error?.message || responseText || '';
                 
                 if (is400Error || isInvalidArgument) {
                     let detailedMessage = '';
                     
                     // 範囲パースエラーの場合
-                    if (errorMessage.includes('Unable to parse range') || errorMessage.includes('parse range')) {
+                    if (invalidArgErrorMessage.includes('Unable to parse range') || invalidArgErrorMessage.includes('parse range')) {
                         detailedMessage = 'スプレッドシートの範囲指定エラーが発生しました。\n\n';
                         detailedMessage += '【原因】\n';
                         detailedMessage += 'スプレッドシートのシート名または範囲の指定に問題があります。\n\n';
@@ -1323,7 +1414,7 @@ class GoogleSheetsService {
                         // その他の400エラーの場合
                         detailedMessage = 'Google Sheets APIでエラーが発生しました。\n\n';
                         detailedMessage += '【エラー内容】\n';
-                        detailedMessage += `${errorMessage}\n\n`;
+                        detailedMessage += `${invalidArgErrorMessage}\n\n`;
                         detailedMessage += '【解決方法】\n';
                         detailedMessage += '1. スプレッドシートのURLが正しいか確認してください\n';
                         detailedMessage += '2. スプレッドシートへのアクセス権限があるか確認してください\n';
