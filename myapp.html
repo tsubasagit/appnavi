@@ -3211,6 +3211,19 @@
             // リダイレクトループを防ぐフラグ
             let isRedirecting = false;
 
+            // URLパラメータをクリーンアップする関数（fromRegisterの重複を防ぐ）
+            function cleanUrlParams() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const fromRegister = urlParams.get('fromRegister');
+                if (fromRegister === 'true') {
+                    // fromRegisterパラメータを削除してクリーンなURLに戻す
+                    urlParams.delete('fromRegister');
+                    const cleanUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+                    // 履歴を更新（リロードしない）
+                    window.history.replaceState({}, '', cleanUrl);
+                }
+            }
+
             // ログイン必須チェック（最初に実行）
             async function checkAuth() {
                 // 既にリダイレクト中の場合はスキップ
@@ -3222,6 +3235,8 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const fromRegister = urlParams.get('fromRegister');
                 if (fromRegister === 'true') {
+                    // URLパラメータをクリーンアップ
+                    cleanUrlParams();
                     // 登録ページから戻ってきた場合は、認証状態を再確認する時間を与える
                     await new Promise(resolve => setTimeout(resolve, 1000));
                 }
@@ -3259,8 +3274,11 @@
 
                 // ログインが必要 - 新規登録ページにリダイレクト（戻り先を保存）
                 isRedirecting = true;
-                const returnUrl = window.location.href.split('?')[0]; // 既存のパラメータを削除
-                window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(returnUrl)}`;
+                // 現在のURLからクリーンなベースURLを取得（fromRegisterパラメータを除外）
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.delete('fromRegister');
+                const cleanReturnUrl = currentUrl.toString();
+                window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(cleanReturnUrl)}`;
                 return false;
             }
 

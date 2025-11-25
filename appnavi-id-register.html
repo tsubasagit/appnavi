@@ -85,6 +85,35 @@
                 return;
             }
 
+            // URLパラメータをクリーンアップする関数（fromRegisterの重複を防ぐ）
+            function cleanUrlAndAddFromRegister(url) {
+                try {
+                    const urlObj = new URL(url);
+                    // 既存のfromRegisterパラメータを削除
+                    urlObj.searchParams.delete('fromRegister');
+                    // fromRegister=trueを追加
+                    urlObj.searchParams.set('fromRegister', 'true');
+                    return urlObj.toString();
+                } catch (e) {
+                    // URL解析に失敗した場合は、文字列操作で処理
+                    let cleanUrl = url.split('?')[0]; // ベースURLを取得
+                    const params = new URLSearchParams();
+                    // 既存のパラメータを解析（fromRegisterを除外）
+                    const urlParts = url.split('?');
+                    if (urlParts.length > 1) {
+                        const existingParams = new URLSearchParams(urlParts[1]);
+                        for (const [key, value] of existingParams.entries()) {
+                            if (key !== 'fromRegister') {
+                                params.set(key, value);
+                            }
+                        }
+                    }
+                    // fromRegister=trueを追加
+                    params.set('fromRegister', 'true');
+                    return `${cleanUrl}?${params.toString()}`;
+                }
+            }
+
             // 既にログインしている場合はリダイレクト
             if (auth.currentUser) {
                 // AppNaviIDをFirebase UIDから生成して保存
@@ -94,9 +123,9 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const returnUrl = urlParams.get('returnUrl');
                 if (returnUrl) {
-                    // returnUrlにfromRegisterパラメータを追加してリダイレクトループを防ぐ
-                    const separator = returnUrl.includes('?') ? '&' : '?';
-                    window.location.href = `${returnUrl}${separator}fromRegister=true`;
+                    // returnUrlをクリーンアップしてfromRegisterパラメータを追加
+                    const cleanReturnUrl = cleanUrlAndAddFromRegister(returnUrl);
+                    window.location.href = cleanReturnUrl;
                 } else {
                     window.location.href = 'index.html';
                 }
@@ -131,9 +160,9 @@
                             const urlParams = new URLSearchParams(window.location.search);
                             const returnUrl = urlParams.get('returnUrl');
                             if (returnUrl) {
-                                // returnUrlにfromRegisterパラメータを追加してリダイレクトループを防ぐ
-                                const separator = returnUrl.includes('?') ? '&' : '?';
-                                window.location.href = `${returnUrl}${separator}fromRegister=true`;
+                                // returnUrlをクリーンアップしてfromRegisterパラメータを追加
+                                const cleanReturnUrl = cleanUrlAndAddFromRegister(returnUrl);
+                                window.location.href = cleanReturnUrl;
                             } else {
                                 window.location.href = 'index.html';
                             }
