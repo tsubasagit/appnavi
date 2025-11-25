@@ -6,6 +6,8 @@ class GoogleSheetsService {
         this.apiKey = null; // Google Sheets API Key（環境変数から取得）
         this.accessToken = null; // OAuth 2.0アクセストークン
         this.isAuthenticated = false;
+        this.tokenClient = null; // Google Identity Servicesのトークンクライアント
+        this.refreshTokenPromise = null; // リフレッシュ中のPromise（重複リクエストを防ぐ）
     }
 
     // Google認証を初期化（OAuth 2.0）
@@ -73,9 +75,12 @@ class GoogleSheetsService {
                         }
                         this.accessToken = response.access_token;
                         this.isAuthenticated = true;
+                        // トークンクライアントを保存（リフレッシュ用）
+                        this.tokenClient = client;
                         resolve(true);
                     },
                 });
+                this.tokenClient = client; // リフレッシュ用に保存
                 client.requestAccessToken();
             } catch (error) {
                 reject(error);
@@ -124,6 +129,70 @@ class GoogleSheetsService {
     setAccessToken(token) {
         this.accessToken = token;
         this.isAuthenticated = true;
+    }
+
+    // トークンをリフレッシュ
+    async refreshAccessToken() {
+        // 既にリフレッシュ中の場合は、そのPromiseを返す
+        if (this.refreshTokenPromise) {
+            return this.refreshTokenPromise;
+        }
+
+        this.refreshTokenPromise = new Promise((resolve, reject) => {
+            try {
+                // クライアントIDを取得
+                const DEFAULT_CLIENT_ID = '509155102966-d1caj0trqoakrmi2tju5mvicdlj2qb1f.apps.googleusercontent.com';
+                const clientId = this.clientId || 
+                                localStorage.getItem('google_client_id') || 
+                                DEFAULT_CLIENT_ID;
+                
+                if (!clientId || clientId === 'YOUR_CLIENT_ID') {
+                    this.refreshTokenPromise = null;
+                    reject(new Error('Google Client IDが設定されていません。設定画面で設定してください。'));
+                    return;
+                }
+
+                // 新しいトークンクライアントを作成してリフレッシュ
+                const refreshClient = google.accounts.oauth2.initTokenClient({
+                    client_id: clientId,
+                    scope: 'https://www.googleapis.com/auth/spreadsheets',
+                    callback: (response) => {
+                        if (response.error) {
+                            this.refreshTokenPromise = null;
+                            reject(new Error(`トークンのリフレッシュに失敗しました: ${response.error}`));
+                            return;
+                        }
+                        this.accessToken = response.access_token;
+                        this.isAuthenticated = true;
+                        this.tokenClient = refreshClient; // 新しいトークンクライアントを保存
+                        this.refreshTokenPromise = null;
+                        resolve(this.accessToken);
+                    },
+                });
+                
+                // リフレッシュトークンを要求（prompt: ''でサイレントリフレッシュ）
+                refreshClient.requestAccessToken({ prompt: '' });
+            } catch (error) {
+                this.refreshTokenPromise = null;
+                reject(error);
+            }
+        });
+
+        return this.refreshTokenPromise;
+    }
+
+    // 認証エラーを検出してトークンをリフレッシュ
+    async handleAuthError(originalRequest) {
+        try {
+            // トークンをリフレッシュ
+            await this.refreshAccessToken();
+            
+            // 元のリクエストを再実行
+            return await originalRequest();
+        } catch (refreshError) {
+            // リフレッシュに失敗した場合は、再認証が必要
+            throw new Error('認証の有効期限が切れました。再度ログインしてください。');
+        }
     }
 
     // クライアントIDを設定
@@ -378,6 +447,43 @@ class GoogleSheetsService {
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 
+                // 401エラー（認証エラー）の処理
+                const is401Error = response.status === 401 || errorData.error?.code === 401;
+                const isUnauthorized = errorData.error?.status === 'UNAUTHENTICATED';
+                const hasInvalidAuth = errorData.error?.message?.includes('invalid authentication credentials') ||
+                                      errorData.error?.message?.includes('invalid_token') ||
+                                      errorData.error?.message?.includes('token expired') ||
+                                      errorData.error?.message?.includes('Request had invalid authentication credentials');
+                
+                // 認証エラーの場合、トークンをリフレッシュして再試行
+                if (is401Error || isUnauthorized || hasInvalidAuth) {
+                    try {
+                        console.log('認証エラーを検出。トークンをリフレッシュします...');
+                        await this.refreshAccessToken();
+                        
+                        // リフレッシュ後、元のリクエストを再実行
+                        const retryResponse = await fetch(url, {
+                            method: method,
+                            headers: {
+                                'Authorization': `Bearer ${this.accessToken}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(body)
+                        });
+                        
+                        if (retryResponse.ok) {
+                            return await retryResponse.json();
+                        }
+                        
+                        // 再試行後もエラーの場合は、通常のエラーハンドリングに進む
+                        const retryErrorData = await retryResponse.json().catch(() => ({}));
+                        throw new Error(`認証エラーが続いています。再認証が必要です: ${retryErrorData.error?.message || retryResponse.statusText}`);
+                    } catch (refreshError) {
+                        // リフレッシュに失敗した場合は、再認証を促す
+                        throw new Error('認証の有効期限が切れました。再度ログインしてください。\n\n【解決方法】\n1. ダッシュボードで「Googleでログイン」ボタンをクリックしてください\n2. 認証後、再度お試しください');
+                    }
+                }
+                
                 // 403エラーまたはPERMISSION_DENIEDエラーの場合は常に詳細なメッセージを提供
                 const is403Error = response.status === 403 || errorData.error?.code === 403;
                 const isPermissionDenied = errorData.error?.status === 'PERMISSION_DENIED';
@@ -592,6 +698,43 @@ class GoogleSheetsService {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
+                
+                // 401エラー（認証エラー）の処理
+                const is401Error = response.status === 401 || errorData.error?.code === 401;
+                const isUnauthorized = errorData.error?.status === 'UNAUTHENTICATED';
+                const hasInvalidAuth = errorData.error?.message?.includes('invalid authentication credentials') ||
+                                      errorData.error?.message?.includes('invalid_token') ||
+                                      errorData.error?.message?.includes('token expired') ||
+                                      errorData.error?.message?.includes('Request had invalid authentication credentials');
+                
+                // 認証エラーの場合、トークンをリフレッシュして再試行
+                if (is401Error || isUnauthorized || hasInvalidAuth) {
+                    try {
+                        console.log('認証エラーを検出。トークンをリフレッシュします...');
+                        await this.refreshAccessToken();
+                        
+                        // リフレッシュ後、元のリクエストを再実行
+                        const retryResponse = await fetch(url, {
+                            method: method,
+                            headers: {
+                                'Authorization': `Bearer ${this.accessToken}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(body)
+                        });
+                        
+                        if (retryResponse.ok) {
+                            return await retryResponse.json();
+                        }
+                        
+                        // 再試行後もエラーの場合は、通常のエラーハンドリングに進む
+                        const retryErrorData = await retryResponse.json().catch(() => ({}));
+                        throw new Error(`認証エラーが続いています。再認証が必要です: ${retryErrorData.error?.message || retryResponse.statusText}`);
+                    } catch (refreshError) {
+                        // リフレッシュに失敗した場合は、再認証を促す
+                        throw new Error('認証の有効期限が切れました。再度ログインしてください。\n\n【解決方法】\n1. ダッシュボードで「Googleでログイン」ボタンをクリックしてください\n2. 認証後、再度お試しください');
+                    }
+                }
                 
                 // 403エラーまたはPERMISSION_DENIEDエラーの場合は常に詳細なメッセージを提供
                 const is403Error = response.status === 403 || errorData.error?.code === 403;
@@ -815,6 +958,43 @@ class GoogleSheetsService {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
+                
+                // 401エラー（認証エラー）の処理
+                const is401Error = response.status === 401 || errorData.error?.code === 401;
+                const isUnauthorized = errorData.error?.status === 'UNAUTHENTICATED';
+                const hasInvalidAuth = errorData.error?.message?.includes('invalid authentication credentials') ||
+                                      errorData.error?.message?.includes('invalid_token') ||
+                                      errorData.error?.message?.includes('token expired') ||
+                                      errorData.error?.message?.includes('Request had invalid authentication credentials');
+                
+                // 認証エラーの場合、トークンをリフレッシュして再試行
+                if (is401Error || isUnauthorized || hasInvalidAuth) {
+                    try {
+                        console.log('認証エラーを検出。トークンをリフレッシュします...');
+                        await this.refreshAccessToken();
+                        
+                        // リフレッシュ後、元のリクエストを再実行
+                        const retryResponse = await fetch(url, {
+                            method: method,
+                            headers: {
+                                'Authorization': `Bearer ${this.accessToken}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(body)
+                        });
+                        
+                        if (retryResponse.ok) {
+                            return await retryResponse.json();
+                        }
+                        
+                        // 再試行後もエラーの場合は、通常のエラーハンドリングに進む
+                        const retryErrorData = await retryResponse.json().catch(() => ({}));
+                        throw new Error(`認証エラーが続いています。再認証が必要です: ${retryErrorData.error?.message || retryResponse.statusText}`);
+                    } catch (refreshError) {
+                        // リフレッシュに失敗した場合は、再認証を促す
+                        throw new Error('認証の有効期限が切れました。再度ログインしてください。\n\n【解決方法】\n1. ダッシュボードで「Googleでログイン」ボタンをクリックしてください\n2. 認証後、再度お試しください');
+                    }
+                }
                 
                 // 403エラーまたはPERMISSION_DENIEDエラーの場合は常に詳細なメッセージを提供
                 const is403Error = response.status === 403 || errorData.error?.code === 403;
@@ -1060,6 +1240,43 @@ class GoogleSheetsService {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
+                
+                // 401エラー（認証エラー）の処理
+                const is401Error = response.status === 401 || errorData.error?.code === 401;
+                const isUnauthorized = errorData.error?.status === 'UNAUTHENTICATED';
+                const hasInvalidAuth = errorData.error?.message?.includes('invalid authentication credentials') ||
+                                      errorData.error?.message?.includes('invalid_token') ||
+                                      errorData.error?.message?.includes('token expired') ||
+                                      errorData.error?.message?.includes('Request had invalid authentication credentials');
+                
+                // 認証エラーの場合、トークンをリフレッシュして再試行
+                if (is401Error || isUnauthorized || hasInvalidAuth) {
+                    try {
+                        console.log('認証エラーを検出。トークンをリフレッシュします...');
+                        await this.refreshAccessToken();
+                        
+                        // リフレッシュ後、元のリクエストを再実行
+                        const retryResponse = await fetch(url, {
+                            method: method,
+                            headers: {
+                                'Authorization': `Bearer ${this.accessToken}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(body)
+                        });
+                        
+                        if (retryResponse.ok) {
+                            return await retryResponse.json();
+                        }
+                        
+                        // 再試行後もエラーの場合は、通常のエラーハンドリングに進む
+                        const retryErrorData = await retryResponse.json().catch(() => ({}));
+                        throw new Error(`認証エラーが続いています。再認証が必要です: ${retryErrorData.error?.message || retryResponse.statusText}`);
+                    } catch (refreshError) {
+                        // リフレッシュに失敗した場合は、再認証を促す
+                        throw new Error('認証の有効期限が切れました。再度ログインしてください。\n\n【解決方法】\n1. ダッシュボードで「Googleでログイン」ボタンをクリックしてください\n2. 認証後、再度お試しください');
+                    }
+                }
                 
                 // 403エラーまたはPERMISSION_DENIEDエラーの場合は常に詳細なメッセージを提供
                 const is403Error = response.status === 403 || errorData.error?.code === 403;

@@ -3754,8 +3754,31 @@
                     let errorMessage = error.message || '不明なエラーが発生しました';
                     let activationUrl = null;
                     
+                    // 認証エラー（トークン期限切れ）の場合
+                    if (errorMessage.includes('認証の有効期限が切れました') ||
+                        errorMessage.includes('invalid authentication credentials') ||
+                        errorMessage.includes('Request had invalid authentication credentials') ||
+                        errorMessage.includes('再度ログインしてください')) {
+                        
+                        showNotification('認証の有効期限が切れました。ダッシュボードで再度ログインしてください。', 'error');
+                        
+                        // ダッシュボードへのリンクを表示
+                        const dashboardLink = document.createElement('a');
+                        dashboardLink.href = 'index.html';
+                        dashboardLink.className = 'text-blue-600 hover:text-blue-800 underline';
+                        dashboardLink.textContent = 'ダッシュボードに戻る';
+                        dashboardLink.style.marginLeft = '10px';
+                        
+                        // 通知にリンクを追加（通知システムが対応している場合）
+                        setTimeout(() => {
+                            const notification = document.querySelector('.notification');
+                            if (notification) {
+                                notification.appendChild(dashboardLink);
+                            }
+                        }, 100);
+                    }
                     // Google Sheets APIが有効化されていないエラーの場合
-                    if (errorMessage.includes('Google Sheets APIが有効化されていません') || 
+                    else if (errorMessage.includes('Google Sheets APIが有効化されていません') || 
                         errorMessage.includes('SERVICE_DISABLED') ||
                         errorMessage.includes('has not been used')) {
                         
