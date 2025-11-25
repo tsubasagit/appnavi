@@ -1426,6 +1426,12 @@
             const appId = urlParams.get('appId');
             const isNewApp = urlParams.get('newApp') === 'true';
 
+            // デバッグモード判定
+            function isDebugMode() {
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get('debug') === '1';
+            }
+
             // アプリデータを読み込む
             async function loadApp(appId) {
                 try {
@@ -1492,7 +1498,13 @@
                     console.error('Error loading app:', error);
                     // AppNaviIDエラーの場合はリダイレクト
                     if (error.message.includes('AppNaviID') || error.message.includes('ログイン') || error.message.includes('認証')) {
-                        showLoginRequiredModal();
+                        // デバッグモードチェック
+                        if (isDebugMode()) {
+                            console.error('⚠️ デバッグモード: リダイレクトを無効化しました');
+                            alert('認証失敗（デバッグモード）\n\nコンソールを確認してください。\n通常モードに戻すには、URLから?debug=1を削除してください。');
+                            return;
+                        }
+                        window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(window.location.href)}`;
                         return;
                     }
                     // フォールバック: localStorageから読み込み
@@ -1504,7 +1516,13 @@
                             // AppNaviIDでフィルタリング
                             const currentAppNaviID = appNaviIDService?.getAppNaviID();
                             if (foundApp.userId !== currentAppNaviID) {
-                                showLoginRequiredModal();
+                                // デバッグモードチェック
+                                if (isDebugMode()) {
+                                    console.error('⚠️ デバッグモード: リダイレクトを無効化しました');
+                                    alert('認証失敗（デバッグモード）\n\nコンソールを確認してください。\n通常モードに戻すには、URLから?debug=1を削除してください。');
+                                    return;
+                                }
+                                window.location.href = `appnavi-id-register.html?returnUrl=${encodeURIComponent(window.location.href)}`;
                                 return;
                             }
                             currentApp = foundApp;
