@@ -1429,11 +1429,6 @@
             // アプリデータを読み込む
             async function loadApp(appId) {
                 try {
-                    // AppNaviIDチェック（必須）
-                    if (!checkAppNaviID()) {
-                        return; // リダイレクトされる
-                    }
-                    
                     // 認証チェック（AppNaviID必須）
                     await databaseService.checkAuth();
                     
