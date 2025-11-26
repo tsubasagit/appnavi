@@ -314,12 +314,12 @@ class DatabaseService {
                 throw new Error('Firebaseの更新に失敗しました。Firebase設定を確認してください。');
             }
         }
-        return this.updateAppInLocalStorage(appId, updateData);
+        return await this.updateAppInLocalStorage(appId, updateData);
     }
 
-    // localStorageでアプリを更新
-    updateAppInLocalStorage(appId, updates) {
-        const apps = this.getAppsFromLocalStorage();
+    // localStorageでアプリを更新（修正：async対応）
+    async updateAppInLocalStorage(appId, updates) {
+        const apps = await this.getAppsFromLocalStorage();
         const appIndex = apps.findIndex(app => app.id === appId);
         if (appIndex !== -1) {
             apps[appIndex] = {
@@ -327,7 +327,18 @@ class DatabaseService {
                 ...updates,
                 updatedAt: new Date().toISOString()
             };
-            localStorage.setItem('apps', JSON.stringify(apps));
+            // 全アプリを取得して更新（ユーザーIDでフィルタリング）
+            const userId = await this.getCurrentUserId();
+            const allApps = JSON.parse(localStorage.getItem('apps') || '[]');
+            const allAppsIndex = allApps.findIndex(app => app.id === appId && app.userId === userId);
+            if (allAppsIndex !== -1) {
+                allApps[allAppsIndex] = {
+                    ...allApps[allAppsIndex],
+                    ...updates,
+                    updatedAt: new Date().toISOString()
+                };
+                localStorage.setItem('apps', JSON.stringify(allApps));
+            }
             return apps[appIndex];
         }
         return null;

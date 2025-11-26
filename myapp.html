@@ -1525,10 +1525,32 @@
 
                         // スプレッドシートに同期（連携している場合）
                         if (currentApp.googleSheetsUrl) {
-                            // バックグラウンドで同期（エラーは無視）
-                            syncToGoogleSheets().catch(err => {
+                            // Google Sheetsへの同期を試行（認証情報がある場合のみ）
+                            try {
+                                // アクセストークンまたはGoogle Apps Script URLが必要
+                                if (currentApp.googleAccessToken || currentApp.googleAppsScriptUrl) {
+                                    if (currentApp.googleAccessToken) {
+                                        googleSheetsService.setAccessToken(currentApp.googleAccessToken);
+                                    }
+                                    if (currentApp.googleAppsScriptUrl) {
+                                        googleSheetsService.setAppsScriptUrl(currentApp.googleAppsScriptUrl);
+                                    }
+                                    
+                                    // 行を更新
+                                    const values = currentApp.columns.map(col => currentApp.data[rowIndex][col.name] || '');
+                                    await googleSheetsService.updateSpreadsheetRow(
+                                        currentApp.googleSheetsUrl,
+                                        null,
+                                        rowIndex + 1, // Google Sheetsは1ベース
+                                        values
+                                    );
+                                } else {
+                                    console.warn('Google Sheets同期: 認証情報またはGoogle Apps Script URLが必要です');
+                                }
+                            } catch (err) {
                                 console.warn('Google Sheets同期エラー（無視）:', err);
-                            });
+                                // エラーは無視してローカル保存は成功とする
+                            }
                         }
 
                         // 視覚的フィードバック：保存成功アニメーション（改善サイクル3）
@@ -3147,87 +3169,7 @@
                 });
             }
             
-            // 編集したデータ行を保存
-            async function saveEditedDataRow(index, columns) {
-                if (!currentApp || !currentApp.data) {
-                    showNotification('データを更新できません。アプリデータが読み込まれていません。', 'error');
-                    return;
-                }
-                
-                const newRowData = {};
-                let hasError = false;
-                
-                columns.forEach(col => {
-                    const input = document.getElementById(`edit-field-${col.name}`);
-                    if (!input) {
-                        hasError = true;
-                        return;
-                    }
-                    
-                    const value = input.value.trim();
-                    if (col.required && !value) {
-                        showNotification(`${col.name}は必須項目です。入力してください。`, 'error');
-                        input.focus();
-                        hasError = true;
-                        return;
-                    }
-                    
-                    newRowData[col.name] = value;
-                });
-                
-                if (hasError) return;
-                
-                // データを更新
-                currentApp.data[index] = { ...currentApp.data[index], ...newRowData };
-                
-                // スプレッドシートに書き込む（設定されている場合）
-                if (currentApp.googleSheetsUrl) {
-                    try {
-                        // アクセストークンが設定されている場合は直接APIに書き込む
-                        if (currentApp.googleAccessToken) {
-                            googleSheetsService.setAccessToken(currentApp.googleAccessToken);
-                        }
-                        // Google Apps ScriptのURLが設定されている場合はそれを使用
-                        if (currentApp.googleAppsScriptUrl) {
-                            googleSheetsService.setAppsScriptUrl(currentApp.googleAppsScriptUrl);
-                        }
-                        
-                        const values = columns.map(col => newRowData[col.name] || '');
-                        const result = await googleSheetsService.updateSpreadsheetRow(
-                            currentApp.googleSheetsUrl,
-                            null,
-                            index,
-                            values
-                        );
-                        
-                        if (result && result.success) {
-                            showNotification('データをスプレッドシートに更新しました');
-                        }
-                    } catch (error) {
-                        console.error('Error updating spreadsheet:', error);
-                        showNotification('スプレッドシートへの更新に失敗しました。データはローカルに保存されました。', 'warning');
-                    }
-                }
-                
-                // データベースに保存
-                if (appId && databaseService) {
-                    try {
-                        await databaseService.updateApp(appId, {
-                            data: currentApp.data
-                        });
-                        updateAppDataTable(currentApp.data, currentApp.columns);
-                        closeDataAddModal();
-                        showNotification('データを更新しました');
-                    } catch (error) {
-                        console.error('Error updating data:', error);
-                        showNotification('データの更新に失敗しました。もう一度お試しください。', 'error');
-                    }
-                } else {
-                    updateAppDataTable(currentApp.data, currentApp.columns);
-                    closeDataAddModal();
-                    showNotification('データを更新しました（ローカル保存）');
-                }
-            }
+            // 編集モーダルは削除されました。インライン編集を使用してください。
 
             // データ削除機能（より分かりやすい確認）
             async function deleteDataRow(index, rowData) {
