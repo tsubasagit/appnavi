@@ -1314,15 +1314,7 @@
                     }
                 }
 
-                // ヘッダーに「操作」列を追加
-                if (tableHead) {
-                    const headerRow = tableHead.querySelector('tr');
-                    if (headerRow && !headerRow.querySelector('th:last-child')?.textContent.includes('操作')) {
-                        headerRow.innerHTML += '<th class="px-6 py-3 text-left font-semibold">操作</th>';
-                    }
-                }
-                
-                // ボディ更新（編集・削除ボタン付き）
+                // ボディ更新（インライン編集対応、編集・削除アイコンなし）
                 if (tableBody) {
                     tableBody.innerHTML = data.rows.map((row, index) => {
                         const firstCell = row[0];
@@ -1333,24 +1325,8 @@
                         return `<tr class="hover:bg-slate-50" data-row-id="${rowId}">
                             ${firstCellHTML}
                             ${row.slice(1).map(cell => `<td class="px-6 py-4">${cell}</td>`).join('')}
-                            ${getActionButtonsHTML(rowId)}
                         </tr>`;
                     }).join('');
-                    
-                    // イベントリスナーを追加（サンプルデータ用）
-                    tableBody.querySelectorAll('.edit-row-btn').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            showNotification('サンプルデータは編集できません。実際のアプリデータを編集してください。', 'info');
-                        });
-                    });
-                    
-                    tableBody.querySelectorAll('.delete-row-btn').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            showNotification('サンプルデータは削除できません。実際のアプリデータを削除してください。', 'info');
-                        });
-                    });
                 }
 
                 // ヘッダータイトルも更新
