@@ -292,33 +292,43 @@
                 </div>
             </aside>
             <main id="data-view" class="flex-1 overflow-auto px-4 md:px-6 py-6">
-                <!-- スプレッドシート連携情報バナー -->
-                <div id="sheets-integration-banner" class="mb-6 rounded-2xl border border-green-200 bg-green-50 p-4 shadow-sm hidden">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5 text-green-600">
+                <!-- スプレッドシート連携情報バナー（改善：より目立つ表示） -->
+                <div id="sheets-integration-banner" class="mb-6 rounded-2xl border-2 border-green-300 bg-gradient-to-r from-green-50 to-emerald-50 p-5 shadow-lg hidden">
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-start space-x-4 flex-1">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full bg-green-200 shadow-md">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-6 w-6 text-green-700">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75V11.25m0 1.5v1.5m0-1.5H7.5m1.5 0h1.5M15 12.75V11.25m0 1.5v1.5m0-1.5h-1.5m1.5 0h1.5M4.5 6.75h15m-13.5 0v10.5a2.25 2.25 0 0 0 2.25 2.25h6a2.25 2.25 0 0 0 2.25-2.25V6.75" />
                                 </svg>
                             </div>
-                            <div>
-                                <p class="text-sm font-semibold text-green-900">Googleスプレッドシートと連携中</p>
-                                <p id="sheets-integration-url" class="text-xs text-green-700 mt-1 break-all"></p>
-                                <div class="mt-1 flex items-center space-x-2">
-                                    <div id="sheets-integration-auth-indicator" class="h-2 w-2 rounded-full bg-gray-400"></div>
-                                    <span id="sheets-integration-auth-text" class="text-xs text-green-600">未認証</span>
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <p class="text-base font-bold text-green-900">📊 Googleスプレッドシートと連携中</p>
+                                    <div id="sheets-integration-auth-indicator" class="h-3 w-3 rounded-full bg-gray-400"></div>
+                                </div>
+                                <p class="text-sm font-semibold text-green-800 mb-1">連携先:</p>
+                                <p id="sheets-integration-url" class="text-xs text-green-700 mb-2 break-all bg-white px-2 py-1 rounded border border-green-200"></p>
+                                <div class="flex items-center space-x-2">
+                                    <span id="sheets-integration-auth-text" class="text-xs font-semibold text-green-700">未認証</span>
+                                    <span id="sheets-last-synced" class="text-xs text-green-600"></span>
                                 </div>
                             </div>
                         </div>
-                        <div class="flex items-center space-x-2">
-                            <button id="sheets-sync-button" class="rounded-lg border border-green-300 bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed" title="スプレッドシートにデータを反映します">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mr-1 inline h-3 w-3">
+                        <div class="flex flex-col items-end space-y-2 ml-4">
+                            <button id="sheets-fetch-button" class="rounded-lg border-2 border-blue-300 bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-md" title="スプレッドシートから最新データを取得します">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1 inline h-4 w-4">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                </svg>
+                                取得
+                            </button>
+                            <button id="sheets-sync-button" class="rounded-lg border-2 border-green-300 bg-green-600 px-4 py-2 text-xs font-bold text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-md" title="スプレッドシートにデータを反映します">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1 inline h-4 w-4">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
                                 </svg>
-                                データを更新
+                                反映
                             </button>
-                            <a id="sheets-integration-link" href="#" target="_blank" class="rounded-lg border border-green-300 bg-white px-3 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-100">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mr-1 inline h-3 w-3">
+                            <a id="sheets-integration-link" href="#" target="_blank" class="rounded-lg border-2 border-green-300 bg-white px-4 py-2 text-xs font-bold text-green-700 hover:bg-green-100 shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1 inline h-4 w-4">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
                                 </svg>
                                 開く
@@ -1038,9 +1048,7 @@
             const dataAddModalCancel = document.getElementById('data-add-modal-cancel');
             let selectedTable = null;
             
-            // グラフ関連
-            let dataChart = null;
-            let trendChart = null;
+            // グラフ関連（変数宣言は後で定義）
             const chartTypeSelect = document.getElementById('chart-type');
             const chartGroupBySelect = document.getElementById('chart-group-by');
 
@@ -3134,47 +3142,9 @@
                 </td>`;
             }
 
-            // データテーブルの更新関数を拡張（編集・削除ボタンを追加）
-            const originalUpdateAppDataTable = updateAppDataTable;
-            updateAppDataTable = function(data, columns) {
-                originalUpdateAppDataTable(data, columns);
-                
-                // アクションボタン列を追加
-                const tableHead = document.getElementById('table-head');
-                const tableBody = document.getElementById('table-body');
-                
-                if (tableHead) {
-                    const headerRow = tableHead.querySelector('tr');
-                    if (headerRow && !headerRow.querySelector('th:last-child')?.textContent.includes('操作')) {
-                        headerRow.innerHTML += '<th class="px-6 py-3 text-left font-semibold">操作</th>';
-                    }
-                }
-                
-                if (tableBody) {
-                    // 各行にアクションボタンを追加
-                    const rows = tableBody.querySelectorAll('tr');
-                    rows.forEach((row, index) => {
-                        if (!row.querySelector('.edit-row-btn')) {
-                            const rowId = `row-${index}`;
-                            row.innerHTML += getActionButtonsHTML(rowId);
-                            
-                            // イベントリスナーを追加
-                            const editBtn = row.querySelector('.edit-row-btn');
-                            const deleteBtn = row.querySelector('.delete-row-btn');
-                            
-                            editBtn?.addEventListener('click', () => {
-                                editDataRow(index, data[index], columns);
-                            });
-                            
-                            deleteBtn?.addEventListener('click', () => {
-                                deleteDataRow(index, data[index]);
-                            });
-                        }
-                    });
-                }
-            };
+            // 古いコード（編集・削除ボタン追加）は削除済み - インライン編集のみ使用
 
-            // データ編集機能（より使いやすいモーダル版）
+            // データ編集機能（より使いやすいモーダル版） - 使用されていない（インライン編集を使用）
             function editDataRow(index, rowData, columns) {
                 if (!currentApp || !currentApp.data || !currentApp.columns) {
                     showNotification('データを編集できません。アプリデータが読み込まれていません。', 'error');
@@ -3892,17 +3862,37 @@
                             : 'h-2 w-2 rounded-full bg-gray-400';
                     }
                     if (authText) {
-                        authText.textContent = hasAuth ? '認証済み（データ変更可能）' : '未認証（読み込み専用）';
+                        authText.textContent = hasAuth ? '✓ 認証済み（データ変更可能）' : '✗ 未認証（読み込み専用）';
+                    }
+                    
+                    // 最終同期時刻を表示
+                    const lastSyncedEl = document.getElementById('sheets-last-synced');
+                    if (lastSyncedEl && currentApp.googleSheetsLastSynced) {
+                        const lastSynced = new Date(currentApp.googleSheetsLastSynced);
+                        lastSyncedEl.textContent = `最終同期: ${lastSynced.toLocaleString('ja-JP')}`;
+                    } else if (lastSyncedEl) {
+                        lastSyncedEl.textContent = '未同期';
                     }
                     
                     // 更新ボタンの有効/無効を設定
                     const syncButton = document.getElementById('sheets-sync-button');
+                    const fetchButton = document.getElementById('sheets-fetch-button');
+                    
                     if (syncButton) {
                         syncButton.disabled = !hasAuth;
                         if (!hasAuth) {
                             syncButton.title = 'Google認証が必要です。ダッシュボードで認証してください。';
                         } else {
                             syncButton.title = 'スプレッドシートにデータを反映します';
+                        }
+                    }
+                    
+                    if (fetchButton) {
+                        fetchButton.disabled = !hasAuth;
+                        if (!hasAuth) {
+                            fetchButton.title = 'Google認証が必要です。ダッシュボードで認証してください。';
+                        } else {
+                            fetchButton.title = 'スプレッドシートから最新データを取得します';
                         }
                     }
                 } else {
@@ -3978,6 +3968,94 @@
             
             // スプレッドシート同期ボタンのイベントリスナー
             document.getElementById('sheets-sync-button')?.addEventListener('click', syncDataToSpreadsheet);
+            
+            // スプレッドシートからデータを取得（改善：元のスプレッドシートの値を取得）
+            document.getElementById('sheets-fetch-button')?.addEventListener('click', async () => {
+                await fetchDataFromSpreadsheet();
+            });
+            
+            // スプレッドシートから最新データを取得
+            async function fetchDataFromSpreadsheet() {
+                if (!currentApp || !currentApp.googleSheetsUrl) {
+                    showNotification('スプレッドシートが連携されていません', 'warning');
+                    return;
+                }
+                
+                const fetchButton = document.getElementById('sheets-fetch-button');
+                if (!fetchButton) return;
+                
+                // ボタンを無効化
+                fetchButton.disabled = true;
+                const originalText = fetchButton.innerHTML;
+                fetchButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1 inline h-4 w-4 animate-spin"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>取得中...';
+                
+                try {
+                    // アクセストークンを取得
+                    const accessToken = currentApp.googleAccessToken || localStorage.getItem('google_access_token');
+                    if (!accessToken) {
+                        showNotification('Google認証が必要です。ダッシュボードで認証してください。', 'warning');
+                        return;
+                    }
+                    
+                    // Google Sheets Serviceにアクセストークンを設定
+                    googleSheetsService.setAccessToken(accessToken);
+                    
+                    // スプレッドシートからデータを取得
+                    const spreadsheetData = await googleSheetsService.fetchSpreadsheetData(currentApp.googleSheetsUrl);
+                    
+                    if (spreadsheetData && spreadsheetData.values && spreadsheetData.values.length > 0) {
+                        // ヘッダー行を取得
+                        const headers = spreadsheetData.values[0];
+                        const dataRows = spreadsheetData.values.slice(1);
+                        
+                        // データを変換
+                        const newData = dataRows.map(row => {
+                            const rowData = {};
+                            headers.forEach((header, index) => {
+                                rowData[header] = row[index] || '';
+                            });
+                            return rowData;
+                        });
+                        
+                        // 列情報を更新（既存の列情報を保持）
+                        const newColumns = headers.map(header => {
+                            const existingCol = currentApp.columns.find(col => col.name === header);
+                            return existingCol || { name: header, type: 'text', required: false };
+                        });
+                        
+                        // データを更新
+                        currentApp.data = newData;
+                        currentApp.columns = newColumns;
+                        
+                        // データベースに保存
+                        if (databaseService && appId) {
+                            await databaseService.updateApp(appId, {
+                                data: currentApp.data,
+                                columns: currentApp.columns,
+                                updatedAt: new Date().toISOString(),
+                                googleSheetsLastSynced: new Date().toISOString()
+                            });
+                        }
+                        
+                        // テーブルを更新
+                        updateAppDataTable(currentApp.data, currentApp.columns);
+                        
+                        // 最終同期時刻を更新
+                        updateSheetsIntegrationBanner();
+                        
+                        showNotification(`✓ スプレッドシートから ${newData.length} 件のデータを取得しました`, 'success');
+                    } else {
+                        showNotification('スプレッドシートにデータが見つかりませんでした', 'warning');
+                    }
+                } catch (error) {
+                    console.error('スプレッドシート取得エラー:', error);
+                    showNotification('データの取得に失敗しました: ' + error.message, 'error');
+                } finally {
+                    // ボタンを再有効化
+                    fetchButton.disabled = false;
+                    fetchButton.innerHTML = originalText;
+                }
+            }
             
             // グラフ生成機能（Excel風 - データから自動生成）
             let dataChart = null;
