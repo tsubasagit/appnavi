@@ -387,18 +387,26 @@
                         <table id="data-table" class="min-w-full divide-y divide-slate-200 text-sm">
                             <thead id="table-head" class="bg-gradient-to-r from-slate-100 to-slate-50 text-slate-600">
                                 <tr>
-                                    <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">予約ID</th>
-                                    <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">予約施設</th>
-                                    <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">申請部署</th>
-                                    <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">予約者</th>
-                                    <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">開始日時</th>
-                                    <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">終了時間</th>
-                                    <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">ステータス</th>
+                                    <th class="px-3 py-4 text-center text-xs font-bold uppercase tracking-wider border-r border-slate-200 w-12 bg-slate-50">#</th>
+                                    <!-- ヘッダーは動的に生成されます -->
                                 </tr>
                             </thead>
                             <tbody id="table-body" class="divide-y divide-slate-100 bg-white text-slate-700">
                                 <!-- テーブルデータがここに動的に挿入されます -->
                             </tbody>
+                            <!-- Excel風：行追加ボタン -->
+                            <tfoot id="table-footer" class="bg-slate-50 border-t-2 border-slate-200">
+                                <tr>
+                                    <td colspan="100%" class="px-6 py-3">
+                                        <button id="add-row-button" class="flex w-full items-center justify-center space-x-2 rounded-lg border-2 border-dashed border-blue-300 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 hover:border-blue-400 hover:bg-blue-100 transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
+                                            </svg>
+                                            <span>+ 行を追加（Excel風）</span>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                 </div>
@@ -1384,19 +1392,20 @@
                     `;
                 }
 
-                // ヘッダーを更新（ソート機能付き）
+                // ヘッダーを更新（ソート機能付き、行番号列追加）
                 if (tableHead) {
                     const headerRow = tableHead.querySelector('tr');
                     if (headerRow) {
-                        headerRow.innerHTML = columns.map(col => {
-                            const isSorted = currentSortColumn === col.name;
-                            const sortIcon = isSorted 
-                                ? (currentSortDirection === 'asc' ? '↑' : '↓')
-                                : '';
-                            return `<th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 cursor-pointer hover:bg-slate-100 select-none sortable-header" data-column="${col.name}">
-                                ${col.name} ${sortIcon}
-                            </th>`;
-                        }).join('');
+                        headerRow.innerHTML = `<th class="px-3 py-3 text-center text-xs font-semibold text-slate-400 border-r border-slate-200 w-12 bg-slate-50 select-none" title="行番号">#</th>` + 
+                            columns.map(col => {
+                                const isSorted = currentSortColumn === col.name;
+                                const sortIcon = isSorted 
+                                    ? (currentSortDirection === 'asc' ? '↑' : '↓')
+                                    : '';
+                                return `<th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 cursor-pointer hover:bg-slate-100 select-none sortable-header" data-column="${col.name}" title="クリックしてソート">
+                                    ${col.name} ${sortIcon}
+                                </th>`;
+                            }).join('');
                     }
 
                     // ソート機能のイベントリスナーを追加
@@ -1429,20 +1438,28 @@
                         const rowId = row.id || `row-${index}`;
                         const cells = columns.map(col => {
                             const value = row[col.name] || '';
-                            // インライン編集可能なセル（視覚的フィードバック強化）
+                            // インライン編集可能なセル（視覚的フィードバック強化 - Excel風）
                             return `<td class="px-6 py-4 text-sm text-slate-700">
-                                <div class="editable-cell min-w-[100px] rounded px-2 py-1 transition-all duration-200 hover:bg-blue-50 hover:shadow-sm focus-within:bg-blue-100 focus-within:ring-2 focus-within:ring-blue-500 focus-within:shadow-md" 
+                                <div class="editable-cell group relative min-w-[100px] rounded border border-transparent px-2 py-1 transition-all duration-200 cursor-text hover:border-blue-300 hover:bg-blue-50 hover:shadow-sm focus-within:border-blue-500 focus-within:bg-blue-100 focus-within:ring-2 focus-within:ring-blue-500 focus-within:shadow-md" 
                                      contenteditable="true" 
                                      data-column="${col.name}" 
                                      data-row-index="${index}"
                                      data-original-value="${escapeHtml(String(value))}"
-                                     title="クリックして編集（Enterで保存）">
+                                     title="クリックして編集（Enterキーまたはクリック外で保存）">
                                     ${escapeHtml(String(value)) || '<span class="text-slate-400 italic">クリックして入力</span>'}
+                                    <!-- 編集可能インジケーター（ホバー時） -->
+                                    <span class="absolute -top-1 -right-1 hidden h-2 w-2 rounded-full bg-blue-500 group-hover:block"></span>
                                 </div>
                             </td>`;
                         }).join('');
                         
-                        return `<tr class="hover:bg-slate-50 transition-colors duration-150" data-row-id="${rowId}" data-row-index="${index}">
+                        return `<tr class="hover:bg-slate-50 transition-colors duration-150 group" data-row-id="${rowId}" data-row-index="${index}" tabindex="0">
+                            <td class="px-3 py-4 text-xs text-slate-400 text-center border-r border-slate-200 w-12 bg-slate-50 group-hover:bg-slate-100 cursor-pointer select-none" 
+                                title="行番号をクリックして削除"
+                                data-row-index="${index}"
+                                onclick="deleteRowByIndex(${index})">
+                                ${index + 1}
+                            </td>
                             ${cells}
                         </tr>`;
                     }).join('');
@@ -1471,9 +1488,99 @@
                             }
                         });
                     });
+                    
+                    // 行の削除機能（Excel風 - Deleteキー対応）
+                    tableBody.querySelectorAll('tr').forEach(row => {
+                        // 行をクリックして選択状態にする
+                        row.addEventListener('click', (e) => {
+                            // セル編集中の場合は選択しない
+                            if (e.target.closest('.editable-cell') && e.target.closest('.editable-cell').isContentEditable) {
+                                return;
+                            }
+                            // 行番号列をクリックした場合は削除処理
+                            if (e.target.closest('td:first-child')) {
+                                return; // deleteRowByIndexが処理
+                            }
+                            // 行を選択状態にする
+                            tableBody.querySelectorAll('tr').forEach(r => r.classList.remove('bg-blue-50', 'ring-2', 'ring-blue-300'));
+                            row.classList.add('bg-blue-50', 'ring-2', 'ring-blue-300');
+                            row.focus();
+                        });
+                        
+                        // Deleteキーで行を削除
+                        row.addEventListener('keydown', async (e) => {
+                            if (e.key === 'Delete' && !e.target.closest('.editable-cell')?.isContentEditable) {
+                                e.preventDefault();
+                                const rowIndex = parseInt(row.dataset.rowIndex);
+                                if (!isNaN(rowIndex) && confirm(`この行（${rowIndex + 1}行目）を削除しますか？`)) {
+                                    await deleteRowByIndex(rowIndex);
+                                }
+                            }
+                        });
+                    });
                 }
 
                 console.log('updateAppDataTable: データ表示完了', { displayedRows: data.length });
+                
+                // Excel風：行追加ボタンのイベントリスナー
+                const addRowButton = document.getElementById('add-row-button');
+                if (addRowButton) {
+                    addRowButton.onclick = async () => {
+                        await addNewRow();
+                    };
+                }
+            }
+            
+            // Excel風：新しい行を追加
+            async function addNewRow() {
+                if (!currentApp || !currentApp.columns || !currentApp.data) {
+                    showNotification('データ構造が定義されていません', 'error');
+                    return;
+                }
+                
+                // 新しい空の行を作成
+                const newRow = {};
+                currentApp.columns.forEach(col => {
+                    newRow[col.name] = '';
+                });
+                
+                // データに追加
+                currentApp.data.push(newRow);
+                
+                // データベースに保存
+                if (appId && databaseService) {
+                    try {
+                        await databaseService.updateApp(appId, {
+                            data: currentApp.data,
+                            updatedAt: new Date().toISOString()
+                        });
+                    } catch (error) {
+                        console.error('Error adding row:', error);
+                        showNotification('行の追加に失敗しました', 'error');
+                        currentApp.data.pop(); // ロールバック
+                        return;
+                    }
+                }
+                
+                // テーブルを再表示
+                updateAppDataTable(currentApp.data, currentApp.columns);
+                
+                // 追加した行の最初のセルにフォーカス
+                setTimeout(() => {
+                    const newRowIndex = currentApp.data.length - 1;
+                    const firstCell = document.querySelector(`[data-row-index="${newRowIndex}"][data-column="${currentApp.columns[0].name}"] .editable-cell`);
+                    if (firstCell) {
+                        firstCell.focus();
+                        // セル内のテキストを選択
+                        const range = document.createRange();
+                        range.selectNodeContents(firstCell);
+                        const selection = window.getSelection();
+                        selection.removeAllRanges();
+                        selection.addRange(range);
+                    }
+                }, 100);
+                
+                showNotification('新しい行を追加しました。セルをクリックして入力してください', 'success');
             }
 
             // セルの編集を保存
@@ -1529,30 +1636,38 @@
                             }
                         }
 
-                        // 視覚的フィードバック：保存成功アニメーション（改善サイクル3）
+                        // 視覚的フィードバック：保存成功アニメーション（改善 - Excel風）
                         const cell = document.querySelector(`[data-row-index="${rowIndex}"][data-column="${columnName}"]`);
                         if (cell) {
-                            // 編集中のセルに視覚的フィードバック
-                            cell.classList.add('bg-blue-100', 'ring-2', 'ring-blue-400');
-                            const savingIndicator = document.createElement('span');
-                            savingIndicator.className = 'ml-2 text-xs text-blue-600 font-semibold';
-                            savingIndicator.textContent = '保存中...';
-                            savingIndicator.id = 'saving-indicator';
-                            cell.appendChild(savingIndicator);
+                            // 保存状態インジケーターを追加/更新
+                            let statusIndicator = cell.querySelector('.save-status-indicator');
+                            if (!statusIndicator) {
+                                statusIndicator = document.createElement('span');
+                                statusIndicator.className = 'save-status-indicator absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full text-xs font-bold shadow-sm';
+                                cell.appendChild(statusIndicator);
+                            }
                             
-                            // 保存成功の視覚的フィードバック
+                            // 保存中表示
+                            statusIndicator.className = 'save-status-indicator absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 text-white text-xs font-bold shadow-sm animate-pulse';
+                            statusIndicator.innerHTML = '⏳';
+                            statusIndicator.title = '保存中...';
+                            
+                            // 保存成功表示
                             setTimeout(() => {
-                                cell.classList.remove('bg-blue-100', 'ring-2', 'ring-blue-400');
-                                cell.classList.add('bg-green-50', 'ring-2', 'ring-green-400');
-                                if (savingIndicator) {
-                                    savingIndicator.textContent = '✓ 保存済み';
-                                    savingIndicator.className = 'ml-2 text-xs text-green-600 font-semibold';
-                                }
-                                // 3秒後に元に戻す
+                                statusIndicator.className = 'save-status-indicator absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-green-500 text-white text-xs font-bold shadow-sm';
+                                statusIndicator.innerHTML = '✓';
+                                statusIndicator.title = '保存済み';
+                                
+                                // 3秒後にフェードアウト
                                 setTimeout(() => {
-                                    cell.classList.remove('bg-green-50', 'ring-2', 'ring-green-400');
-                                    if (savingIndicator) savingIndicator.remove();
-                                }, 3000);
+                                    statusIndicator.style.opacity = '0';
+                                    statusIndicator.style.transition = 'opacity 0.5s';
+                                    setTimeout(() => {
+                                        if (statusIndicator.parentElement) {
+                                            statusIndicator.remove();
+                                        }
+                                    }, 500);
+                                }, 2000);
                             }, 300);
                         }
                         showNotification('✓ データを保存しました', 'success');
@@ -1561,17 +1676,26 @@
                         // エラーの視覚的フィードバック
                         const cell = document.querySelector(`[data-row-index="${rowIndex}"][data-column="${columnName}"]`);
                         if (cell) {
-                            cell.classList.remove('bg-blue-100', 'ring-2', 'ring-blue-400');
-                            cell.classList.add('bg-red-50', 'ring-2', 'ring-red-400');
-                            const savingIndicator = cell.querySelector('#saving-indicator');
-                            if (savingIndicator) {
-                                savingIndicator.textContent = '✗ 保存失敗';
-                                savingIndicator.className = 'ml-2 text-xs text-red-600 font-semibold';
-                                setTimeout(() => {
-                                    if (savingIndicator) savingIndicator.remove();
-                                    cell.classList.remove('bg-red-50', 'ring-2', 'ring-red-400');
-                                }, 3000);
+                            let statusIndicator = cell.querySelector('.save-status-indicator');
+                            if (!statusIndicator) {
+                                statusIndicator = document.createElement('span');
+                                statusIndicator.className = 'save-status-indicator absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full text-xs font-bold shadow-sm';
+                                cell.appendChild(statusIndicator);
                             }
+                            statusIndicator.className = 'save-status-indicator absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold shadow-sm animate-pulse';
+                            statusIndicator.innerHTML = '✗';
+                            statusIndicator.title = '保存失敗 - クリックして再試行';
+                            
+                            // 5秒後にフェードアウト
+                            setTimeout(() => {
+                                statusIndicator.style.opacity = '0';
+                                statusIndicator.style.transition = 'opacity 0.5s';
+                                setTimeout(() => {
+                                    if (statusIndicator.parentElement) {
+                                        statusIndicator.remove();
+                                    }
+                                }, 500);
+                            }, 5000);
                         }
                         showNotification('データの保存に失敗しました', 'error');
                     }
@@ -3147,6 +3271,21 @@
             
             // 編集モーダルは削除されました。インライン編集を使用してください。
 
+            // 行番号をクリックして削除（Excel風）
+            async function deleteRowByIndex(index) {
+                if (!currentApp || !currentApp.data || index < 0 || index >= currentApp.data.length) {
+                    showNotification('削除する行が見つかりません', 'error');
+                    return;
+                }
+                
+                const confirmMessage = `${index + 1}行目を削除しますか？\n\nこの操作は元に戻せません。`;
+                if (!confirm(confirmMessage)) {
+                    return;
+                }
+                
+                await deleteDataRow(index, currentApp.data[index]);
+            }
+            
             // データ削除機能（より分かりやすい確認）
             async function deleteDataRow(index, rowData) {
                 // より分かりやすい確認メッセージ
@@ -3839,6 +3978,180 @@
             
             // スプレッドシート同期ボタンのイベントリスナー
             document.getElementById('sheets-sync-button')?.addEventListener('click', syncDataToSpreadsheet);
+            
+            // グラフ生成機能（Excel風 - データから自動生成）
+            let dataChart = null;
+            let trendChart = null;
+            
+            // グラフタイプと集計方法の変更時にグラフを更新
+            document.getElementById('chart-type')?.addEventListener('change', () => {
+                renderChart();
+            });
+            document.getElementById('chart-group-by')?.addEventListener('change', () => {
+                renderChart();
+            });
+            
+            // グラフを生成・更新
+            function renderChart() {
+                if (!currentApp || !currentApp.data || currentApp.data.length === 0) {
+                    // データがない場合のメッセージ
+                    const chartContainer = document.getElementById('data-chart');
+                    if (chartContainer) {
+                        const ctx = chartContainer.getContext('2d');
+                        ctx.clearRect(0, 0, chartContainer.width, chartContainer.height);
+                        ctx.font = '16px sans-serif';
+                        ctx.fillStyle = '#64748b';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('データがありません', chartContainer.width / 2, chartContainer.height / 2);
+                    }
+                    return;
+                }
+                
+                const chartType = document.getElementById('chart-type')?.value || 'bar';
+                const groupBy = document.getElementById('chart-group-by')?.value || 'status';
+                
+                // データを集計
+                const aggregatedData = aggregateData(currentApp.data, currentApp.columns, groupBy);
+                
+                // メイングラフを生成
+                const dataChartCanvas = document.getElementById('data-chart');
+                if (dataChartCanvas) {
+                    const ctx = dataChartCanvas.getContext('2d');
+                    
+                    // 既存のグラフを破棄
+                    if (dataChart) {
+                        dataChart.destroy();
+                    }
+                    
+                    // 新しいグラフを作成
+                    dataChart = new Chart(ctx, {
+                        type: chartType,
+                        data: {
+                            labels: aggregatedData.labels,
+                            datasets: [{
+                                label: groupBy === 'status' ? 'ステータス別' : groupBy === 'department' ? '部署別' : groupBy === 'facility' ? '施設別' : '日付別',
+                                data: aggregatedData.values,
+                                backgroundColor: [
+                                    'rgba(59, 130, 246, 0.8)',
+                                    'rgba(16, 185, 129, 0.8)',
+                                    'rgba(245, 158, 11, 0.8)',
+                                    'rgba(239, 68, 68, 0.8)',
+                                    'rgba(139, 92, 246, 0.8)',
+                                    'rgba(236, 72, 153, 0.8)'
+                                ],
+                                borderColor: [
+                                    'rgba(59, 130, 246, 1)',
+                                    'rgba(16, 185, 129, 1)',
+                                    'rgba(245, 158, 11, 1)',
+                                    'rgba(239, 68, 68, 1)',
+                                    'rgba(139, 92, 246, 1)',
+                                    'rgba(236, 72, 153, 1)'
+                                ],
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: `${groupBy === 'status' ? 'ステータス別' : groupBy === 'department' ? '部署別' : groupBy === 'facility' ? '施設別' : '日付別'}の集計`,
+                                    font: {
+                                        size: 16,
+                                        weight: 'bold'
+                                    }
+                                },
+                                legend: {
+                                    display: chartType === 'pie' || chartType === 'doughnut',
+                                    position: 'bottom'
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                // 集計サマリーを更新
+                updateChartSummary(aggregatedData);
+            }
+            
+            // データを集計
+            function aggregateData(data, columns, groupBy) {
+                const counts = {};
+                const labels = [];
+                const values = [];
+                
+                // groupByに基づいて集計
+                data.forEach(row => {
+                    let key = '';
+                    if (groupBy === 'status') {
+                        key = row['ステータス'] || row['status'] || '未設定';
+                    } else if (groupBy === 'department') {
+                        key = row['申請部署'] || row['部署'] || row['department'] || '未設定';
+                    } else if (groupBy === 'facility') {
+                        key = row['予約施設'] || row['施設'] || row['facility'] || '未設定';
+                    } else if (groupBy === 'date') {
+                        const dateValue = row['開始日時'] || row['日付'] || row['date'] || '';
+                        key = dateValue ? new Date(dateValue).toLocaleDateString('ja-JP') : '日付不明';
+                    } else {
+                        // 列名から自動検出
+                        const col = columns.find(c => c.name.toLowerCase().includes(groupBy.toLowerCase()));
+                        key = col ? (row[col.name] || '未設定') : '未設定';
+                    }
+                    
+                    counts[key] = (counts[key] || 0) + 1;
+                });
+                
+                // ソートして配列に変換
+                Object.entries(counts)
+                    .sort((a, b) => b[1] - a[1])
+                    .forEach(([label, value]) => {
+                        labels.push(label);
+                        values.push(value);
+                    });
+                
+                return { labels, values };
+            }
+            
+            // 集計サマリーを更新
+            function updateChartSummary(aggregatedData) {
+                const summaryContainer = document.querySelector('#chart-view .space-y-3');
+                if (summaryContainer) {
+                    const total = aggregatedData.values.reduce((sum, val) => sum + val, 0);
+                    summaryContainer.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-slate-600">総数</span>
+                            <span class="text-lg font-semibold text-slate-900">${total}</span>
+                        </div>
+                        ${aggregatedData.labels.slice(0, 5).map((label, index) => `
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-slate-600">${label}</span>
+                                <span class="text-lg font-semibold text-blue-600">${aggregatedData.values[index]}</span>
+                            </div>
+                        `).join('')}
+                    `;
+                }
+            }
+            
+            // データが更新されたときにグラフも更新
+            const originalUpdateAppDataTable = updateAppDataTable;
+            updateAppDataTable = function(data, columns) {
+                originalUpdateAppDataTable(data, columns);
+                // グラフビューが表示されている場合、グラフを更新
+                const chartView = document.getElementById('chart-view');
+                if (chartView && !chartView.classList.contains('hidden')) {
+                    setTimeout(() => renderChart(), 100);
+                }
+            };
+            
+            // グラフタブが選択されたときにグラフを生成
+            const originalSetTab = setTab;
+            setTab = function(tabName) {
+                originalSetTab(tabName);
+                if (tabName === 'chart') {
+                    setTimeout(() => renderChart(), 100);
+                }
+            };
 
             // 設定サイドバーボタンのイベントリスナー
             document.getElementById('settings-btn-general')?.addEventListener('click', () => {
