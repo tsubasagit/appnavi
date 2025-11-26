@@ -135,3 +135,4 @@ console.log('Button exists:', button !== null);
 4. ボタンをクリックすると、アプリのデータがスプレッドシートに反映される
 
 
+

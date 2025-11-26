@@ -148,3 +148,4 @@ service cloud.firestore {
 - **Firebase Firestore**: オプション（設定が必要）
 - 両方を使用することも可能（将来的な拡張）
 
+

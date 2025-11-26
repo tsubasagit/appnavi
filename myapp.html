@@ -16,6 +16,72 @@
     <script src="firebase-config.js"></script>
     <!-- Google Sheets API -->
     <script src="google-sheets-api.js"></script>
+    <style>
+        /* 改善サイクル5：プロフェッショナルなアニメーション */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .animate-slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        /* スムーズなトランジション */
+        .transition-smooth {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* ホバーエフェクト */
+        .hover-lift {
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+        }
+        
+        .hover-lift:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        /* フォーカスリングの改善 */
+        .focus-ring {
+            transition: all 0.2s ease-out;
+        }
+        
+        .focus-ring:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px white, 0 0 0 4px rgb(59 130 246);
+        }
+    </style>
 </head>
 <body class="bg-slate-100 text-slate-900">
     <!-- モバイルメニューオーバーレイ -->
@@ -111,82 +177,40 @@
             </aside>
             <!-- サイドバーコンテンツ（UI） -->
             <aside id="sidebar-ui" class="fixed md:static inset-y-0 left-0 z-30 hidden w-72 flex-col border-r border-slate-200 bg-white transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out md:transition-none">
-                <div class="border-b border-slate-200 px-4 py-4">
-                    <button id="add-page-button" class="flex w-full items-center justify-center space-x-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5">
+                <div class="border-b border-slate-200 bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-4">
+                    <button id="add-page-button" class="flex w-full items-center justify-center space-x-2 rounded-lg bg-blue-600 px-4 py-3 text-base font-bold text-white shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 transition-all hover:shadow-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
                         </svg>
                         <span>ページを追加</span>
-                        </button>
+                    </button>
+                    <p class="mt-2 text-center text-xs text-slate-600 font-medium">新しいフォームページを作成します</p>
                 </div>
                 <div class="flex-1 overflow-auto px-3 py-4 text-sm">
                     <section class="space-y-2">
-                        <div class="flex items-center justify-between px-3 mb-2">
-                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">ページ構造</p>
-                            <span class="text-xs text-slate-400">ドラッグで並び替え</span>
+                        <div class="px-3 mb-3">
+                            <p class="text-sm font-bold text-slate-700 mb-1">作成したページ一覧</p>
+                            <p class="text-xs text-slate-600">複数のフォームページを作成できます。ドラッグで順番を変更できます。</p>
                         </div>
                         <div id="page-list" class="space-y-1">
-                            <div class="page-item flex w-full items-center justify-between rounded-lg bg-blue-50 px-3 py-2 text-blue-700 shadow-sm cursor-move" data-page-id="page-1" draggable="true">
-                                <span class="font-semibold">予約フォーム</span>
-                                <div class="flex items-center space-x-1">
-                                    <button class="page-delete rounded p-1 text-slate-400 hover:text-red-600 hover:bg-red-50">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                                        </svg>
-                        </button>
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-slate-400">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                                    </svg>
-                                </div>
-                            </div>
-                            <div class="page-item flex w-full items-center justify-between rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 cursor-move" data-page-id="page-2" draggable="true">
-                                <span>予約カレンダー</span>
-                                <div class="flex items-center space-x-1">
-                                    <button class="page-delete rounded p-1 text-slate-400 hover:text-red-600 hover:bg-red-50">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                                        </svg>
-                        </button>
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-slate-400">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                                    </svg>
-                                </div>
-                            </div>
-                            <div class="page-item flex w-full items-center justify-between rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 cursor-move" data-page-id="page-3" draggable="true">
-                                <span>承認ダッシュボード</span>
-                                <div class="flex items-center space-x-1">
-                                    <button class="page-delete rounded p-1 text-slate-400 hover:text-red-600 hover:bg-red-50">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                                        </svg>
-                                    </button>
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-slate-400">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                                    </svg>
-                                </div>
-                            </div>
+                            <!-- ページリストはJavaScriptで動的に生成されます -->
+                        </div>
+                        <div class="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                            <p class="text-xs text-slate-600">ページがまだありません。上の「ページを追加」ボタンから作成してください。</p>
                         </div>
                     </section>
                     <section class="mt-6 space-y-2">
-                        <p class="px-3 text-xs font-semibold uppercase tracking-wide text-slate-400">コンポーネント</p>
-                        <button class="flex w-full items-center rounded-lg border border-dashed border-slate-300 px-3 py-2 text-slate-600 hover:border-blue-400 hover:text-blue-600">
-                            <span>入力フィールド</span>
-                        </button>
-                        <button class="flex w-full items-center rounded-lg border border-dashed border-slate-300 px-3 py-2 text-slate-600 hover:border-blue-400 hover:text-blue-600">
-                            <span>ドロップダウン</span>
-                        </button>
-                        <button class="flex w-full items-center rounded-lg border border-dashed border-slate-300 px-3 py-2 text-slate-600 hover:border-blue-400 hover:text-blue-600">
-                            <span>カレンダー</span>
-                        </button>
-                        <button class="flex w-full items-center rounded-lg border border-dashed border-slate-300 px-3 py-2 text-slate-600 hover:border-blue-400 hover:text-blue-600">
-                            <span>メトリクスカード</span>
-                        </button>
-                        <button class="flex w-full items-center rounded-lg border border-dashed border-slate-300 px-3 py-2 text-slate-600 hover:border-blue-400 hover:text-blue-600">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mr-2 h-4 w-4">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
-                            </svg>
-                            <span>グラフ</span>
-                        </button>
+                        <div class="px-3 mb-3">
+                            <p class="text-sm font-bold text-slate-700 mb-1">ステップ2: 入力項目を追加</p>
+                            <p class="text-xs text-slate-600">フォームに追加したい項目を選んでクリックしてください</p>
+                        </div>
+                        <div id="component-list" class="space-y-2">
+                            <!-- コンポーネントボタンはJavaScriptで動的に生成されます -->
+                        </div>
+                        <div class="mt-4 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2">
+                            <p class="text-xs font-semibold text-blue-900 mb-1">💡 ヒント</p>
+                            <p class="text-xs text-blue-700">項目をクリックすると、中央のフォームエリアに追加されます。後から順番を変更したり削除することもできます。</p>
+                        </div>
                     </section>
                 </div>
                 <div class="mt-auto border-t border-slate-200 px-4 py-4">
@@ -339,29 +363,37 @@
                     </div>
                 </div>
                 
-                <!-- テーブル表示 -->
-                <div id="table-display-container" class="rounded-2xl border border-slate-200 bg-white shadow-sm">
-                    <div id="table-header" class="flex items-center justify-between px-6 py-4">
+                <!-- テーブル表示（改善サイクル5：プロフェッショナル感の向上） -->
+                <div id="table-display-container" class="rounded-2xl border-2 border-slate-200 bg-white shadow-lg transition-all duration-300 hover:shadow-xl">
+                    <div id="table-header" class="flex items-center justify-between px-6 py-5 border-b-2 border-slate-200 bg-gradient-to-r from-slate-50 to-white">
                         <div>
-                            <h2 id="table-title" class="text-xl font-semibold text-slate-900">施設予約一覧</h2>
-                            <p id="table-subtitle" class="text-xs text-slate-500">予約マスタ | 最終更新: 2025/11/12 17:45</p>
+                            <h2 id="table-title" class="text-2xl font-bold text-slate-900 mb-1">施設予約一覧</h2>
+                            <p id="table-subtitle" class="text-sm text-slate-600 font-medium">データマスタ | 最終更新: 2025/11/12 17:45</p>
                         </div>
-                        <div id="table-badges" class="flex space-x-2 text-xs">
-                            <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 font-medium text-amber-700">承認待ち 3</span>
-                            <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-1 font-medium text-emerald-700">承認済み 24</span>
+                        <div class="flex items-center space-x-3">
+                            <div id="table-badges" class="flex space-x-2 text-xs">
+                                <span class="inline-flex items-center rounded-full bg-amber-100 px-3 py-1.5 font-bold text-amber-700 shadow-sm border border-amber-200">承認待ち 3</span>
+                                <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1.5 font-bold text-emerald-700 shadow-sm border border-emerald-200">承認済み 24</span>
+                            </div>
+                            <button id="data-update-button" class="flex items-center space-x-2 rounded-lg bg-blue-600 px-5 py-3 text-base font-bold text-white shadow-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-lg hover:scale-105 active:scale-95">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                </svg>
+                                <span>データを更新</span>
+                            </button>
                         </div>
                     </div>
                     <div class="overflow-x-auto">
                         <table id="data-table" class="min-w-full divide-y divide-slate-200 text-sm">
-                            <thead id="table-head" class="bg-slate-50 text-slate-500">
+                            <thead id="table-head" class="bg-gradient-to-r from-slate-100 to-slate-50 text-slate-600">
                                 <tr>
-                                    <th class="px-6 py-3 text-left font-semibold">予約ID</th>
-                                    <th class="px-6 py-3 text-left font-semibold">予約施設</th>
-                                    <th class="px-6 py-3 text-left font-semibold">申請部署</th>
-                                    <th class="px-6 py-3 text-left font-semibold">予約者</th>
-                                    <th class="px-6 py-3 text-left font-semibold">開始日時</th>
-                                    <th class="px-6 py-3 text-left font-semibold">終了時間</th>
-                                    <th class="px-6 py-3 text-left font-semibold">ステータス</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">予約ID</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">予約施設</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">申請部署</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">予約者</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">開始日時</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">終了時間</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">ステータス</th>
                                 </tr>
                             </thead>
                             <tbody id="table-body" class="divide-y divide-slate-100 bg-white text-slate-700">
@@ -493,97 +525,181 @@
                             </div>
                         </div>
                         
-                        <div id="auto-generated-form" class="mx-auto max-w-3xl space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow">
-                            <!-- 自動生成フォームがここに表示されます -->
-                            <div class="grid grid-cols-2 gap-4" id="default-form">
-                                <div>
-                                    <label class="text-xs font-semibold text-slate-500">予約施設</label>
-                                    <select class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                        <option>第1会議室 (12名)</option>
-                                        <option>第2会議室 (8名)</option>
-                                        <option>公用車 (市民課)</option>
-                                    </select>
+                        <!-- 初期状態のガイダンス（改善サイクル2：操作フローの明確化） -->
+                        <div id="ui-builder-empty-state" class="mx-auto max-w-3xl rounded-2xl border-2 border-dashed border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-12 text-center shadow-sm">
+                            <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-blue-600 shadow-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-10 w-10 text-white">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                                </svg>
+                            </div>
+                            <h3 class="mb-2 text-2xl font-bold text-slate-900">フォームを作成しましょう</h3>
+                            <p class="mb-8 text-base text-slate-700">3つのステップで、簡単にフォームが作れます</p>
+                            <div class="mx-auto max-w-lg space-y-4 text-left">
+                                <div class="group flex items-start space-x-4 rounded-xl bg-white p-5 shadow-md transition-all hover:shadow-lg">
+                                    <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white shadow-md">1</div>
+                                    <div class="flex-1">
+                                        <p class="mb-1 text-base font-bold text-slate-900">ステップ1: ページを追加</p>
+                                        <p class="mb-2 text-sm text-slate-600">左上の青い「ページを追加」ボタンをクリックしてください</p>
+                                        <div class="flex items-center space-x-2 text-xs text-blue-600">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                            </svg>
+                                            <span>左側のサイドバーに移動します</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label class="text-xs font-semibold text-slate-500">利用部署</label>
-                                    <input type="text" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" value="税務課" />
+                                <div class="group flex items-start space-x-4 rounded-xl bg-white p-5 shadow-md transition-all hover:shadow-lg opacity-60">
+                                    <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-slate-400 text-sm font-bold text-white">2</div>
+                                    <div class="flex-1">
+                                        <p class="mb-1 text-base font-bold text-slate-700">ステップ2: 入力項目を追加</p>
+                                        <p class="mb-2 text-sm text-slate-500">「入力項目を追加」から、必要な項目を選んでクリックします</p>
+                                        <p class="text-xs text-slate-400">※ ステップ1を完了すると、このステップが有効になります</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label class="text-xs font-semibold text-slate-500">予約者</label>
-                                    <input type="text" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" value="佐々木 太郎" />
-                                </div>
-                                <div>
-                                    <label class="text-xs font-semibold text-slate-500">連絡先</label>
-                                    <input type="tel" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" value="03-1234-5678" />
+                                <div class="group flex items-start space-x-4 rounded-xl bg-white p-5 shadow-md transition-all hover:shadow-lg opacity-60">
+                                    <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-slate-400 text-sm font-bold text-white">3</div>
+                                    <div class="flex-1">
+                                        <p class="mb-1 text-base font-bold text-slate-700">ステップ3: 項目を設定</p>
+                                        <p class="mb-2 text-sm text-slate-500">追加した項目をクリックすると、右側で項目名などを変更できます</p>
+                                        <p class="text-xs text-slate-400">※ ステップ2を完了すると、このステップが有効になります</p>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="grid grid-cols-2 gap-4">
+                            <div class="mt-8 flex flex-col items-center space-y-3">
+                                <button id="ui-builder-quick-start" class="w-full max-w-sm rounded-lg bg-blue-600 px-6 py-3 text-base font-semibold text-white shadow-md hover:bg-blue-700 transition-colors">
+                                    <span class="flex items-center justify-center space-x-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                        </svg>
+                                        <span>スプレッドシートから自動生成（おすすめ）</span>
+                                    </span>
+                                </button>
+                                <p class="text-xs text-slate-500">既にスプレッドシートにデータがある場合は、こちらが便利です</p>
+                            </div>
+                        </div>
+                        
+                        <!-- フォーム表示エリア（改善サイクル3：リアルタイムプレビュー） -->
+                        <div id="form-fields-container" class="mx-auto max-w-3xl space-y-6 rounded-2xl border-2 border-blue-200 bg-white p-8 shadow-lg hidden">
+                            <div class="mb-4 flex items-center justify-between border-b-2 border-blue-100 pb-3">
                                 <div>
-                                    <label class="text-xs font-semibold text-slate-500">開始日時</label>
-                                    <input type="datetime-local" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" value="2025-11-20T09:00" />
+                                    <h3 class="text-lg font-bold text-slate-900">フォームプレビュー</h3>
+                                    <p class="text-xs text-slate-500 mt-1">実際のフォームの見た目です。項目を追加・編集すると、ここに反映されます</p>
                                 </div>
-                                <div>
-                                    <label class="text-xs font-semibold text-slate-500">終了日時</label>
-                                    <input type="time" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" value="11:00" />
-                                </div>
-                            </div>
-                            <div>
-                                <label class="text-xs font-semibold text-slate-500">利用目的</label>
-                                <textarea rows="4" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="打合せの内容を入力してください"></textarea>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <button class="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-500 hover:bg-slate-100">下書き保存</button>
-                                <div class="space-x-2">
-                                    <button class="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-100">承認経路を編集</button>
-                                    <button class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text白 shadow hover:bg-blue-700">申請を送信</button>
+                                <div class="flex items-center space-x-2 rounded-lg bg-green-50 px-3 py-1 border border-green-200">
+                                    <div class="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
+                                    <span class="text-xs font-semibold text-green-700">リアルタイム更新</span>
                                 </div>
                             </div>
+                            <!-- フォームフィールドがここに動的に表示されます -->
                         </div>
                     </div>
                     </div>
                     <aside id="builder-properties" class="w-80 flex-shrink-0 border-l border-slate-200 bg-white p-4 overflow-auto">
-                        <h3 class="text-sm font-semibold text-slate-700">プロパティ</h3>
-                        <div class="mt-3 space-y-4 text-sm">
-                            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                                <p class="text-xs font-semibold uppercase tracking-wide text-blue-600">対象フィールド</p>
-                                <p class="mt-1 text-lg font-semibold text-slate-900">予約施設</p>
-                                <p class="text-xs text-slate-500">ドロップダウン | 施設マスタ</p>
+                        <h3 class="text-sm font-semibold text-slate-700 mb-2">項目の設定</h3>
+                        <p class="text-xs text-slate-500 mb-4">フォームの項目をクリックして、設定を変更できます</p>
+                        <div id="builder-properties-empty" class="rounded-xl border-2 border-dashed border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100 p-8 text-center transition-all duration-300 hover:border-blue-300 hover:shadow-md">
+                            <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-200 transition-transform duration-300 hover:scale-110">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-8 w-8 text-slate-400">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 0 0-5.78 1.128 2.25 2.25 0 0 1-2.4 2.245 4.5 4.5 0 0 0 8.4-2.245c0-.399-.078-.78-.22-1.128Zm0 0a15.998 15.998 0 0 0 3.388-1.62m-5.043-.025a15.994 15.994 0 0 1 1.622-3.395m3.42 3.42a15.995 15.995 0 0 0 4.764-4.648l3.876-5.814a1.151 1.151 0 0 0-1.597-1.597L14.146 6.32a15.996 15.996 0 0 0-4.649 4.763m3.42 3.42a6.776 6.776 0 0 0-3.42-3.42" />
+                                </svg>
                             </div>
-                            <div>
-                                <label class="text-xs font-semibold text-slate-500">ラベル名</label>
-                                <input type="text" value="予約施設" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                            <p class="mt-4 text-base font-bold text-slate-700">項目を選択してください</p>
+                            <p class="mt-2 text-xs text-slate-500 leading-relaxed">フォームの項目をクリックすると、ここに設定が表示されます</p>
+                            <div class="mt-4 flex items-center justify-center space-x-1 text-xs text-slate-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 15l6-6m0 0l-6-6m6 6H9a6 6 0 000 12h3" />
+                                </svg>
+                                <span>左側のフォームから項目を選んでください</span>
                             </div>
-                            <div>
-                                <label class="text-xs font-semibold text-slate-500">プレースホルダー</label>
-                                <input type="text" value="会議室を選択してください" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                            </div>
-                            <div>
-                                <label class="text-xs font-semibold text-slate-500">データソース</label>
-                                <div class="mt-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-                                    <p class="text-sm font-semibold text-slate-700">会議室マスタ</p>
-                                    <p class="text-xs text-slate-500">フィールド: 施設名 / 定員 / 設備</p>
+                        </div>
+                        <div id="builder-properties-content" class="mt-3 space-y-4 text-sm hidden animate-fade-in">
+                            <div class="rounded-xl border-2 border-blue-300 bg-gradient-to-br from-blue-50 to-indigo-50 p-4 shadow-md transition-all duration-300 hover:shadow-lg">
+                                <div class="flex items-center justify-between mb-2">
+                                    <p class="text-xs font-bold uppercase tracking-wide text-blue-700">選択中の項目</p>
+                                    <div class="flex items-center space-x-2">
+                                        <div class="h-2 w-2 rounded-full bg-blue-500 animate-pulse"></div>
+                                        <span class="text-xs font-semibold text-blue-600">編集中</span>
+                                    </div>
                                 </div>
+                                <p class="mt-1 text-xl font-bold text-slate-900" id="selected-field-name">項目名</p>
+                                <p class="text-xs text-slate-600 font-medium" id="selected-field-type">項目タイプ</p>
                             </div>
                             <div>
-                                <label class="text-xs font-semibold text-slate-500">バリデーション</label>
-                                <div class="mt-1 space-y-2">
-                                    <label class="flex items-center space-x-2 text-slate-600">
-                                        <input type="checkbox" checked class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
-                                        <span>必須入力</span>
-                                    </label>
-                                    <label class="flex items-center space-x-2 text-slate-600">
-                                        <input type="checkbox" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
-                                        <span>管理者のみ編集可能</span>
-                                    </label>
+                                <label class="text-xs font-bold text-slate-700 mb-1 block flex items-center space-x-1">
+                                    <span>項目名（表示名）</span>
+                                    <span class="text-red-500 font-bold">*</span>
+                                </label>
+                                <input type="text" id="field-label-input" required class="mt-1 w-full rounded-lg border-2 border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors" placeholder="例: お名前、会社名、メールアドレス" />
+                                <p class="mt-1 text-xs text-slate-500 flex items-start space-x-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-3 w-3 mt-0.5 flex-shrink-0">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span>フォームに表示される項目名です。わかりやすい名前を付けてください（例: 「お名前」「会社名」「メールアドレス」）</span>
+                                </p>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-700 mb-1 block">入力例（プレースホルダー）</label>
+                                <input type="text" id="field-placeholder-input" class="mt-1 w-full rounded-lg border-2 border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors" placeholder="例: 山田太郎、株式会社○○、example@email.com" />
+                                <p class="mt-1 text-xs text-slate-500 flex items-start space-x-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-3 w-3 mt-0.5 flex-shrink-0">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span>入力欄に表示される例文です。ユーザーが入力しやすくなるよう、具体的な例を入れてください（任意項目）</span>
+                                </p>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-700 mb-1 block flex items-center space-x-1">
+                                    <span>入力タイプ</span>
+                                    <span class="text-red-500 font-bold">*</span>
+                                </label>
+                                <select id="field-type-select" required class="mt-1 w-full rounded-lg border-2 border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors">
+                                    <option value="text">テキスト入力（一行）- 名前、メールなど</option>
+                                    <option value="textarea">テキスト入力（複数行）- メッセージ、備考など</option>
+                                    <option value="number">数値入力 - 金額、数量など</option>
+                                    <option value="date">日付選択 - 生年月日、予約日など</option>
+                                    <option value="datetime">日時選択 - 予約日時、開始時刻など</option>
+                                    <option value="select">選択肢（ドロップダウン）- 都道府県、カテゴリなど</option>
+                                    <option value="radio">選択肢（ラジオボタン）- 性別、選択肢が少ない場合</option>
+                                    <option value="checkbox">チェックボックス - 同意、複数選択など</option>
+                                </select>
+                                <p class="mt-1 text-xs text-slate-500 flex items-start space-x-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-3 w-3 mt-0.5 flex-shrink-0">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span>入力方法を選びます。用途に合わせて選んでください（例: 名前→テキスト、日付→日付選択、都道府県→選択肢）</span>
+                                </p>
+                            </div>
+                            <div class="rounded-lg border-2 border-amber-200 bg-amber-50 p-3">
+                                <label class="text-xs font-bold text-slate-700 mb-2 block">必須入力の設定</label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" id="field-required-checkbox" class="h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                                    <span class="text-sm font-semibold text-slate-900">この項目を必須にする</span>
+                                </label>
+                                <p class="mt-2 text-xs text-amber-800 flex items-start space-x-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-3 w-3 mt-0.5 flex-shrink-0">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                                    </svg>
+                                    <span><strong>必須項目</strong>にすると、ユーザーが入力しないとフォームを送信できません。重要な情報（名前、メールアドレスなど）は必須にしてください。</span>
+                                </p>
+                            </div>
+                            <div class="pt-4 border-t border-slate-200">
+                                <button id="save-field-settings" class="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-md hover:bg-blue-700 transition-all hover:shadow-lg flex items-center justify-center space-x-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                    </svg>
+                                    <span>設定を保存</span>
+                                </button>
+                                <div id="field-save-success" class="mt-2 hidden rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700">
+                                    <span class="flex items-center space-x-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                        </svg>
+                                        <span>保存しました</span>
+                                    </span>
                                 </div>
-                            </div>
-                            <div>
-                                <label class="text-xs font-semibold text-slate-500">アクション</label>
-                                <ul class="mt-2 space-y-2 text-xs text-slate-600">
-                                    <li>・値変更時に重複予約チェック</li>
-                                    <li>・承認ワークフローを更新</li>
-                                </ul>
-                                <button class="mt-3 w全 rounded-lg border border-dashed border-slate-300 px-4 py-2 text-sm text-slate-500 hover:border-blue-400 hover:text-blue-600">＋ アクションを追加</button>
+                                <button id="delete-field-btn" class="mt-3 w-full rounded-lg border-2 border-red-300 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 hover:border-red-400 transition-colors">
+                                    この項目を削除
+                                </button>
                             </div>
                         </div>
                     </aside>
@@ -732,10 +848,10 @@
 
     <div id="data-add-modal" class="pointer-events-none fixed inset-0 z-40 hidden items-center justify-center bg-slate-900/60 px-4 py-8">
         <div class="pointer-events-auto w-full max-w-3xl rounded-2xl bg-white shadow-2xl">
-            <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+            <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4 bg-slate-50">
                 <div>
                     <h3 class="text-lg font-semibold text-slate-900">データを追加</h3>
-                    <p class="text-xs text-slate-500" id="modal-table-name">選択したテーブルに新しいデータを追加します。</p>
+                    <p class="text-xs text-slate-500" id="modal-table-name">Excelのように、新しい行を追加してデータを入力できます。</p>
                 </div>
                 <button id="data-add-modal-close" class="rounded-full border border-slate-200 p-2 text-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
@@ -746,31 +862,55 @@
             <div class="px-6 py-6">
                 <div class="space-y-4 text-sm text-slate-600">
                     <div class="rounded-xl border border-blue-100 bg-blue-50 px-5 py-4">
-                        <p class="font-semibold text-blue-900">データ追加方法を選択</p>
-                        <div class="mt-4 space-y-3">
-                            <button class="flex w-full items-center justify-between rounded-lg border border-blue-200 bg-white px-4 py-3 text-sm hover:border-blue-400 hover:bg-blue-50">
-                                <span class="flex items-center space-x-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5">
+                        <div class="flex items-center space-x-2 mb-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5 text-blue-600">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" />
+                            </svg>
+                            <p class="font-semibold text-blue-900">データ追加方法を選択</p>
+                        </div>
+                        <p class="text-xs text-blue-700 mb-4">Excelと同じ感覚で、データを追加できます</p>
+                        <div class="space-y-3">
+                            <button class="flex w-full items-center justify-between rounded-lg border-2 border-blue-300 bg-white px-4 py-3 text-sm font-semibold hover:border-blue-400 hover:bg-blue-50 transition-colors">
+                                <span class="flex items-center space-x-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5 text-blue-600">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
                                     </svg>
-                                    <span>手動で入力</span>
+                                    <div class="text-left">
+                                        <span class="block font-semibold text-slate-900">手動で入力</span>
+                                        <span class="text-xs font-normal text-slate-600">フォームに入力してデータを追加</span>
+                                    </div>
                                 </span>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5 text-slate-400">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                </svg>
                             </button>
-                            <button class="flex w-full items-center justify-between rounded-lg border border-blue-200 bg-white px-4 py-3 text-sm hover:border-blue-400 hover:bg-blue-50">
-                                <span class="flex items-center space-x-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5">
+                            <button class="flex w-full items-center justify-between rounded-lg border border-blue-200 bg-white px-4 py-3 text-sm hover:border-blue-400 hover:bg-blue-50 transition-colors">
+                                <span class="flex items-center space-x-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5 text-blue-600">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75 9 17.25l10.5-10.5M12 3.75v12" />
                                     </svg>
-                                    <span>Excelからインポート</span>
+                                    <div class="text-left">
+                                        <span class="block font-semibold text-slate-900">Excelからインポート</span>
+                                        <span class="text-xs font-normal text-slate-600">Excelファイルをアップロードして一括追加</span>
+                                    </div>
                                 </span>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5 text-slate-400">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                </svg>
                             </button>
-                            <button class="flex w-full items-center justify-between rounded-lg border border-blue-200 bg-white px-4 py-3 text-sm hover:border-blue-400 hover:bg-blue-50">
-                                <span class="flex items-center space-x-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5">
+                            <button class="flex w-full items-center justify-between rounded-lg border border-blue-200 bg-white px-4 py-3 text-sm hover:border-blue-400 hover:bg-blue-50 transition-colors">
+                                <span class="flex items-center space-x-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-5 w-5 text-blue-600">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
                                     </svg>
-                                    <span>CSVからインポート</span>
+                                    <div class="text-left">
+                                        <span class="block font-semibold text-slate-900">CSVからインポート</span>
+                                        <span class="text-xs font-normal text-slate-600">CSVファイルをアップロードして一括追加</span>
+                                    </div>
                                 </span>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5 text-slate-400">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                </svg>
                             </button>
                         </div>
                     </div>
@@ -1219,7 +1359,11 @@
                 }
             }
 
-            // アプリデータをテーブルに表示する関数
+            // ソート状態を管理
+            let currentSortColumn = null;
+            let currentSortDirection = 'asc'; // 'asc' or 'desc'
+
+            // アプリデータをテーブルに表示する関数（インライン編集対応）
             function updateAppDataTable(data, columns) {
                 if (!data || !Array.isArray(data) || data.length === 0) {
                     console.warn('updateAppDataTable: データが空です', { data, columns });
@@ -1252,62 +1396,188 @@
                     const lastUpdated = currentApp?.updatedAt 
                         ? new Date(currentApp.updatedAt).toLocaleString('ja-JP')
                         : new Date().toLocaleString('ja-JP');
-                    tableSubtitle.textContent = `最終更新: ${lastUpdated}`;
+                    tableSubtitle.textContent = `データマスタ | 最終更新: ${lastUpdated}`;
                 }
 
                 // バッジを更新（データ件数）
                 if (tableBadges) {
                     tableBadges.innerHTML = `
                         <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700">
-                            総件数 ${data.length}
+                            総数 ${data.length}
                         </span>
                     `;
                 }
 
-                // ヘッダーを更新
+                // ヘッダーを更新（ソート機能付き）
                 if (tableHead) {
                     const headerRow = tableHead.querySelector('tr');
                     if (headerRow) {
-                        headerRow.innerHTML = columns.map(col => 
-                            `<th class="px-6 py-3 text-left text-xs font-semibold text-slate-500">${col.name}</th>`
-                        ).join('') + '<th class="px-6 py-3 text-left text-xs font-semibold text-slate-500">操作</th>';
+                        headerRow.innerHTML = columns.map(col => {
+                            const isSorted = currentSortColumn === col.name;
+                            const sortIcon = isSorted 
+                                ? (currentSortDirection === 'asc' ? '↑' : '↓')
+                                : '';
+                            return `<th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 cursor-pointer hover:bg-slate-100 select-none sortable-header" data-column="${col.name}">
+                                ${col.name} ${sortIcon}
+                            </th>`;
+                        }).join('');
                     }
+
+                    // ソート機能のイベントリスナーを追加
+                    tableHead.querySelectorAll('.sortable-header').forEach(header => {
+                        header.addEventListener('click', () => {
+                            const columnName = header.dataset.column;
+                            if (currentSortColumn === columnName) {
+                                // 同じ列をクリックした場合はソート方向を反転
+                                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+                            } else {
+                                // 新しい列をクリックした場合は昇順でソート
+                                currentSortColumn = columnName;
+                                currentSortDirection = 'asc';
+                            }
+                            // データをソートして再表示
+                            const sortedData = [...data].sort((a, b) => {
+                                const aVal = a[columnName] || '';
+                                const bVal = b[columnName] || '';
+                                const comparison = String(aVal).localeCompare(String(bVal), 'ja', { numeric: true });
+                                return currentSortDirection === 'asc' ? comparison : -comparison;
+                            });
+                            updateAppDataTable(sortedData, columns);
+                        });
+                    });
                 }
 
-                // ボディを更新
+                            // ボディを更新（インライン編集対応、編集・削除アイコンなし）
                 if (tableBody) {
                     tableBody.innerHTML = data.map((row, index) => {
                         const rowId = row.id || `row-${index}`;
                         const cells = columns.map(col => {
                             const value = row[col.name] || '';
-                            return `<td class="px-6 py-4 text-sm text-slate-700">${escapeHtml(String(value))}</td>`;
+                            // インライン編集可能なセル（視覚的フィードバック強化）
+                            return `<td class="px-6 py-4 text-sm text-slate-700">
+                                <div class="editable-cell min-w-[100px] rounded px-2 py-1 transition-all duration-200 hover:bg-blue-50 hover:shadow-sm focus-within:bg-blue-100 focus-within:ring-2 focus-within:ring-blue-500 focus-within:shadow-md" 
+                                     contenteditable="true" 
+                                     data-column="${col.name}" 
+                                     data-row-index="${index}"
+                                     data-original-value="${escapeHtml(String(value))}"
+                                     title="クリックして編集（Enterで保存）">
+                                    ${escapeHtml(String(value)) || '<span class="text-slate-400 italic">クリックして入力</span>'}
+                                </div>
+                            </td>`;
                         }).join('');
                         
-                        return `<tr class="hover:bg-slate-50" data-row-id="${rowId}" data-row-index="${index}">
+                        return `<tr class="hover:bg-slate-50 transition-colors duration-150" data-row-id="${rowId}" data-row-index="${index}">
                             ${cells}
-                            ${getActionButtonsHTML(rowId, index)}
                         </tr>`;
                     }).join('');
 
-                    // イベントリスナーを追加
-                    tableBody.querySelectorAll('.edit-row-btn').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            const rowIndex = parseInt(btn.closest('tr').dataset.rowIndex);
-                            editDataRow(rowIndex);
-                        });
-                    });
+                    // インライン編集のイベントリスナーを追加
+                    tableBody.querySelectorAll('.editable-cell').forEach(cell => {
+                        // フォーカスアウト時に保存
+                        cell.addEventListener('blur', async (e) => {
+                            const columnName = e.target.dataset.column;
+                            const rowIndex = parseInt(e.target.dataset.rowIndex);
+                            const newValue = e.target.textContent.trim();
+                            const originalValue = e.target.dataset.originalValue;
 
-                    tableBody.querySelectorAll('.delete-row-btn').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            const rowIndex = parseInt(btn.closest('tr').dataset.rowIndex);
-                            deleteDataRow(rowIndex);
+                            if (newValue !== originalValue) {
+                                // 値が変更された場合のみ保存
+                                await saveCellEdit(rowIndex, columnName, newValue);
+                                e.target.dataset.originalValue = newValue;
+                            }
+                        });
+
+                        // Enterキーでフォーカスアウト
+                        cell.addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                e.target.blur();
+                            }
                         });
                     });
                 }
 
                 console.log('updateAppDataTable: データ表示完了', { displayedRows: data.length });
+            }
+
+            // セルの編集を保存
+            let saveCellEditTimeout = null;
+            async function saveCellEdit(rowIndex, columnName, newValue) {
+                if (!currentApp || !currentApp.data || !currentApp.columns) {
+                    showNotification('データが読み込まれていません', 'error');
+                    return;
+                }
+
+                // デバウンス処理（連続編集を防ぐ）
+                clearTimeout(saveCellEditTimeout);
+                saveCellEditTimeout = setTimeout(async () => {
+                    try {
+                        // データを更新
+                        if (currentApp.data[rowIndex]) {
+                            currentApp.data[rowIndex][columnName] = newValue;
+                        }
+
+                        // データベースに保存
+                        await databaseService.updateApp(appId, {
+                            data: currentApp.data,
+                            updatedAt: new Date().toISOString()
+                        });
+
+                        // スプレッドシートに同期（連携している場合）
+                        if (currentApp.googleSheetsUrl) {
+                            // バックグラウンドで同期（エラーは無視）
+                            syncToGoogleSheets().catch(err => {
+                                console.warn('Google Sheets同期エラー（無視）:', err);
+                            });
+                        }
+
+                        // 視覚的フィードバック：保存成功アニメーション（改善サイクル3）
+                        const cell = document.querySelector(`[data-row-index="${rowIndex}"][data-column="${columnName}"]`);
+                        if (cell) {
+                            // 編集中のセルに視覚的フィードバック
+                            cell.classList.add('bg-blue-100', 'ring-2', 'ring-blue-400');
+                            const savingIndicator = document.createElement('span');
+                            savingIndicator.className = 'ml-2 text-xs text-blue-600 font-semibold';
+                            savingIndicator.textContent = '保存中...';
+                            savingIndicator.id = 'saving-indicator';
+                            cell.appendChild(savingIndicator);
+                            
+                            // 保存成功の視覚的フィードバック
+                            setTimeout(() => {
+                                cell.classList.remove('bg-blue-100', 'ring-2', 'ring-blue-400');
+                                cell.classList.add('bg-green-50', 'ring-2', 'ring-green-400');
+                                if (savingIndicator) {
+                                    savingIndicator.textContent = '✓ 保存済み';
+                                    savingIndicator.className = 'ml-2 text-xs text-green-600 font-semibold';
+                                }
+                                // 3秒後に元に戻す
+                                setTimeout(() => {
+                                    cell.classList.remove('bg-green-50', 'ring-2', 'ring-green-400');
+                                    if (savingIndicator) savingIndicator.remove();
+                                }, 3000);
+                            }, 300);
+                        }
+                        showNotification('✓ データを保存しました', 'success');
+                    } catch (error) {
+                        console.error('Error saving cell edit:', error);
+                        // エラーの視覚的フィードバック
+                        const cell = document.querySelector(`[data-row-index="${rowIndex}"][data-column="${columnName}"]`);
+                        if (cell) {
+                            cell.classList.remove('bg-blue-100', 'ring-2', 'ring-blue-400');
+                            cell.classList.add('bg-red-50', 'ring-2', 'ring-red-400');
+                            const savingIndicator = cell.querySelector('#saving-indicator');
+                            if (savingIndicator) {
+                                savingIndicator.textContent = '✗ 保存失敗';
+                                savingIndicator.className = 'ml-2 text-xs text-red-600 font-semibold';
+                                setTimeout(() => {
+                                    if (savingIndicator) savingIndicator.remove();
+                                    cell.classList.remove('bg-red-50', 'ring-2', 'ring-red-400');
+                                }, 3000);
+                            }
+                        }
+                        showNotification('データの保存に失敗しました', 'error');
+                    }
+                }, 500); // 500ms待機
             }
 
             // HTMLエスケープ関数
@@ -1317,74 +1587,126 @@
                 return div.innerHTML;
             }
 
-            // アクションボタンのHTMLを生成
-            function getActionButtonsHTML(rowId, rowIndex) {
-                return `
-                    <td class="px-6 py-4">
-                        <div class="flex items-center space-x-2">
-                            <button class="edit-row-btn rounded-lg border border-blue-200 bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100" data-row-id="${rowId}" data-row-index="${rowIndex}">
-                                編集
-                            </button>
-                            <button class="delete-row-btn rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-100" data-row-id="${rowId}" data-row-index="${rowIndex}">
-                                削除
-                            </button>
-                        </div>
-                    </td>
-                `;
-            }
-
-            // データ行を編集
-            function editDataRow(rowIndex) {
-                if (!currentApp || !currentApp.data || !currentApp.columns) {
-                    showNotification('データが読み込まれていません', 'error');
-                    return;
-                }
-
-                const row = currentApp.data[rowIndex];
-                if (!row) {
-                    showNotification('行が見つかりません', 'error');
-                    return;
-                }
-
-                // 編集モーダルを表示（簡易実装）
-                const columnNames = currentApp.columns.map(col => col.name).join(', ');
-                const rowValues = currentApp.columns.map(col => `${col.name}: ${row[col.name] || ''}`).join('\n');
-                
-                const newValues = prompt(`行 ${rowIndex + 1} を編集\n\n${rowValues}\n\n※ この機能は簡易版です。完全な編集機能は今後実装予定です。`);
-                if (newValues === null) return;
-
-                showNotification('編集機能は開発中です', 'info');
-            }
-
-            // データ行を削除
-            async function deleteDataRow(rowIndex) {
-                if (!currentApp || !currentApp.data || !currentApp.columns) {
-                    showNotification('データが読み込まれていません', 'error');
-                    return;
-                }
-
-                if (!confirm(`行 ${rowIndex + 1} を削除しますか？`)) {
+            // Google Sheetsへの同期
+            async function syncToGoogleSheets() {
+                if (!currentApp || !currentApp.googleSheetsUrl) {
                     return;
                 }
 
                 try {
-                    // データから行を削除
-                    currentApp.data.splice(rowIndex, 1);
+                    if (typeof googleSheetsService === 'undefined') {
+                        console.warn('Google Sheets Service is not available');
+                        return;
+                    }
 
+                    const headers = currentApp.columns.map(col => col.name);
+                    const rows = currentApp.data.map(row => 
+                        headers.map(header => row[header] || '')
+                    );
+
+                    await googleSheetsService.syncAllDataToSpreadsheet(
+                        currentApp.googleSheetsUrl,
+                        null,
+                        headers,
+                        currentApp.data
+                    );
+
+                    // 最終同期時刻を更新
+                    await databaseService.updateApp(appId, {
+                        googleSheetsLastSynced: new Date().toISOString()
+                    });
+
+                    showNotification('スプレッドシートにデータを反映しました', 'success');
+                } catch (error) {
+                    console.error('Error syncing to Google Sheets:', error);
+                    showNotification('スプレッドシートへの同期に失敗しました', 'error');
+                }
+            }
+
+            // データ更新ボタンのイベントリスナー（改善サイクル3：視覚的フィードバック強化）
+            document.getElementById('data-update-button')?.addEventListener('click', async () => {
+                const button = document.getElementById('data-update-button');
+                if (button.disabled) return;
+
+                button.disabled = true;
+                const originalText = button.innerHTML;
+                button.classList.add('opacity-75', 'cursor-not-allowed');
+                button.innerHTML = `
+                    <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>更新中...</span>
+                `;
+
+                // テーブルヘッダーに更新中バッジを表示
+                const tableHeader = document.getElementById('table-header');
+                let updatingBadge = document.getElementById('updating-badge');
+                if (!updatingBadge && tableHeader) {
+                    updatingBadge = document.createElement('div');
+                    updatingBadge.id = 'updating-badge';
+                    updatingBadge.className = 'ml-3 flex items-center space-x-2 rounded-lg bg-blue-100 px-3 py-1 border border-blue-300';
+                    updatingBadge.innerHTML = `
+                        <svg class="animate-spin h-3 w-3 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span class="text-xs font-semibold text-blue-700">データを更新中...</span>
+                    `;
+                    tableHeader.appendChild(updatingBadge);
+                }
+
+                try {
                     // データベースに保存
                     await databaseService.updateApp(appId, {
-                        data: currentApp.data
+                        data: currentApp.data,
+                        updatedAt: new Date().toISOString()
                     });
+
+                    // スプレッドシートに同期（連携している場合）
+                    if (currentApp.googleSheetsUrl) {
+                        await syncToGoogleSheets();
+                    } else {
+                        showNotification('✓ データを更新しました', 'success');
+                    }
 
                     // テーブルを再表示
                     updateAppDataTable(currentApp.data, currentApp.columns);
 
-                    showNotification('データを削除しました', 'success');
+                    // 成功バッジを表示
+                    if (updatingBadge) {
+                        updatingBadge.className = 'ml-3 flex items-center space-x-2 rounded-lg bg-green-100 px-3 py-1 border border-green-300';
+                        updatingBadge.innerHTML = `
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-3 w-3 text-green-600">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                            <span class="text-xs font-semibold text-green-700">更新完了</span>
+                        `;
+                        setTimeout(() => {
+                            if (updatingBadge) updatingBadge.remove();
+                        }, 3000);
+                    }
                 } catch (error) {
-                    console.error('Error deleting row:', error);
-                    showNotification('データの削除に失敗しました', 'error');
+                    console.error('Error updating data:', error);
+                    showNotification('データの更新に失敗しました', 'error');
+                    if (updatingBadge) {
+                        updatingBadge.className = 'ml-3 flex items-center space-x-2 rounded-lg bg-red-100 px-3 py-1 border border-red-300';
+                        updatingBadge.innerHTML = `
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-3 w-3 text-red-600">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                            </svg>
+                            <span class="text-xs font-semibold text-red-700">更新失敗</span>
+                        `;
+                        setTimeout(() => {
+                            if (updatingBadge) updatingBadge.remove();
+                        }, 5000);
+                    }
+                } finally {
+                    button.disabled = false;
+                    button.classList.remove('opacity-75', 'cursor-not-allowed');
+                    button.innerHTML = originalText;
                 }
-            }
+            });
 
             const tableNames = {
                 'reservations': '施設予約一覧',
@@ -2989,58 +3311,114 @@
                 const modalContent = document.querySelector('#data-add-modal .px-6');
                 if (!modalContent) return;
                 
-                let formHTML = '<div class="space-y-4">';
-                columns.forEach(col => {
-                    const required = col.required ? '<span class="text-red-500">*</span>' : '';
+                let formHTML = '<div class="space-y-5">';
+                columns.forEach((col, index) => {
+                    const required = col.required ? '<span class="ml-1 text-red-500 font-bold">*</span>' : '';
+                    const requiredText = col.required ? '<span class="ml-2 text-xs text-red-600 font-medium">必須項目</span>' : '<span class="ml-2 text-xs text-slate-400">任意</span>';
                     let inputHTML = '';
+                    let placeholder = '';
+                    let helpText = '';
+                    
+                    // プレースホルダーとヘルプテキストを生成
+                    switch (col.type) {
+                        case 'select':
+                            placeholder = '選択してください';
+                            helpText = 'リストから選択してください';
+                            break;
+                        case 'date':
+                            placeholder = 'YYYY-MM-DD';
+                            helpText = '日付を選択してください';
+                            break;
+                        case 'datetime':
+                            placeholder = 'YYYY-MM-DD HH:MM';
+                            helpText = '日時を選択してください';
+                            break;
+                        case 'number':
+                            placeholder = '数値を入力';
+                            helpText = '数字のみ入力できます';
+                            break;
+                        case 'textarea':
+                            placeholder = `${col.name}を入力してください`;
+                            helpText = '複数行のテキストを入力できます';
+                            break;
+                        default:
+                            placeholder = `${col.name}を入力してください`;
+                            helpText = 'テキストを入力してください';
+                    }
                     
                     switch (col.type) {
                         case 'select':
                             const options = col.options || [];
                             inputHTML = `
-                                <select id="add-field-${col.name}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200" ${col.required ? 'required' : ''}>
-                                    <option value="">選択してください</option>
+                                <select id="add-field-${col.name}" class="w-full rounded-lg border-2 border-slate-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors" ${col.required ? 'required' : ''}>
+                                    <option value="">${placeholder}</option>
                                     ${options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
                                 </select>
                             `;
                             break;
                         case 'date':
-                            inputHTML = `<input type="date" id="add-field-${col.name}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200" ${col.required ? 'required' : ''} />`;
+                            inputHTML = `<input type="date" id="add-field-${col.name}" class="w-full rounded-lg border-2 border-slate-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors" placeholder="${placeholder}" ${col.required ? 'required' : ''} />`;
                             break;
                         case 'datetime':
-                            inputHTML = `<input type="datetime-local" id="add-field-${col.name}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200" ${col.required ? 'required' : ''} />`;
+                            inputHTML = `<input type="datetime-local" id="add-field-${col.name}" class="w-full rounded-lg border-2 border-slate-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors" placeholder="${placeholder}" ${col.required ? 'required' : ''} />`;
                             break;
                         case 'number':
-                            inputHTML = `<input type="number" id="add-field-${col.name}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200" ${col.required ? 'required' : ''} />`;
+                            inputHTML = `<input type="number" id="add-field-${col.name}" class="w-full rounded-lg border-2 border-slate-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors" placeholder="${placeholder}" ${col.required ? 'required' : ''} />`;
+                            break;
+                        case 'textarea':
+                            inputHTML = `<textarea id="add-field-${col.name}" rows="4" class="w-full rounded-lg border-2 border-slate-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors resize-y" placeholder="${placeholder}" ${col.required ? 'required' : ''}></textarea>`;
                             break;
                         default:
-                            inputHTML = `<input type="text" id="add-field-${col.name}" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="${col.name}を入力" ${col.required ? 'required' : ''} />`;
+                            inputHTML = `<input type="text" id="add-field-${col.name}" class="w-full rounded-lg border-2 border-slate-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors" placeholder="${placeholder}" ${col.required ? 'required' : ''} />`;
                     }
                     
                     formHTML += `
-                        <div>
-                            <label class="text-sm font-semibold text-slate-700 mb-1 block">${col.name} ${required}</label>
+                        <div class="rounded-lg border border-slate-200 bg-white p-4 ${col.required ? 'border-l-4 border-l-red-400' : ''}">
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="text-base font-bold text-slate-900">
+                                    ${index + 1}. ${col.name} ${required}
+                                </label>
+                                ${requiredText}
+                            </div>
                             ${inputHTML}
+                            <p class="mt-2 text-xs text-slate-500 flex items-center space-x-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-3 w-3">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>${helpText}</span>
+                            </p>
                         </div>
                     `;
                 });
                 
                 formHTML += '</div>';
                 formHTML += `
-                    <div class="mt-6 flex items-center justify-end space-x-2">
-                        <button id="data-add-form-cancel" class="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-100">キャンセル</button>
-                        <button id="data-add-form-save" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700">保存</button>
+                    <div class="mt-8 flex items-center justify-between border-t-2 border-slate-200 pt-6">
+                        <div class="text-xs text-slate-500">
+                            <span class="font-semibold text-slate-700">必須項目</span>は必ず入力してください
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <button id="data-add-form-cancel" class="rounded-lg border-2 border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition-colors">キャンセル</button>
+                            <button id="data-add-form-save" class="rounded-lg bg-blue-600 px-8 py-3 text-base font-bold text-white shadow-md hover:bg-blue-700 transition-all hover:shadow-lg">
+                                <span class="flex items-center space-x-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                    </svg>
+                                    <span>保存する</span>
+                                </span>
+                            </button>
+                        </div>
                     </div>
                 `;
                 
                 modalContent.innerHTML = `
-                    <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4 -mx-6 -mt-6 mb-6">
+                    <div class="flex items-center justify-between border-b-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-5 -mx-6 -mt-6 mb-6">
                         <div>
-                            <h3 class="text-lg font-semibold text-slate-900">データを追加</h3>
-                            <p class="text-xs text-slate-500" id="modal-table-name">新しいデータを入力してください。</p>
+                            <h3 class="text-xl font-bold text-slate-900 mb-1">新しいデータを追加</h3>
+                            <p class="text-sm text-slate-600" id="modal-table-name">以下の項目を入力してください。必須項目（<span class="text-red-500 font-bold">*</span>）は必ず入力してください。</p>
                         </div>
-                        <button id="data-add-modal-close" class="rounded-full border border-slate-200 p-2 text-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="h-4 w-4">
+                        <button id="data-add-modal-close" class="rounded-full border-2 border-slate-300 bg-white p-2 text-slate-500 hover:bg-slate-100 hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                             </svg>
                         </button>
@@ -3057,15 +3435,42 @@
                 });
             }
 
-            // 新しいデータ行を保存
+            // 新しいデータ行を保存（改善サイクル4：エラー処理・ガイダンス強化）
             async function saveNewDataRow() {
                 if (!currentApp || !currentApp.columns) {
                     showNotification('データ構造が定義されていません。先にExcelファイルをアップロードしてアプリを作成してください。', 'error');
+                    // エラー時のガイダンス
+                    const errorGuidance = document.createElement('div');
+                    errorGuidance.className = 'fixed top-20 right-4 z-50 max-w-sm rounded-lg border-2 border-red-300 bg-red-50 p-4 shadow-lg';
+                    errorGuidance.innerHTML = `
+                        <div class="flex items-start space-x-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-6 w-6 text-red-600 flex-shrink-0 mt-0.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                            </svg>
+                            <div class="flex-1">
+                                <p class="font-bold text-red-900 mb-1">データ構造が未定義です</p>
+                                <p class="text-sm text-red-700 mb-2">以下の手順でデータ構造を設定してください：</p>
+                                <ol class="text-xs text-red-600 list-decimal list-inside space-y-1">
+                                    <li>ダッシュボードに戻る</li>
+                                    <li>「新規アプリ作成」からExcelファイルをアップロード</li>
+                                    <li>または、スプレッドシートと連携</li>
+                                </ol>
+                            </div>
+                            <button onclick="this.parentElement.parentElement.remove()" class="text-red-400 hover:text-red-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    `;
+                    document.body.appendChild(errorGuidance);
+                    setTimeout(() => errorGuidance.remove(), 10000);
                     return;
                 }
                 
                 const newRow = {};
                 let hasError = false;
+                const errorFields = [];
                 
                 currentApp.columns.forEach(col => {
                     const input = document.getElementById(`add-field-${col.name}`);
@@ -3076,16 +3481,39 @@
                     
                     const value = input.value.trim();
                     if (col.required && !value) {
-                        showNotification(`${col.name}は必須項目です。入力してください。`, 'error');
-                        input.focus();
+                        errorFields.push(col.name);
+                        // エラーフィールドに視覚的フィードバック
+                        input.classList.add('border-red-500', 'bg-red-50', 'ring-2', 'ring-red-400');
+                        const errorMsg = document.createElement('p');
+                        errorMsg.className = 'mt-1 text-xs text-red-600 font-semibold';
+                        errorMsg.textContent = `${col.name}は必須項目です。入力してください。`;
+                        errorMsg.id = `error-${col.name}`;
+                        // 既存のエラーメッセージを削除
+                        const existingError = input.parentElement.querySelector(`#error-${col.name}`);
+                        if (existingError) existingError.remove();
+                        input.parentElement.appendChild(errorMsg);
                         hasError = true;
                         return;
+                    } else {
+                        // エラーがない場合はスタイルをリセット
+                        input.classList.remove('border-red-500', 'bg-red-50', 'ring-2', 'ring-red-400');
+                        const existingError = input.parentElement.querySelector(`#error-${col.name}`);
+                        if (existingError) existingError.remove();
                     }
                     
                     newRow[col.name] = value;
                 });
                 
-                if (hasError) return;
+                if (hasError) {
+                    // エラーフィールドにスクロール
+                    const firstErrorField = document.getElementById(`add-field-${errorFields[0]}`);
+                    if (firstErrorField) {
+                        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstErrorField.focus();
+                    }
+                    showNotification(`必須項目が未入力です。${errorFields.join('、')}を入力してください。`, 'error');
+                    return;
+                }
                 
                 // データを追加
                 if (!currentApp.data) {
@@ -3134,12 +3562,41 @@
                         showNotification('データを追加しました');
                     } catch (error) {
                         console.error('Error adding data:', error);
-                        showNotification('データの追加に失敗しました', 'error');
+                        // エラー時の詳細なガイダンス
+                        const errorMessage = error.message || '不明なエラーが発生しました';
+                        showNotification(`データの追加に失敗しました: ${errorMessage}`, 'error');
+                        
+                        // リカバリーガイダンス
+                        const recoveryGuidance = document.createElement('div');
+                        recoveryGuidance.className = 'fixed top-20 right-4 z-50 max-w-sm rounded-lg border-2 border-amber-300 bg-amber-50 p-4 shadow-lg';
+                        recoveryGuidance.innerHTML = `
+                            <div class="flex items-start space-x-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-6 w-6 text-amber-600 flex-shrink-0 mt-0.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                                </svg>
+                                <div class="flex-1">
+                                    <p class="font-bold text-amber-900 mb-1">保存に失敗しました</p>
+                                    <p class="text-sm text-amber-700 mb-2">以下の方法をお試しください：</p>
+                                    <ul class="text-xs text-amber-600 list-disc list-inside space-y-1">
+                                        <li>入力内容を確認して再度保存</li>
+                                        <li>ページを更新してから再試行</li>
+                                        <li>データは一時的にローカルに保存されます</li>
+                                    </ul>
+                                </div>
+                                <button onclick="this.parentElement.parentElement.remove()" class="text-amber-400 hover:text-amber-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        `;
+                        document.body.appendChild(recoveryGuidance);
+                        setTimeout(() => recoveryGuidance.remove(), 8000);
                     }
                 } else {
                     updateAppDataTable(currentApp.data, currentApp.columns);
                     closeDataAddModal();
-                    showNotification('データを追加しました（ローカル保存）');
+                    showNotification('✓ データを追加しました（ローカル保存）', 'success');
                 }
             }
 

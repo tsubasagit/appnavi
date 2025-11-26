@@ -247,3 +247,4 @@ git push origin feature/your-feature-name
 
 **一緒に、誰もがテクノロジーを使いこなせる社会を実現しましょう。**
 
+

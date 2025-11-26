@@ -130,3 +130,4 @@ class FirebaseStatusChecker {
 // グローバルインスタンス
 const firebaseStatusChecker = new FirebaseStatusChecker();
 
+

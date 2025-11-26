@@ -27,7 +27,7 @@ Transform Excel-managed data into powerful web applications in 5 minutes. No cod
 - 🏛️ Local government officials (DX promoters)
 - 📊 Non-profit organizations (data managers)
 
-🔗 **Live Demo**: [View on GitHub Pages](https://tsubasagit.github.io/appnavi/)
+🔗 **Live Demo**: [View on GitHub Pages](https://tsubasagit.github.io/appnavi/) | [About AppNavi](https://tsubasagit.github.io/appnavi/about)
 
 ## Architecture Philosophy
 
@@ -66,6 +66,7 @@ See `ARCHITECTURE_STRATEGY.md` for detailed architecture and cost comparison.
 
 ## 📚 Documentation
 
+- **[About AppNavi](https://tsubasagit.github.io/appnavi/about)**: Learn more about AppNavi's vision, features, and core concepts
 - **[DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)**: Development guidelines, architecture, and technical details
 - **[SPECIFICATION.md](./SPECIFICATION.md)**: Complete specification document
 - **[VISION.md](./VISION.md)**: Vision and mission statement
