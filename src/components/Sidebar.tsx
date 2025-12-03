@@ -7,6 +7,7 @@ const Sidebar = () => {
   const navItems = [
     { path: '/', icon: LayoutDashboard, label: 'ダッシュボード' },
     { path: '/apps', icon: FolderKanban, label: 'マイアプリ' },
+    { path: '/about', icon: Settings, label: 'About' },
     { path: '/settings', icon: Settings, label: '設定' },
   ]
 

@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar'
 import Dashboard from './pages/Dashboard'
 import MyApps from './pages/MyApps'
 import AppDetail from './pages/AppDetail'
+import About from './pages/About'
 import { AppProvider } from './context/AppContext'
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/apps" element={<MyApps />} />
               <Route path="/apps/:appId" element={<AppDetail />} />
+              <Route path="/about" element={<About />} />
             </Routes>
           </main>
         </div>
