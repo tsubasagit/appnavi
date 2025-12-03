@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Search, Plus, Edit, ExternalLink, FileText } from 'lucide-react'
 import { App } from '../types'
 
@@ -120,10 +121,13 @@ const MyApps = () => {
 
             {/* Actions */}
             <div className="flex items-center space-x-4">
-              <button className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center">
+              <Link
+                to={`/apps/${app.id}`}
+                className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center"
+              >
                 <Edit className="w-4 h-4 mr-1" />
                 編集
-              </button>
+              </Link>
               <button className="text-sm text-slate-600 hover:text-slate-900 font-medium flex items-center">
                 <ExternalLink className="w-4 h-4 mr-1" />
                 開く
