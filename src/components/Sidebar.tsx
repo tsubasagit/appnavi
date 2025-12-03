@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { LayoutDashboard, FolderKanban, Settings } from 'lucide-react'
+import { LayoutDashboard, FolderKanban, Settings, Info } from 'lucide-react'
 
 const Sidebar = () => {
   const location = useLocation()
