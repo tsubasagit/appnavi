@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Search, User } from 'lucide-react'
+import { ArrowLeft, Search } from 'lucide-react'
 import PolicyTab from '../components/tabs/PolicyTab'
 import DataTab from '../components/tabs/DataTab'
 import UITab from '../components/tabs/UITab'
@@ -9,7 +9,7 @@ import SettingsTab from '../components/tabs/SettingsTab'
 import { Compass, Database, PenTool, BarChart3, Settings } from 'lucide-react'
 
 const AppDetail = () => {
-  const { appId } = useParams<{ appId: string }>()
+  useParams<{ appId: string }>()
   const [activeTab, setActiveTab] = useState<'policy' | 'data' | 'design' | 'graph' | 'settings'>('policy')
 
   const tabs = [
@@ -88,4 +88,5 @@ const AppDetail = () => {
 }
 
 export default AppDetail
+
 

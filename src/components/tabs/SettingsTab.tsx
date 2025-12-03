@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Settings, Users, Link2, Save, Mail, X, Check } from 'lucide-react'
+import { Settings, Users, Link2, Save, Mail, X } from 'lucide-react'
 
 const SettingsTab = () => {
   const [appName, setAppName] = useState('サンプルアプリ')
@@ -156,4 +156,5 @@ const SettingsTab = () => {
 }
 
 export default SettingsTab
+
 
