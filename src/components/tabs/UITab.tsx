@@ -1,9 +1,5 @@
 import { useState, useEffect } from 'react'
 import {
-  PenTool,
-  Database,
-  Zap,
-  Settings,
   Layout,
   Layers,
   Plus,
@@ -42,12 +38,7 @@ type Component = {
   children?: Component[]
 }
 
-type GlobalMode = 'design' | 'data' | 'automate' | 'settings'
-
 const UITab = () => {
-  // グローバルモード
-  const [globalMode, setGlobalMode] = useState<GlobalMode>('design')
-
   // 左サイドバー
   const [leftTab, setLeftTab] = useState<'screens' | 'components'>('screens')
   const [screens, setScreens] = useState<Screen[]>([
@@ -179,55 +170,7 @@ const UITab = () => {
 
   return (
     <div className="flex h-full bg-slate-50">
-      {/* A. グローバルナビゲーション (64px固定) */}
-      <div className="w-16 bg-white border-r border-slate-200 flex flex-col items-center py-4 space-y-4">
-        <button
-          onClick={() => setGlobalMode('design')}
-          className={`w-12 h-12 flex items-center justify-center rounded-lg transition ${
-            globalMode === 'design'
-              ? 'bg-blue-50 text-blue-600'
-              : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
-          }`}
-          title="Design"
-        >
-          <PenTool size={20} />
-        </button>
-        <button
-          onClick={() => setGlobalMode('data')}
-          className={`w-12 h-12 flex items-center justify-center rounded-lg transition ${
-            globalMode === 'data'
-              ? 'bg-blue-50 text-blue-600'
-              : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
-          }`}
-          title="Data"
-        >
-          <Database size={20} />
-        </button>
-        <button
-          onClick={() => setGlobalMode('automate')}
-          className={`w-12 h-12 flex items-center justify-center rounded-lg transition ${
-            globalMode === 'automate'
-              ? 'bg-blue-50 text-blue-600'
-              : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
-          }`}
-          title="Automate"
-        >
-          <Zap size={20} />
-        </button>
-        <button
-          onClick={() => setGlobalMode('settings')}
-          className={`w-12 h-12 flex items-center justify-center rounded-lg transition ${
-            globalMode === 'settings'
-              ? 'bg-blue-50 text-blue-600'
-              : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
-          }`}
-          title="Settings"
-        >
-          <Settings size={20} />
-        </button>
-      </div>
-
-      {/* B. 左サイドバー (280px固定) */}
+      {/* 左サイドバー (280px固定) */}
       <div className="w-[280px] bg-white border-r border-slate-200 flex flex-col h-full">
         {/* ヘッダー */}
         <div className="p-4 border-b border-slate-200 flex items-center justify-between">
@@ -410,7 +353,7 @@ const UITab = () => {
         </div>
       </div>
 
-      {/* C. メインエリア (flex-1) */}
+      {/* メインエリア (flex-1) */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* ツールバー */}
         <div className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
@@ -562,7 +505,7 @@ const UITab = () => {
         </div>
       </div>
 
-      {/* D. 右サイドバー (320px固定) */}
+      {/* 右サイドバー (320px固定) */}
       <div className="w-[320px] bg-white border-l border-slate-200 flex flex-col h-full">
         {/* ヘッダー */}
         <div className="p-4 border-b border-slate-200 flex items-center justify-between">
