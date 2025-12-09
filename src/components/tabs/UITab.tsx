@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { Monitor, Smartphone, Eye, Rocket, Plus, Search, Sparkles } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Monitor, Smartphone, Eye, Rocket, Plus, Search, Sparkles, X, FileSpreadsheet, FileText, LayoutDashboard, ClipboardList } from 'lucide-react'
+import { useApp } from '../../context/AppContext'
 
 const UITab = () => {
   const [selectedLayout] = useState('list')
@@ -7,6 +8,8 @@ const UITab = () => {
   const [selectedElement, setSelectedElement] = useState<string | null>(null)
   const [appStructureTab, setAppStructureTab] = useState<'screens' | 'components'>('screens')
   const [selectedScreen, setSelectedScreen] = useState<string | null>('一覧ページ')
+  const [isNewScreenModalOpen, setIsNewScreenModalOpen] = useState(false)
+  const { dataSources } = useApp()
 
   const sampleData = [
     { 日時: '2023/10/24', 担当者: '山田 太郎', 顧客名: '株式会社A', 案件名: '商談', ステータス: '完了' },
@@ -14,15 +17,238 @@ const UITab = () => {
     { 日時: '2023/10/23', 担当者: '佐藤 次郎', 顧客名: 'Cテック', 案件名: 'トラブル対応', ステータス: '完了' },
   ]
 
+  // データソース（AppContextから取得、なければサンプルデータを使用）
+  const sampleDataSources = [
+    {
+      id: '1',
+      name: '営業活動報告テーブル',
+      type: 'google-sheets' as const,
+      lastSynced: '2023/11/01',
+      generatedScreens: '一覧（検索/フィルター付き）、詳細/編集フォーム',
+    },
+    {
+      id: '2',
+      name: '在庫管理台帳(Excel)',
+      type: 'excel' as const,
+      lastSynced: '2023/10/25',
+      generatedScreens: '一覧（グラフ付き）、詳細/在庫更新フォーム',
+    },
+  ]
+  
+  // AppContextのデータソースを拡張形式に変換
+  const availableDataSources = dataSources.length > 0 
+    ? dataSources.map(ds => ({
+        ...ds,
+        generatedScreens: ds.type === 'google-sheets' 
+          ? '一覧（検索/フィルター付き）、詳細/編集フォーム'
+          : '一覧（グラフ付き）、詳細/在庫更新フォーム',
+        lastSynced: ds.lastSynced || '未同期',
+      }))
+    : sampleDataSources
+
+  // テンプレートリスト
+  const templates = [
+    {
+      id: 'blank',
+      name: '空白のページから開始',
+      description: '自由にデザインできます。データ連携は後からいつでも可能です。',
+      dataRequired: false,
+      icon: Plus,
+    },
+    {
+      id: 'dashboard',
+      name: '総合ダッシュボード',
+      description: '複数のデータソースに対応。全体像を把握するのに最適です。',
+      dataRequired: true,
+      dataCount: '複数',
+      icon: LayoutDashboard,
+    },
+    {
+      id: 'form',
+      name: 'データ入力フォーム',
+      description: 'データソース：1つ必須（登録用）。手動でのデータ入力に便利です。',
+      dataRequired: true,
+      dataCount: '1つ必須',
+      icon: FileText,
+    },
+    {
+      id: 'kanban',
+      name: 'カンバン/タスクリスト',
+      description: 'データソース：1つ必須（タスク用）。進捗を視覚的に管理できます。',
+      dataRequired: true,
+      dataCount: '1つ必須',
+      icon: ClipboardList,
+    },
+  ]
+
+  const handleDataSourceClick = (dataSourceId: string) => {
+    // ダミー: 画面生成APIを呼び出す
+    alert(`データソース ${dataSourceId} から画面を生成します`)
+    setIsNewScreenModalOpen(false)
+  }
+
+  const handleTemplateClick = (templateId: string) => {
+    // ダミー: テンプレート選択後の画面名入力ステップ
+    alert(`テンプレート ${templateId} を選択しました。画面名を入力してください。`)
+    setIsNewScreenModalOpen(false)
+  }
+
+  // ESCキーでモーダルを閉じる
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isNewScreenModalOpen) {
+        setIsNewScreenModalOpen(false)
+      }
+    }
+    if (isNewScreenModalOpen) {
+      document.addEventListener('keydown', handleEscape)
+      // モーダルが開いている時は背景のスクロールを無効化
+      document.body.style.overflow = 'hidden'
+    }
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+      document.body.style.overflow = 'unset'
+    }
+  }, [isNewScreenModalOpen])
+
+  const getDataSourceIcon = (type: string) => {
+    switch (type) {
+      case 'google-sheets':
+        return <div className="w-8 h-8 bg-green-600 rounded flex items-center justify-center text-white font-bold text-xs">GS</div>
+      case 'excel':
+        return <FileSpreadsheet className="w-8 h-8 text-green-600" />
+      default:
+        return <FileText className="w-8 h-8 text-slate-400" />
+    }
+  }
+
   return (
     <div className="flex h-full">
+      {/* New Screen Modal */}
+      {isNewScreenModalOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={(e) => {
+            // 背景クリックでモーダルを閉じる
+            if (e.target === e.currentTarget) {
+              setIsNewScreenModalOpen(false)
+            }
+          }}
+        >
+          <div 
+            className="bg-white rounded-xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-slate-200">
+              <h2 className="text-2xl font-bold text-slate-900">新しい画面を作成</h2>
+              <button
+                onClick={() => setIsNewScreenModalOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 transition"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-8">
+              {/* Section 1: AI Auto-generation from Data */}
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">
+                  データからAI自動生成 (No Codeの最適解)
+                </h3>
+                <p className="text-sm text-slate-600 mb-4">
+                  既存のデータソースを選択するだけで、AIが実用的な画面セット（一覧、詳細、編集フォーム）を自動構築します。
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {availableDataSources.map((dataSource, index) => (
+                    <div
+                      key={dataSource.id}
+                      className={`border-2 rounded-lg p-4 cursor-pointer transition ${
+                        index === 0
+                          ? 'border-primary-600 bg-primary-50'
+                          : 'border-slate-200 bg-white hover:border-slate-300'
+                      }`}
+                      onClick={() => handleDataSourceClick(dataSource.id)}
+                    >
+                      <div className="flex items-start space-x-3 mb-3">
+                        {getDataSourceIcon(dataSource.type)}
+                        <div className="flex-1">
+                          <h4 className="font-bold text-slate-900 mb-1">{dataSource.name}</h4>
+                          <p className="text-xs text-slate-600 mb-2">{dataSource.generatedScreens}</p>
+                          <p className="text-xs text-slate-500">最終更新: {dataSource.lastSynced}</p>
+                        </div>
+                      </div>
+                      <button
+                        className={`w-full py-2 rounded-lg text-sm font-medium transition ${
+                          index === 0
+                            ? 'bg-primary-600 text-white hover:bg-primary-700'
+                            : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                        }`}
+                      >
+                        このデータで生成開始
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Section 2: Templates */}
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">
+                  テンプレートから作成(用途に合わせたガイド)
+                </h3>
+                <p className="text-sm text-slate-600 mb-4">
+                  デザイン済みのレイアウトから始められます。必要なデータソースは後から連携可能です。プレビュー画像を確認してから選択してください。
+                </p>
+                <div className="space-y-3">
+                  {templates.map((template) => {
+                    const Icon = template.icon
+                    return (
+                      <div
+                        key={template.id}
+                        className="border border-slate-200 rounded-lg p-4 cursor-pointer hover:border-primary-300 hover:bg-primary-50 transition"
+                        onClick={() => handleTemplateClick(template.id)}
+                      >
+                        <div className="flex items-start space-x-4">
+                          {template.id === 'blank' ? (
+                            <div className="w-16 h-16 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center">
+                              <Plus className="w-6 h-6 text-slate-400" />
+                            </div>
+                          ) : (
+                            <div className="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center">
+                              <Icon className="w-8 h-8 text-slate-600" />
+                            </div>
+                          )}
+                          <div className="flex-1">
+                            <h4 className="font-medium text-slate-900 mb-1">{template.name}</h4>
+                            <p className="text-sm text-slate-600 mb-2">{template.description}</p>
+                            {template.dataRequired && (
+                              <p className="text-xs text-slate-500">
+                                データ連携：<span className="font-medium">{template.dataCount}</span>
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Left Panel - App Structure & Add Elements */}
       <aside className="w-80 bg-slate-50 border-r border-slate-200 p-6 overflow-auto">
         {/* App Structure Section */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-lg font-bold text-slate-900">App Structure</h3>
-            <button className="flex items-center space-x-1 px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition text-sm font-medium">
+            <button 
+              onClick={() => setIsNewScreenModalOpen(true)}
+              className="flex items-center space-x-1 px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition text-sm font-medium"
+            >
               <Plus size={16} />
               <span>新規画面</span>
             </button>
