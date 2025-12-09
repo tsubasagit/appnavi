@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { List, LayoutGrid, Calendar, FileText, Sparkles, Monitor, Smartphone, Eye, Rocket, Plus, Search, Table2, Type, Box, Star } from 'lucide-react'
+import { List, LayoutGrid, Calendar, FileText, Sparkles, Monitor, Smartphone, Eye, Rocket, Plus, Search } from 'lucide-react'
 
 const UITab = () => {
   const [selectedLayout, setSelectedLayout] = useState('list')
@@ -30,8 +30,9 @@ const UITab = () => {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-lg font-bold text-slate-900">App Structure</h3>
-            <button className="w-6 h-6 flex items-center justify-center rounded hover:bg-slate-200 text-slate-600">
+            <button className="flex items-center space-x-1 px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition text-sm font-medium">
               <Plus size={16} />
+              <span>新規画面</span>
             </button>
           </div>
           
@@ -125,30 +126,6 @@ const UITab = () => {
           )}
         </div>
 
-        {/* Add Elements Section - Only show when not in Screens tab or no screen selected */}
-        {appStructureTab !== 'screens' || !selectedScreen ? (
-          <div className="mb-6">
-            <h3 className="text-lg font-bold text-slate-900 mb-4">ADD ELEMENTS</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <button className="flex flex-col items-center justify-center p-4 bg-white border border-slate-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition">
-                <Table2 className="w-6 h-6 mb-2 text-slate-600" />
-                <span className="text-xs font-medium text-slate-700">Table</span>
-              </button>
-              <button className="flex flex-col items-center justify-center p-4 bg-white border border-slate-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition">
-                <Type className="w-6 h-6 mb-2 text-slate-600" />
-                <span className="text-xs font-medium text-slate-700">Text</span>
-              </button>
-              <button className="flex flex-col items-center justify-center p-4 bg-white border border-slate-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition">
-                <Box className="w-6 h-6 mb-2 text-slate-600" />
-                <span className="text-xs font-medium text-slate-700">Container</span>
-              </button>
-              <button className="flex flex-col items-center justify-center p-4 bg-white border border-slate-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition">
-                <Star className="w-6 h-6 mb-2 text-slate-600" />
-                <span className="text-xs font-medium text-slate-700">Button</span>
-              </button>
-            </div>
-          </div>
-        ) : null}
 
         {selectedElement && (
           <div className="bg-white border border-slate-200 rounded-lg p-4">
