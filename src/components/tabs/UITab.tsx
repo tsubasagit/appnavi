@@ -1,20 +1,12 @@
 import { useState } from 'react'
-import { List, LayoutGrid, Calendar, FileText, Sparkles, Monitor, Smartphone, Eye, Rocket, Plus, Search } from 'lucide-react'
+import { Monitor, Smartphone, Eye, Rocket, Plus, Search, Sparkles } from 'lucide-react'
 
 const UITab = () => {
-  const [selectedLayout, setSelectedLayout] = useState('list')
+  const [selectedLayout] = useState('list')
   const [previewMode, setPreviewMode] = useState<'pc' | 'mobile'>('pc')
   const [selectedElement, setSelectedElement] = useState<string | null>(null)
   const [appStructureTab, setAppStructureTab] = useState<'screens' | 'components'>('screens')
   const [selectedScreen, setSelectedScreen] = useState<string | null>('一覧ページ')
-
-  const layouts = [
-    { id: 'list', icon: List, label: 'リスト一覧', description: '品リスト一覧' },
-    { id: 'card', icon: LayoutGrid, label: 'カード型' },
-    { id: 'calendar', icon: Calendar, label: 'カレンダー' },
-    { id: 'template', icon: FileText, label: 'テンプレートから選ぶ' },
-    { id: 'ai', icon: Sparkles, label: 'AIに作らせる' },
-  ]
 
   const sampleData = [
     { 日時: '2023/10/24', 担当者: '山田 太郎', 顧客名: '株式会社A', 案件名: '商談', ステータス: '完了' },
