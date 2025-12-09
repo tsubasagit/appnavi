@@ -24,14 +24,14 @@ const UITab = () => {
       name: '営業活動報告テーブル',
       type: 'google-sheets' as const,
       lastSynced: '2023/11/01',
-      generatedScreens: '一覧（検索/フィルター付き）、詳細/編集フォーム',
+      generatedScreens: '自動生成される画面: **一覧 (検索/フィルタ付)**+**詳細/編集フォーム**',
     },
     {
       id: '2',
       name: '在庫管理台帳(Excel)',
       type: 'excel' as const,
       lastSynced: '2023/10/25',
-      generatedScreens: '一覧（グラフ付き）、詳細/在庫更新フォーム',
+      generatedScreens: '自動生成される画面: **一覧 (グラフ付)** + **詳細/在庫更新フォーム**',
     },
   ]
   
@@ -40,8 +40,8 @@ const UITab = () => {
     ? dataSources.map(ds => ({
         ...ds,
         generatedScreens: ds.type === 'google-sheets' 
-          ? '一覧（検索/フィルター付き）、詳細/編集フォーム'
-          : '一覧（グラフ付き）、詳細/在庫更新フォーム',
+          ? '自動生成される画面: **一覧 (検索/フィルタ付)**+**詳細/編集フォーム**'
+          : '自動生成される画面: **一覧 (グラフ付)** + **詳細/在庫更新フォーム**',
         lastSynced: ds.lastSynced || '未同期',
       }))
     : sampleDataSources
@@ -51,7 +51,7 @@ const UITab = () => {
     {
       id: 'blank',
       name: '空白のページから開始',
-      description: '自由にデザインできます。データ連携は後からいつでも可能です。',
+      description: '** 【デザイン優先】 ** ゼロから自由に設計します。データ連携は後からいつでも可能です。',
       dataRequired: false,
       icon: Plus,
     },
@@ -154,40 +154,61 @@ const UITab = () => {
             <div className="p-6 space-y-8">
               {/* Section 1: AI Auto-generation from Data */}
               <div>
-                <h3 className="text-lg font-bold text-slate-900 mb-2">
-                  データからAI自動生成 (No Codeの最適解)
-                </h3>
-                <p className="text-sm text-slate-600 mb-4">
-                  既存のデータソースを選択するだけで、AIが実用的な画面セット（一覧、詳細、編集フォーム）を自動構築します。
-                </p>
+                <div className="mb-4">
+                  <h3 className="text-lg font-bold text-indigo-700 mb-2">
+                    データからAI自動生成 (No Codeの最適解)
+                  </h3>
+                  <p className="text-sm text-slate-600">
+                    既存のデータソースを選択するだけで、AIが実用的な画面セット（一覧、詳細、編集フォーム）を自動構築します。
+                  </p>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {availableDataSources.map((dataSource, index) => (
                     <div
                       key={dataSource.id}
-                      className={`border-2 rounded-lg p-4 cursor-pointer transition ${
+                      className={`border-2 rounded-lg overflow-hidden cursor-pointer transition ${
                         index === 0
-                          ? 'border-primary-600 bg-primary-50'
+                          ? 'border-indigo-500 bg-indigo-50 shadow-md'
                           : 'border-slate-200 bg-white hover:border-slate-300'
                       }`}
                       onClick={() => handleDataSourceClick(dataSource.id)}
                     >
-                      <div className="flex items-start space-x-3 mb-3">
-                        {getDataSourceIcon(dataSource.type)}
-                        <div className="flex-1">
-                          <h4 className="font-bold text-slate-900 mb-1">{dataSource.name}</h4>
-                          <p className="text-xs text-slate-600 mb-2">{dataSource.generatedScreens}</p>
-                          <p className="text-xs text-slate-500">最終更新: {dataSource.lastSynced}</p>
+                      {/* データカードのヘッダー部分にインディゴ系のアクセント */}
+                      <div className={`px-4 py-3 ${
+                        index === 0 ? 'bg-indigo-600' : 'bg-slate-50'
+                      }`}>
+                        <div className="flex items-start space-x-3">
+                          {getDataSourceIcon(dataSource.type)}
+                          <div className="flex-1">
+                            <h4 className={`font-bold mb-1 ${
+                              index === 0 ? 'text-white' : 'text-slate-900'
+                            }`}>
+                              {dataSource.name}
+                            </h4>
+                          </div>
                         </div>
                       </div>
-                      <button
-                        className={`w-full py-2 rounded-lg text-sm font-medium transition ${
-                          index === 0
-                            ? 'bg-primary-600 text-white hover:bg-primary-700'
-                            : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
-                        }`}
-                      >
-                        このデータで生成開始
-                      </button>
+                      <div className="p-4">
+                        <p className="text-xs text-slate-600 mb-2">
+                          {dataSource.generatedScreens.split('**').map((part, idx) => 
+                            idx % 2 === 1 ? (
+                              <strong key={idx} className="font-bold">{part}</strong>
+                            ) : (
+                              <span key={idx}>{part}</span>
+                            )
+                          )}
+                        </p>
+                        <p className="text-xs text-slate-500 mb-3">最終更新: {dataSource.lastSynced}</p>
+                        <button
+                          className={`w-full py-2 rounded-lg text-sm font-medium transition ${
+                            index === 0
+                              ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                              : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                          }`}
+                        >
+                          このデータで生成開始
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -204,16 +225,21 @@ const UITab = () => {
                 <div className="space-y-3">
                   {templates.map((template) => {
                     const Icon = template.icon
+                    const isBlank = template.id === 'blank'
                     return (
                       <div
                         key={template.id}
-                        className="border border-slate-200 rounded-lg p-4 cursor-pointer hover:border-primary-300 hover:bg-primary-50 transition"
+                        className={`rounded-lg p-4 cursor-pointer transition ${
+                          isBlank
+                            ? 'border-4 border-indigo-300 bg-indigo-50 shadow-lg hover:shadow-xl hover:border-indigo-400'
+                            : 'border border-slate-200 hover:border-primary-300 hover:bg-primary-50'
+                        }`}
                         onClick={() => handleTemplateClick(template.id)}
                       >
                         <div className="flex items-start space-x-4">
-                          {template.id === 'blank' ? (
-                            <div className="w-16 h-16 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center">
-                              <Plus className="w-6 h-6 text-slate-400" />
+                          {isBlank ? (
+                            <div className="w-16 h-16 border-2 border-dashed border-indigo-400 bg-white rounded-lg flex items-center justify-center">
+                              <Plus className="w-6 h-6 text-indigo-600" />
                             </div>
                           ) : (
                             <div className="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center">
@@ -221,8 +247,16 @@ const UITab = () => {
                             </div>
                           )}
                           <div className="flex-1">
-                            <h4 className="font-medium text-slate-900 mb-1">{template.name}</h4>
-                            <p className="text-sm text-slate-600 mb-2">{template.description}</p>
+                            <h4 className="font-bold text-slate-900 mb-1">{template.name}</h4>
+                            <p className="text-sm text-slate-600 mb-2">
+                              {template.description.split('**').map((part, idx) => 
+                                idx % 2 === 1 ? (
+                                  <strong key={idx} className="font-bold">{part}</strong>
+                                ) : (
+                                  <span key={idx}>{part}</span>
+                                )
+                              )}
+                            </p>
                             {template.dataRequired && (
                               <p className="text-xs text-slate-500">
                                 データ連携：<span className="font-medium">{template.dataCount}</span>
