@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AppNavi - 地方の中小企業の経営者様へ。高額なシステム導入はもう不要です</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-bg {
+            background-color: #f8fafc;
+            background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+    </style>
+</head>
+<body class="text-slate-800 bg-white">
+
+    <!-- Header -->
+    <header class="fixed w-full bg-white/80 backdrop-blur-md border-b border-slate-200 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">A</div>
+                <span class="text-xl font-bold text-slate-800 tracking-tight">AppNavi</span>
+            </div>
+            <nav class="hidden md:flex space-x-8 text-sm font-medium text-slate-600">
+                <a href="#problem" class="hover:text-blue-600 transition">こんなお悩みありませんか</a>
+                <a href="#solution" class="hover:text-blue-600 transition">AppNaviの解決策</a>
+                <a href="#cases" class="hover:text-blue-600 transition">導入事例</a>
+                <a href="#faq" class="hover:text-blue-600 transition">よくある質問</a>
+            </nav>
+            <div class="flex items-center space-x-4">
+                <a href="#" class="text-sm font-medium text-slate-600 hover:text-slate-900 hidden sm:block">ログイン</a>
+                <a href="#" class="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-bold hover:bg-blue-700 transition shadow-md">無料で始める</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="pt-32 pb-20 hero-bg overflow-hidden relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+            <div class="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-xs font-bold mb-6 animate-pulse">
+                <span class="w-2 h-2 bg-blue-600 rounded-full mr-2"></span>
+                地方の中小企業の経営者様へ
+            </div>
+            <h1 class="text-4xl md:text-6xl font-black tracking-tight leading-tight mb-6 text-slate-900">
+                高額なシステム導入は<br class="hidden md:block"/>
+                <span class="text-blue-600">もう不要です</span>
+            </h1>
+            <p class="text-lg md:text-xl text-slate-500 mb-10 max-w-3xl mx-auto leading-relaxed">
+                地方の中小企業だからこそ、ITの専門知識も予算も限られている。<br/>
+                でも、大丈夫です。使い慣れたExcelを入れるだけ。<br class="hidden md:block"/>
+                AIがあなたの経営方針を理解し、<span class="font-bold text-slate-700">たった5分で最強の経営コックピット</span>を構築します。
+            </p>
+            
+            <div class="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4 mb-16">
+                <a href="#" class="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white rounded-full font-bold text-lg hover:bg-blue-700 transition shadow-lg hover:shadow-xl flex items-center justify-center">
+                    <i data-lucide="rocket" class="mr-2 w-5 h-5"></i>
+                    今すぐ無料で試す
+                </a>
+                <a href="#problem" class="w-full sm:w-auto px-8 py-4 bg-white border border-slate-200 text-slate-700 rounded-full font-bold text-lg hover:bg-slate-50 transition flex items-center justify-center">
+                    詳しく見る
+                </a>
+            </div>
+            <p class="text-xs text-slate-400 mt-[-2rem] mb-12">※ クレジットカード登録は不要です</p>
+
+            <!-- Mock UI Image -->
+            <div class="relative max-w-5xl mx-auto">
+                <div class="absolute inset-0 bg-gradient-to-t from-blue-100 to-transparent opacity-20 rounded-3xl transform rotate-1 scale-105"></div>
+                <div class="bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden relative">
+                    <div class="bg-slate-50 border-b border-slate-100 p-4 flex items-center space-x-2">
+                        <div class="flex space-x-1.5">
+                            <div class="w-3 h-3 rounded-full bg-red-400"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-400"></div>
+                        </div>
+                        <div class="flex-1 bg-white border border-slate-200 rounded-md h-6 mx-4"></div>
+                    </div>
+                    <!-- Simplified Dashboard Mock -->
+                    <div class="p-6 md:p-8 bg-slate-50 grid grid-cols-1 md:grid-cols-12 gap-6">
+                        <!-- Sidebar -->
+                        <div class="hidden md:block md:col-span-2 space-y-4">
+                            <div class="h-8 bg-blue-100 rounded w-3/4"></div>
+                            <div class="h-4 bg-slate-200 rounded w-full"></div>
+                            <div class="h-4 bg-slate-200 rounded w-5/6"></div>
+                            <div class="h-4 bg-slate-200 rounded w-4/5"></div>
+                        </div>
+                        <!-- Main -->
+                        <div class="col-span-12 md:col-span-10 space-y-6">
+                            <div class="flex justify-between items-center">
+                                <div class="h-8 bg-slate-200 rounded w-1/3"></div>
+                                <div class="h-8 bg-blue-600 rounded w-32"></div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div class="bg-white p-4 rounded-lg shadow-sm h-24 border border-slate-100"></div>
+                                <div class="bg-white p-4 rounded-lg shadow-sm h-24 border border-slate-100"></div>
+                                <div class="bg-white p-4 rounded-lg shadow-sm h-24 border border-slate-100"></div>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow-sm h-64 border border-slate-100 flex items-center justify-center text-slate-300">
+                                Graph Area
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Problem Section -->
+    <section id="problem" class="py-20 bg-white">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl font-bold text-slate-900 mb-4">地方の中小企業の経営者様、<br/>こんなお悩みありませんか？</h2>
+            <p class="text-slate-600 mb-12">「DXが必要なのは分かるけど、うちには無理...」そう思っていませんか？</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="p-6 rounded-2xl bg-slate-50 border border-slate-100">
+                    <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="banknote" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">予算がない</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed">「システム導入に数百万円なんて出せない...」地方の中小企業にとって、高額な初期費用は大きな壁です。</p>
+                </div>
+
+                <div class="p-6 rounded-2xl bg-slate-50 border border-slate-100">
+                    <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="users" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">ITに詳しい人がいない</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed">地方ではIT人材の確保が難しい。専門知識がないと、システムを選ぶことすら難しいのが現実です。</p>
+                </div>
+
+                <div class="p-6 rounded-2xl bg-slate-50 border border-slate-100">
+                    <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="shield-alert" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">データを預けるのが不安</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed">大切な顧客情報や取引先データを外部のサーバーに預けるのは不安。情報漏洩のリスクも心配です。</p>
+                </div>
+
+                <div class="p-6 rounded-2xl bg-slate-50 border border-slate-100">
+                    <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="settings-2" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">複雑すぎて使えない</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed">導入したシステムが難しすぎて、結局誰も使わずにExcelに戻ってしまう...そんな経験はありませんか？</p>
+                </div>
+
+                <div class="p-6 rounded-2xl bg-slate-50 border border-slate-100">
+                    <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="clock" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">時間がない</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed">経営者は忙しい。システムの選定や導入に何ヶ月もかける時間はありません。</p>
+                </div>
+
+                <div class="p-6 rounded-2xl bg-slate-50 border border-slate-100">
+                    <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="trending-down" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">投資対効果が見えない</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed">高額な投資をしても、本当に売上や効率が上がるのか分からない。リスクを取りたくない。</p>
+                </div>
+            </div>
+
+            <div class="mt-12 p-8 bg-blue-50 rounded-2xl border border-blue-100">
+                <p class="text-lg font-bold text-slate-900 mb-2">
+                    <i data-lucide="lightbulb" class="inline w-6 h-6 text-blue-600 mr-2"></i>
+                    でも、大丈夫です。
+                </p>
+                <p class="text-slate-700">
+                    AppNaviなら、これらの悩みをすべて解決できます。<br/>
+                    <span class="font-bold">予算ゼロ、IT知識ゼロ、リスクゼロ</span>で、今日からDXを始められます。
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Solution Section -->
+    <section id="solution" class="py-24 bg-slate-900 text-white relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-1/2 h-full bg-blue-900/20 blur-3xl rounded-full transform translate-x-1/2"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-16">
+                <div class="text-blue-400 font-bold mb-4 tracking-wider uppercase text-sm">Our Solution</div>
+                <h2 class="text-3xl md:text-5xl font-bold mb-6 leading-tight">
+                    地方の中小企業のために<br/>
+                    作られた、新しいDXの形
+                </h2>
+                <p class="text-slate-300 text-lg max-w-3xl mx-auto leading-relaxed">
+                    AppNaviは、地方の中小企業の経営者が抱える「予算がない」「ITに詳しい人がいない」「時間がない」<br/>
+                    という課題をすべて解決するために生まれました。
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-8">
+                    <div class="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center mb-6">
+                        <i data-lucide="yen" class="w-8 h-8 text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">完全無料</h3>
+                    <p class="text-slate-300 leading-relaxed mb-4">
+                        初期費用ゼロ、月額費用ゼロ。GoogleスプレッドシートやExcelをデータベースとして使うため、実質コストはかかりません。
+                    </p>
+                    <div class="text-2xl font-bold text-blue-400">¥0</div>
+                </div>
+
+                <div class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-8">
+                    <div class="w-14 h-14 bg-green-600 rounded-xl flex items-center justify-center mb-6">
+                        <i data-lucide="brain-circuit" class="w-8 h-8 text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">AIが自動生成</h3>
+                    <p class="text-slate-300 leading-relaxed mb-4">
+                        ITの専門知識は一切不要。AIに「売上を上げたい」と伝えるだけで、最適な画面やグラフを自動で作成します。
+                    </p>
+                    <div class="text-2xl font-bold text-green-400">5分</div>
+                </div>
+
+                <div class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-8">
+                    <div class="w-14 h-14 bg-purple-600 rounded-xl flex items-center justify-center mb-6">
+                        <i data-lucide="shield-check" class="w-8 h-8 text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">データはあなたのもの</h3>
+                    <p class="text-slate-300 leading-relaxed mb-4">
+                        データはあなたのPCやGoogleドライブに保存されます。外部に預ける必要はなく、いつでもExcelに戻れます。
+                    </p>
+                    <div class="text-2xl font-bold text-purple-400">100%</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-24 bg-slate-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-slate-900 mb-4">地方の中小企業だからこそ選ばれる理由</h2>
+                <p class="text-slate-600">大企業向けの高額システムは必要ありません。シンプルで、確実に、そして無料で。</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
+                    <div class="flex items-start">
+                        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mr-4 flex-shrink-0">
+                            <i data-lucide="file-spreadsheet" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-900 mb-3">使い慣れたExcelそのまま</h3>
+                            <p class="text-slate-600 leading-relaxed">
+                                新しいソフトを覚える必要はありません。今使っているExcelファイルをそのまま使えます。マクロや計算式もそのまま動作します。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
+                    <div class="flex items-start">
+                        <div class="w-12 h-12 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mr-4 flex-shrink-0">
+                            <i data-lucide="zap" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-900 mb-3">5分で完成</h3>
+                            <p class="text-slate-600 leading-relaxed">
+                                複雑な設定や長い打ち合わせは不要。Excelをアップロードして、目的を入力するだけ。AIが自動で最適な画面を作成します。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
+                    <div class="flex items-start">
+                        <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mr-4 flex-shrink-0">
+                            <i data-lucide="smartphone" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-900 mb-3">スマホからも使える</h3>
+                            <p class="text-slate-600 leading-relaxed">
+                                外出先や現場からも、スマホでデータを確認・入力できます。営業日報や在庫管理も、その場で完結します。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
+                    <div class="flex items-start">
+                        <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center mr-4 flex-shrink-0">
+                            <i data-lucide="users" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-900 mb-3">チームで共有</h3>
+                            <p class="text-slate-600 leading-relaxed">
+                                社内メンバーとリアルタイムでデータを共有。誰がいつ更新したかも分かるので、情報のズレがなくなります。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-slate-900 mb-4">たったの3ステップで始められます</h2>
+                <p class="text-slate-600">お昼休みの間に、アプリが完成します。</p>
+            </div>
+
+            <div class="relative">
+                <div class="hidden md:block absolute top-1/2 left-0 w-full h-1 bg-slate-100 -translate-y-1/2 z-0"></div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-12 relative z-10">
+                    <div class="bg-white p-6 text-center">
+                        <div class="w-16 h-16 bg-white border-4 border-blue-600 text-blue-600 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-6 shadow-sm">
+                            1
+                        </div>
+                        <h3 class="text-lg font-bold mb-2">経営方針を入力</h3>
+                        <p class="text-sm text-slate-600 leading-relaxed">
+                            「売上を上げたい」「残業を減らしたい」<br/>
+                            「在庫を適正化したい」<br/>
+                            アプリの目的を、普通の言葉で入力します。
+                        </p>
+                    </div>
+
+                    <div class="bg-white p-6 text-center">
+                        <div class="w-16 h-16 bg-white border-4 border-blue-600 text-blue-600 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-6 shadow-sm">
+                            2
+                        </div>
+                        <h3 class="text-lg font-bold mb-2">Excelをアップロード</h3>
+                        <p class="text-sm text-slate-600 leading-relaxed">
+                            今使っているExcelファイルを<br/>
+                            ドラッグ＆ドロップするだけ。<br/>
+                            マクロや計算式はそのまま使えます。
+                        </p>
+                    </div>
+
+                    <div class="bg-white p-6 text-center">
+                        <div class="w-16 h-16 bg-white border-4 border-blue-600 text-blue-600 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-6 shadow-sm">
+                            3
+                        </div>
+                        <h3 class="text-lg font-bold mb-2">AIが自動生成</h3>
+                        <p class="text-sm text-slate-600 leading-relaxed">
+                            最適なデザインとグラフをAIが提案。<br/>
+                            すぐにチームで共有して<br/>
+                            使うことができます。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Use Cases -->
+    <section id="cases" class="py-20 bg-slate-50">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold text-center text-slate-900 mb-4">地方の中小企業での導入事例</h2>
+            <p class="text-center text-slate-600 mb-12">実際に使っている経営者様の声をご紹介します</p>
+            
+            <div class="space-y-8">
+                <!-- Case 1 -->
+                <div class="bg-white p-8 rounded-2xl shadow-sm flex flex-col md:flex-row items-center border border-slate-100">
+                    <div class="md:w-1/2 mb-6 md:mb-0 md:pr-8">
+                        <div class="text-blue-600 font-bold text-sm mb-2 uppercase tracking-wide">Case 01</div>
+                        <h3 class="text-2xl font-bold text-slate-900 mb-4">製造業（従業員15名）</h3>
+                        <p class="text-slate-600 mb-4 leading-relaxed">
+                            「営業日報をExcelで管理していましたが、帰社後の入力作業で残業が増えていました。AppNaviでスマホから入力できるようにしたら、残業時間が月20時間減りました。」
+                        </p>
+                        <div class="flex items-center text-slate-800 font-bold bg-blue-50 p-3 rounded-lg">
+                            <i data-lucide="check-circle-2" class="w-5 h-5 text-blue-600 mr-3"></i>
+                            <span>導入時間：10分 | コスト：¥0</span>
+                        </div>
+                    </div>
+                    <div class="md:w-1/2 bg-slate-100 h-64 rounded-xl flex items-center justify-center text-slate-400 border border-slate-200">
+                        [スマホ画面イメージ]
+                    </div>
+                </div>
+
+                <!-- Case 2 -->
+                <div class="bg-white p-8 rounded-2xl shadow-sm flex flex-col md:flex-row-reverse items-center border border-slate-100">
+                    <div class="md:w-1/2 mb-6 md:mb-0 md:pl-8">
+                        <div class="text-green-600 font-bold text-sm mb-2 uppercase tracking-wide">Case 02</div>
+                        <h3 class="text-2xl font-bold text-slate-900 mb-4">小売業（従業員8名）</h3>
+                        <p class="text-slate-600 mb-4 leading-relaxed">
+                            「在庫管理が手書きメモとPC入力で二重管理になっており、在庫ズレが頻発していました。AppNaviで倉庫のタブレットから直接入力できるようにしたら、在庫ズレがゼロになりました。」
+                        </p>
+                        <div class="flex items-center text-slate-800 font-bold bg-green-50 p-3 rounded-lg">
+                            <i data-lucide="check-circle-2" class="w-5 h-5 text-green-600 mr-3"></i>
+                            <span>導入時間：15分 | コスト：¥0</span>
+                        </div>
+                    </div>
+                    <div class="md:w-1/2 bg-slate-100 h-64 rounded-xl flex items-center justify-center text-slate-400 border border-slate-200">
+                        [在庫リスト画面イメージ]
+                    </div>
+                </div>
+
+                <!-- Case 3 -->
+                <div class="bg-white p-8 rounded-2xl shadow-sm flex flex-col md:flex-row items-center border border-slate-100">
+                    <div class="md:w-1/2 mb-6 md:mb-0 md:pr-8">
+                        <div class="text-purple-600 font-bold text-sm mb-2 uppercase tracking-wide">Case 03</div>
+                        <h3 class="text-2xl font-bold text-slate-900 mb-4">サービス業（従業員12名）</h3>
+                        <p class="text-slate-600 mb-4 leading-relaxed">
+                            「顧客管理がExcelでバラバラに管理されており、情報共有ができていませんでした。AppNaviで一元管理できるようにしたら、営業効率が30%向上しました。」
+                        </p>
+                        <div class="flex items-center text-slate-800 font-bold bg-purple-50 p-3 rounded-lg">
+                            <i data-lucide="check-circle-2" class="w-5 h-5 text-purple-600 mr-3"></i>
+                            <span>導入時間：8分 | コスト：¥0</span>
+                        </div>
+                    </div>
+                    <div class="md:w-1/2 bg-slate-100 h-64 rounded-xl flex items-center justify-center text-slate-400 border border-slate-200">
+                        [顧客管理画面イメージ]
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq" class="py-20 bg-white">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold text-center text-slate-900 mb-12">よくある質問</h2>
+            <div class="space-y-4">
+                <div class="border border-slate-200 rounded-lg p-6">
+                    <h3 class="font-bold text-lg mb-2 flex items-center">
+                        <i data-lucide="help-circle" class="w-5 h-5 mr-2 text-blue-500"></i>
+                        本当にずっと無料ですか？
+                    </h3>
+                    <p class="text-slate-600 text-sm leading-relaxed ml-7">
+                        はい。AppNavi自体はオープンソース思想に基づき、基本機能を無料で提供しています。データ保管料（Googleドライブ等）や通信費は実費となりますが、中小企業規模であれば無料枠内で十分に運用可能です。追加のサーバー費用や保守費用は一切かかりません。
+                    </p>
+                </div>
+
+                <div class="border border-slate-200 rounded-lg p-6">
+                    <h3 class="font-bold text-lg mb-2 flex items-center">
+                        <i data-lucide="help-circle" class="w-5 h-5 mr-2 text-blue-500"></i>
+                        ITに詳しくなくても使えますか？
+                    </h3>
+                    <p class="text-slate-600 text-sm leading-relaxed ml-7">
+                        はい、大丈夫です。AppNaviは「No Code」をコンセプトに作られており、プログラミングの知識は一切不要です。Excelが使えれば、誰でも簡単に使えます。AIが自動で最適な画面を作成するため、設定も最小限で済みます。
+                    </p>
+                </div>
+
+                <div class="border border-slate-200 rounded-lg p-6">
+                    <h3 class="font-bold text-lg mb-2 flex items-center">
+                        <i data-lucide="help-circle" class="w-5 h-5 mr-2 text-blue-500"></i>
+                        セキュリティは大丈夫ですか？
+                    </h3>
+                    <p class="text-slate-600 text-sm leading-relaxed ml-7">
+                        万全を期しています。AppNaviはGoogleの認証基盤を利用しており、社内メンバーのみにアクセスを制限（Googleログイン必須）することができます。データは皆様自身のストレージ（PCやGoogleドライブ）に保存されるため、私たちがデータを覗き見ることはできません。また、元のExcelファイルはそのまま残るため、いつでも安全に戻ることができます。
+                    </p>
+                </div>
+
+                <div class="border border-slate-200 rounded-lg p-6">
+                    <h3 class="font-bold text-lg mb-2 flex items-center">
+                        <i data-lucide="help-circle" class="w-5 h-5 mr-2 text-blue-500"></i>
+                        Excelのマクロが入っていても使えますか？
+                    </h3>
+                    <p class="text-slate-600 text-sm leading-relaxed ml-7">
+                        はい、使えます。AppNaviはデータの「値」のみを読み取り、アプリ上で表示・更新します。元のExcelファイルのマクロや計算式を破壊することはありませんので、ご安心ください。元のExcelファイルはそのまま残り、いつでも従来通り使えます。
+                    </p>
+                </div>
+
+                <div class="border border-slate-200 rounded-lg p-6">
+                    <h3 class="font-bold text-lg mb-2 flex items-center">
+                        <i data-lucide="help-circle" class="w-5 h-5 mr-2 text-blue-500"></i>
+                        地方でも使えますか？インターネット接続は必要ですか？
+                    </h3>
+                    <p class="text-slate-600 text-sm leading-relaxed ml-7">
+                        はい、使えます。インターネット接続が必要ですが、スマホのテザリングでも十分に動作します。地方の中小企業様でも、スマホの電波が届く場所であれば問題なくご利用いただけます。オフライン時は、元のExcelファイルで従来通り作業を続けることができます。
+                    </p>
+                </div>
+
+                <div class="border border-slate-200 rounded-lg p-6">
+                    <h3 class="font-bold text-lg mb-2 flex items-center">
+                        <i data-lucide="help-circle" class="w-5 h-5 mr-2 text-blue-500"></i>
+                        途中でやめられますか？
+                    </h3>
+                    <p class="text-slate-600 text-sm leading-relaxed ml-7">
+                        はい、いつでもやめられます。データはあなたのPCやGoogleドライブに保存されているため、AppNaviを使わなくなっても、データが消えることはありません。元のExcelファイルはそのまま残っているので、いつでも従来の業務に戻ることができます。解約手続きも不要です。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-24 bg-blue-600 relative overflow-hidden">
+        <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-6">
+                地方の中小企業の経営者様へ<br/>
+                まずは5分、試してみてください。
+            </h2>
+            <p class="text-blue-100 text-lg mb-4">
+                高額なシステム導入はもう不要です。<br/>
+                失うものは何もありません。リスクゼロで、DXの第一歩を踏み出しましょう。
+            </p>
+            <p class="text-blue-200 text-sm mb-10">
+                <i data-lucide="check" class="inline w-4 h-4 mr-1"></i>予算ゼロ
+                <span class="mx-2">|</span>
+                <i data-lucide="check" class="inline w-4 h-4 mr-1"></i>IT知識ゼロ
+                <span class="mx-2">|</span>
+                <i data-lucide="check" class="inline w-4 h-4 mr-1"></i>リスクゼロ
+            </p>
+            <a href="#" class="inline-flex items-center px-8 py-4 bg-white text-blue-600 rounded-full font-bold text-lg hover:bg-blue-50 transition shadow-xl transform hover:scale-105 duration-200">
+                今すぐ無料で始める
+                <i data-lucide="arrow-right" class="ml-2 w-5 h-5"></i>
+            </a>
+            <p class="text-sm text-blue-200 mt-6">
+                <i data-lucide="check" class="inline w-4 h-4 mr-1"></i>クレジットカード不要
+                <span class="mx-2">|</span>
+                <i data-lucide="check" class="inline w-4 h-4 mr-1"></i>いつでも解約可能
+            </p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                <div class="col-span-1 md:col-span-2">
+                    <div class="flex items-center space-x-2 mb-4">
+                        <div class="w-6 h-6 bg-blue-600 rounded flex items-center justify-center text-white font-bold text-sm">A</div>
+                        <span class="text-lg font-bold text-white">AppNavi</span>
+                    </div>
+                    <p class="text-sm leading-relaxed max-w-xs">
+                        「データは個人のもの、プラットフォームはみんなのもの」<br/>
+                        地方の中小企業の自律的なDXを支援するオープン・プラットフォーム。
+                    </p>
+                </div>
+                <div>
+                    <h4 class="text-white font-bold mb-4">機能</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="hover:text-white transition">データ連携</a></li>
+                        <li><a href="#" class="hover:text-white transition">AI自動生成</a></li>
+                        <li><a href="#" class="hover:text-white transition">スマホ対応</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-white font-bold mb-4">サポート</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="hover:text-white transition">ヘルプセンター</a></li>
+                        <li><a href="#" class="hover:text-white transition">導入事例</a></li>
+                        <li><a href="#" class="hover:text-white transition">お問い合わせ</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center text-xs">
+                <p>&copy; 2024 AppNavi Project. All rights reserved.</p>
+                <div class="flex space-x-6 mt-4 md:mt-0">
+                    <a href="#" class="hover:text-white transition">プライバシーポリシー</a>
+                    <a href="#" class="hover:text-white transition">利用規約</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
