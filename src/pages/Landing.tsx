@@ -124,6 +124,12 @@ const Landing = () => {
                 無料で始める
                 <ArrowRight className="w-5 h-5" />
               </Link>
+              <Link
+                to="/login"
+                className="w-full sm:w-auto px-8 py-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-full font-bold text-lg shadow-sm transition flex items-center justify-center gap-2"
+              >
+                ログイン
+              </Link>
               <a
                 href="https://github.com/tsubasagit/appnavi"
                 target="_blank"
