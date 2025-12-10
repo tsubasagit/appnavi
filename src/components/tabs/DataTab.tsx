@@ -1,8 +1,20 @@
-import { useState } from 'react'
-import { RefreshCw, Download, CheckCircle2, ExternalLink, ShieldCheck, FileSpreadsheet, Table as TableIcon, Users, LayoutTemplate, Plus, ChevronRight, Filter, Search } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { RefreshCw, Download, CheckCircle2, ExternalLink, ShieldCheck, FileSpreadsheet, Table as TableIcon, Users, LayoutTemplate, Plus, ChevronRight, Filter, Search, X, Database, Wrench } from 'lucide-react'
+import { signInWithGoogle, auth } from '../../utils/firebase'
+import { onAuthStateChanged } from 'firebase/auth'
 
 const DataTab = () => {
   const [selectedSheet, setSelectedSheet] = useState('営業活動報告')
+  const [isAddDataModalOpen, setIsAddDataModalOpen] = useState(false)
+  const [isAuthenticating, setIsAuthenticating] = useState(false)
+
+  // 認証状態の監視（認証状態を監視するだけで、user変数は使用しない）
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, () => {
+      // 認証状態の変更を監視
+    })
+    return () => unsubscribe()
+  }, [])
 
   const sampleData = [
     {
@@ -40,6 +52,32 @@ const DataTab = () => {
   ]
 
   const columns = Object.keys(sampleData[0])
+
+  // Google認証処理
+  const handleGoogleAuth = async () => {
+    try {
+      setIsAuthenticating(true)
+      const authenticatedUser = await signInWithGoogle()
+      console.log('認証成功:', authenticatedUser)
+      // 認証成功後の処理（スプレッドシート選択など）
+      alert(`Google認証が完了しました。\nユーザー: ${authenticatedUser.displayName || authenticatedUser.email}\nスプレッドシートを選択してください。`)
+      setIsAddDataModalOpen(false)
+    } catch (error: any) {
+      console.error('認証エラー:', error)
+      alert(`認証に失敗しました: ${error.message}`)
+    } finally {
+      setIsAuthenticating(false)
+    }
+  }
+
+  // データソース選択
+  const handleDataSourceSelect = (source: 'spreadsheet' | 'firebase' | 'supabase') => {
+    if (source === 'spreadsheet') {
+      handleGoogleAuth()
+    } else {
+      alert(`${source === 'firebase' ? 'Firebase' : 'Supabase'}からの追加は工事中です`)
+    }
+  }
 
   return (
     <div className="flex h-full">
@@ -158,6 +196,13 @@ const DataTab = () => {
               <span className="text-slate-500 text-sm">全 {sampleData.length} 件</span>
             </div>
             <div className="flex items-center space-x-2">
+              <button 
+                onClick={() => setIsAddDataModalOpen(true)}
+                className="flex items-center space-x-2 bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-primary-700 transition shadow-sm"
+              >
+                <Plus size={16} />
+                <span>新規データ追加</span>
+              </button>
               <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg border border-slate-200" title="絞り込み">
                 <Filter size={16} />
               </button>
@@ -193,6 +238,95 @@ const DataTab = () => {
           </div>
         </div>
       </main>
+
+      {/* 新規データ追加モーダル */}
+      {isAddDataModalOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsAddDataModalOpen(false)
+            }
+          }}
+        >
+          <div 
+            className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-slate-200">
+              <h2 className="text-xl font-bold text-slate-900">新規データを追加</h2>
+              <button
+                onClick={() => setIsAddDataModalOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 transition"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-3">
+              {/* スプレッドシートから追加 */}
+              <button
+                onClick={() => handleDataSourceSelect('spreadsheet')}
+                disabled={isAuthenticating}
+                className="w-full flex items-center space-x-4 p-4 border-2 border-slate-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+                  <FileSpreadsheet className="w-6 h-6 text-green-600" />
+                </div>
+                <div className="flex-1 text-left">
+                  <h3 className="font-bold text-slate-900">スプレッドシートから追加</h3>
+                  <p className="text-sm text-slate-600">Googleスプレッドシートと連携してデータを追加</p>
+                </div>
+                {isAuthenticating && (
+                  <RefreshCw className="w-5 h-5 text-primary-600 animate-spin" />
+                )}
+              </button>
+
+              {/* Firebaseから追加（工事中） */}
+              <button
+                onClick={() => handleDataSourceSelect('firebase')}
+                className="w-full flex items-center space-x-4 p-4 border-2 border-slate-200 rounded-lg hover:border-slate-300 hover:bg-slate-50 transition cursor-pointer opacity-60"
+              >
+                <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
+                  <Database className="w-6 h-6 text-slate-400" />
+                </div>
+                <div className="flex-1 text-left">
+                  <div className="flex items-center space-x-2">
+                    <h3 className="font-bold text-slate-900">Firebaseから追加</h3>
+                    <span className="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full font-medium">
+                      工事中
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-600">Firebaseと連携してデータを追加</p>
+                </div>
+                <Wrench className="w-5 h-5 text-slate-400" />
+              </button>
+
+              {/* Supabaseから追加（工事中） */}
+              <button
+                onClick={() => handleDataSourceSelect('supabase')}
+                className="w-full flex items-center space-x-4 p-4 border-2 border-slate-200 rounded-lg hover:border-slate-300 hover:bg-slate-50 transition cursor-pointer opacity-60"
+              >
+                <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
+                  <Database className="w-6 h-6 text-slate-400" />
+                </div>
+                <div className="flex-1 text-left">
+                  <div className="flex items-center space-x-2">
+                    <h3 className="font-bold text-slate-900">Supabaseから追加</h3>
+                    <span className="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full font-medium">
+                      工事中
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-600">Supabaseと連携してデータを追加</p>
+                </div>
+                <Wrench className="w-5 h-5 text-slate-400" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
