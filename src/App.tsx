@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
 import ProtectedRoute from './components/ProtectedRoute'
 import Landing from './pages/Landing'
@@ -12,64 +12,66 @@ import { AppProvider } from './context/AppContext'
 import { AuthProvider } from './context/AuthContext'
 
 function AppContent() {
-  const location = useLocation()
-  const isAppDetail = location.pathname.startsWith('/apps/') && location.pathname !== '/apps'
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/register'
-  const isLandingPage = location.pathname === '/'
-  const showSidebar = !isAppDetail && !isAuthPage && !isLandingPage
-
-  // パブリックページ（サイドバーなし）
-  if (isAuthPage || isLandingPage) {
-    return (
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-      </Routes>
-    )
-  }
-
-  // 保護されたページ（サイドバーあり）
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
-      {showSidebar && <Sidebar />}
-      <main className="flex-1 overflow-auto">
-        <Routes>
-          <Route 
-            path="/dashboard" 
-            element={
+    <Routes>
+      {/* パブリックページ（サイドバーなし） */}
+      <Route path="/" element={<Landing />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      
+      {/* 保護されたページ（サイドバーあり） */}
+      <Route 
+        path="/dashboard" 
+        element={
+          <div className="flex h-screen overflow-hidden bg-slate-50">
+            <Sidebar />
+            <main className="flex-1 overflow-auto">
               <ProtectedRoute>
                 <Dashboard />
               </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/apps" 
-            element={
+            </main>
+          </div>
+        } 
+      />
+      <Route 
+        path="/apps" 
+        element={
+          <div className="flex h-screen overflow-hidden bg-slate-50">
+            <Sidebar />
+            <main className="flex-1 overflow-auto">
               <ProtectedRoute>
                 <MyApps />
               </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/apps/:appId" 
-            element={
+            </main>
+          </div>
+        } 
+      />
+      <Route 
+        path="/apps/:appId" 
+        element={
+          <div className="flex h-screen overflow-hidden bg-slate-50">
+            <main className="flex-1 overflow-auto">
               <ProtectedRoute>
                 <AppDetail />
               </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/about" 
-            element={
+            </main>
+          </div>
+        } 
+      />
+      <Route 
+        path="/about" 
+        element={
+          <div className="flex h-screen overflow-hidden bg-slate-50">
+            <Sidebar />
+            <main className="flex-1 overflow-auto">
               <ProtectedRoute>
                 <About />
               </ProtectedRoute>
-            } 
-          />
-        </Routes>
-      </main>
-    </div>
+            </main>
+          </div>
+        } 
+      />
+    </Routes>
   )
 }
 
@@ -77,7 +79,7 @@ function App() {
   return (
     <AuthProvider>
       <AppProvider>
-        <BrowserRouter>
+        <BrowserRouter basename="/appnavi">
           <AppContent />
         </BrowserRouter>
       </AppProvider>
