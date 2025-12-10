@@ -18,27 +18,14 @@ import {
   Twitter
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 
 const Landing = () => {
   const { currentUser } = useAuth()
-  const navigate = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  // 既にログインしている場合はダッシュボードにリダイレクト
-  useEffect(() => {
-    if (currentUser) {
-      navigate('/dashboard')
-    }
-  }, [currentUser, navigate])
-
-  if (currentUser) {
-    return null // リダイレクト中
-  }
-
   return (
-    <div className="min-h-screen bg-white text-slate-800">
+    <div className="min-h-screen bg-white text-slate-800 scroll-smooth">
       {/* Navigation */}
       <nav className="bg-white/90 backdrop-blur-md fixed w-full z-50 border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -59,12 +46,20 @@ const Landing = () => {
 
             {/* Auth Buttons */}
             <div className="hidden md:flex items-center space-x-4">
-              <Link to="/login" className="text-slate-600 hover:text-slate-900 font-medium px-4 py-2 transition">
-                ログイン
-              </Link>
-              <Link to="/register" className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full font-bold shadow-md transition transform hover:-translate-y-0.5">
-                新規登録
-              </Link>
+              {currentUser ? (
+                <Link to="/dashboard" className="text-slate-600 hover:text-slate-900 font-medium px-4 py-2 transition">
+                  ダッシュボード
+                </Link>
+              ) : (
+                <>
+                  <Link to="/login" className="text-slate-600 hover:text-slate-900 font-medium px-4 py-2 transition">
+                    ログイン
+                  </Link>
+                  <Link to="/register" className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full font-bold shadow-md transition transform hover:-translate-y-0.5">
+                    新規登録
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* Mobile menu button */}
@@ -87,12 +82,20 @@ const Landing = () => {
               <a href="#features" className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50">特徴</a>
               <a href="#target" className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50">活用事例</a>
               <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-2">
-                <Link to="/login" className="w-full text-center text-slate-600 hover:text-slate-900 font-medium px-4 py-2 border border-slate-300 rounded-md">
-                  ログイン
-                </Link>
-                <Link to="/register" className="w-full text-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-bold shadow-sm">
-                  新規登録
-                </Link>
+                {currentUser ? (
+                  <Link to="/dashboard" className="w-full text-center text-slate-600 hover:text-slate-900 font-medium px-4 py-2 border border-slate-300 rounded-md">
+                    ダッシュボード
+                  </Link>
+                ) : (
+                  <>
+                    <Link to="/login" className="w-full text-center text-slate-600 hover:text-slate-900 font-medium px-4 py-2 border border-slate-300 rounded-md">
+                      ログイン
+                    </Link>
+                    <Link to="/register" className="w-full text-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-bold shadow-sm">
+                      新規登録
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -117,19 +120,23 @@ const Landing = () => {
               誰でも自由に業務課題を解決できる社会へ。
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link
-                to="/register"
-                className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-bold text-lg shadow-lg transition transform hover:-translate-y-1 flex items-center justify-center gap-2"
-              >
-                無料で始める
-                <ArrowRight className="w-5 h-5" />
-              </Link>
-              <Link
-                to="/login"
-                className="w-full sm:w-auto px-8 py-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-full font-bold text-lg shadow-sm transition flex items-center justify-center gap-2"
-              >
-                ログイン
-              </Link>
+              {currentUser ? (
+                <Link
+                  to="/dashboard"
+                  className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-bold text-lg shadow-lg transition transform hover:-translate-y-1 flex items-center justify-center gap-2"
+                >
+                  ダッシュボードへ
+                  <ArrowRight className="w-5 h-5" />
+                </Link>
+              ) : (
+                <Link
+                  to="/register"
+                  className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-bold text-lg shadow-lg transition transform hover:-translate-y-1 flex items-center justify-center gap-2"
+                >
+                  無料で始める
+                  <ArrowRight className="w-5 h-5" />
+                </Link>
+              )}
               <a
                 href="https://github.com/tsubasagit/appnavi"
                 target="_blank"
@@ -343,12 +350,21 @@ const Landing = () => {
             手元のExcelファイルひとつで、DXは始められます。
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/register"
-              className="px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-bold text-lg shadow-xl transition transform hover:-translate-y-1"
-            >
-              無料で新規登録
-            </Link>
+            {currentUser ? (
+              <Link
+                to="/dashboard"
+                className="px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-bold text-lg shadow-xl transition transform hover:-translate-y-1"
+              >
+                ダッシュボードへ
+              </Link>
+            ) : (
+              <Link
+                to="/register"
+                className="px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-bold text-lg shadow-xl transition transform hover:-translate-y-1"
+              >
+                無料で新規登録
+              </Link>
+            )}
             <a
               href="#contact"
               className="px-10 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full font-bold text-lg transition"
