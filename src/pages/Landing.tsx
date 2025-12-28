@@ -42,6 +42,7 @@ const Landing = () => {
               <a href="#features" className="text-slate-600 hover:text-blue-600 transition">特徴</a>
               <a href="#target" className="text-slate-600 hover:text-blue-600 transition">活用事例</a>
               <a href="#contact" className="text-slate-600 hover:text-blue-600 transition">お問い合わせ</a>
+              <Link to="/developer" className="text-slate-600 hover:text-blue-600 transition font-medium">開発者向け</Link>
             </div>
 
             {/* Auth Buttons */}
@@ -81,6 +82,7 @@ const Landing = () => {
               <a href="#mission" className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50">ミッション</a>
               <a href="#features" className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50">特徴</a>
               <a href="#target" className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50">活用事例</a>
+              <Link to="/developer" className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50">開発者向け</Link>
               <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-2">
                 {currentUser ? (
                   <Link to="/dashboard" className="w-full text-center text-slate-600 hover:text-slate-900 font-medium px-4 py-2 border border-slate-300 rounded-md">
@@ -345,6 +347,13 @@ const Landing = () => {
           <h2 className="text-3xl font-bold text-slate-900 mb-6">
             さあ、あなたのデータを解き放ちましょう
           </h2>
+          <p className="text-slate-600 mb-6">
+            開発者・ITベンダーの方は{' '}
+            <Link to="/developer" className="text-blue-600 hover:text-blue-700 font-medium underline">
+              開発者向けページ
+            </Link>
+            もご覧ください
+          </p>
           <p className="text-slate-600 mb-10 text-lg">
             高額なシステムは必要ありません。<br />
             手元のExcelファイルひとつで、DXは始められます。
@@ -399,6 +408,7 @@ const Landing = () => {
             <div>
               <h4 className="font-bold text-slate-900 mb-4">Support</h4>
               <ul className="space-y-2 text-sm text-slate-600">
+                <li><Link to="/developer" className="hover:text-blue-600">開発者向け</Link></li>
                 <li><a href="#" className="hover:text-blue-600">ドキュメント</a></li>
                 <li><a href="#" className="hover:text-blue-600">基本構想書</a></li>
                 <li><a href="#contact" className="hover:text-blue-600">お問い合わせ</a></li>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Monitor, Smartphone, Eye, Rocket, Plus, Search, Sparkles, X, FileSpreadsheet, FileText, LayoutDashboard, ClipboardList } from 'lucide-react'
+import { Monitor, Smartphone, Eye, Rocket, Plus, Search, Sparkles, X, FileSpreadsheet, FileText, LayoutDashboard, ClipboardList, PenTool } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 
 const UITab = () => {
@@ -11,40 +11,23 @@ const UITab = () => {
   const [isNewScreenModalOpen, setIsNewScreenModalOpen] = useState(false)
   const { dataSources } = useApp()
 
+  // サンプルデータ
   const sampleData = [
-    { 日時: '2023/10/24', 担当者: '山田 太郎', 顧客名: '株式会社A', 案件名: '商談', ステータス: '完了' },
-    { 日時: '2023/10/24', 担当者: '鈴木 花子', 顧客名: 'B商事', 案件名: '定期訪問', ステータス: '進行中' },
-    { 日時: '2023/10/23', 担当者: '佐藤 次郎', 顧客名: 'Cテック', 案件名: 'トラブル対応', ステータス: '完了' },
+    { 日時: '2024/01/15 10:00', 担当者: '山田太郎', 顧客名: '株式会社ABC', 案件名: '新規システム導入', ステータス: '進行中' },
+    { 日時: '2024/01/14 14:30', 担当者: '佐藤花子', 顧客名: 'XYZ商事', 案件名: '既存システム改修', ステータス: '提案中' },
+    { 日時: '2024/01/13 09:15', 担当者: '鈴木一郎', 顧客名: 'DEF工業', 案件名: '保守契約', ステータス: '完了' },
+    { 日時: '2024/01/12 16:45', 担当者: '山田太郎', 顧客名: 'GHI株式会社', 案件名: '新規システム導入', ステータス: '進行中' },
+    { 日時: '2024/01/11 11:20', 担当者: '佐藤花子', 顧客名: 'JKL商会', 案件名: '既存システム改修', ステータス: '提案中' },
   ]
 
-  // データソース（AppContextから取得、なければサンプルデータを使用）
-  const sampleDataSources = [
-    {
-      id: '1',
-      name: '営業活動報告テーブル',
-      type: 'google-sheets' as const,
-      lastSynced: '2023/11/01',
-      generatedScreens: '自動生成される画面: **一覧 (検索/フィルタ付)**+**詳細/編集フォーム**',
-    },
-    {
-      id: '2',
-      name: '在庫管理台帳(Excel)',
-      type: 'excel' as const,
-      lastSynced: '2023/10/25',
-      generatedScreens: '自動生成される画面: **一覧 (グラフ付)** + **詳細/在庫更新フォーム**',
-    },
-  ]
-  
-  // AppContextのデータソースを拡張形式に変換
-  const availableDataSources = dataSources.length > 0 
-    ? dataSources.map(ds => ({
-        ...ds,
-        generatedScreens: ds.type === 'google-sheets' 
-          ? '自動生成される画面: **一覧 (検索/フィルタ付)**+**詳細/編集フォーム**'
-          : '自動生成される画面: **一覧 (グラフ付)** + **詳細/在庫更新フォーム**',
-        lastSynced: ds.lastSynced || '未同期',
-      }))
-    : sampleDataSources
+  // データソース（AppContextから取得）
+  const availableDataSources = dataSources.map(ds => ({
+    ...ds,
+    generatedScreens: ds.type === 'google-sheets' 
+      ? '自動生成される画面: **一覧 (検索/フィルタ付)**+**詳細/編集フォーム**'
+      : '自動生成される画面: **一覧 (グラフ付)** + **詳細/在庫更新フォーム**',
+    lastSynced: ds.lastSynced || '未同期',
+  }))
 
   // テンプレートリスト
   const templates = [
@@ -123,8 +106,31 @@ const UITab = () => {
   }
 
   return (
-    <div className="flex h-full">
-      {/* New Screen Modal */}
+    <div className="flex flex-col h-full">
+      {/* Header Section for Engineers */}
+      <div className="bg-slate-50 border-b border-slate-200 p-4 flex-shrink-0">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 flex items-center">
+                <PenTool className="mr-2 text-primary-600" size={24} /> Step 2: Design - テーマエンジン
+              </h2>
+              <p className="text-sm text-slate-600 mt-1">
+                顧客のブランディングに合わせるためのレイヤー。Tailwind Config injection、Component Swapにより、ホワイトラベル対応が可能です。
+              </p>
+            </div>
+            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 text-xs max-w-xs">
+              <p className="font-semibold text-slate-900 mb-1">エンジニア向け:</p>
+              <p className="text-slate-700">
+                プライマリカラー、フォント設定を tailwind.config.js に注入。「管理画面ライク」「SaaSライク」「現場向けモバイルライク」など、UIキット自体を差し替え可能。
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="flex flex-1 overflow-hidden">
+        {/* New Screen Modal */}
       {isNewScreenModalOpen && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
@@ -274,7 +280,7 @@ const UITab = () => {
         </div>
       )}
       {/* Left Panel - App Structure & Add Elements */}
-      <aside className="w-80 bg-slate-50 border-r border-slate-200 p-6 overflow-auto">
+      <aside className="w-80 bg-slate-50 border-r border-slate-200 p-6 overflow-auto pt-4">
         {/* App Structure Section */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
@@ -492,6 +498,7 @@ const UITab = () => {
           </div>
         </div>
       </main>
+      </div>
     </div>
   )
 }

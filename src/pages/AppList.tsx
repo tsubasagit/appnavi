@@ -1,22 +1,15 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { 
-  Plus, 
-  TrendingUp, 
-  Users, 
-  FileText, 
   Package, 
   ClipboardList, 
   UserCheck, 
   Calendar,
-  Rocket,
-  CheckCircle2,
-  Circle,
-  ArrowRight,
+  Settings,
+  FileText,
+  Plus,
   Layers,
-  Database,
-  Palette,
-  Settings
+  Rocket
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 
@@ -64,7 +57,7 @@ const templates = [
   },
 ]
 
-const Dashboard = () => {
+const AppList = () => {
   const navigate = useNavigate()
   const { createNewApp, apps } = useApp()
 
@@ -102,6 +95,58 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Existing Apps Selection */}
+      {apps.length > 0 && (
+        <div className="card mb-8">
+          <div className="mb-6">
+            <h2 className="text-xl font-bold text-slate-900 mb-2">アプリを選択</h2>
+            <p className="text-sm text-slate-600">
+              最初のアプリを選択してください。（あとで）変更もできます
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {apps.map((app) => {
+              const template = templates.find(t => t.id === app.template)
+              const TemplateIcon = template?.icon || FileText
+              
+              return (
+                <button
+                  key={app.id}
+                  onClick={() => navigate(`/apps/${app.id}`)}
+                  className="p-6 border-2 border-slate-200 rounded-xl hover:border-primary-300 hover:bg-primary-50/50 transition text-left"
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                      <TemplateIcon className="w-5 h-5 text-primary-600" />
+                    </div>
+                    <h3 className="font-bold text-lg text-slate-900">{app.name}</h3>
+                  </div>
+                  {app.mission && (
+                    <p className="text-sm text-slate-600 mb-2">{app.mission}</p>
+                  )}
+                  {app.template && (
+                    <div className="flex items-center gap-2 mt-3">
+                      <span className="text-xs px-2 py-1 bg-slate-100 text-slate-600 rounded">
+                        {templates.find(t => t.id === app.template)?.name || 'カスタム'}
+                      </span>
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        app.status === 'published' 
+                          ? 'bg-green-100 text-green-700' 
+                          : app.status === 'building'
+                          ? 'bg-yellow-100 text-yellow-700'
+                          : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        {app.status === 'published' ? '公開中' : 
+                         app.status === 'building' ? 'ビルド中' : '下書き'}
+                      </span>
+                    </div>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Template Selection */}
       <div className="card mb-8">
@@ -154,78 +199,9 @@ const Dashboard = () => {
           })}
         </div>
       </div>
-
-      {/* Existing Apps Quick Access */}
-      {apps.length > 0 && (
-        <div className="card mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-slate-900">既存のアプリ</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {apps.map((app) => {
-              const template = templates.find(t => t.id === app.template)
-              const TemplateIcon = template?.icon || FileText
-              
-              return (
-                <Link
-                  key={app.id}
-                  to={`/apps/${app.id}`}
-                  className="block p-4 border border-slate-200 rounded-lg hover:border-primary-300 hover:bg-primary-50/50 transition"
-                >
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-                      <TemplateIcon className="w-5 h-5 text-primary-600" />
-                    </div>
-                    <h3 className="font-bold text-slate-900">{app.name}</h3>
-                  </div>
-                  {app.mission && (
-                    <p className="text-sm text-slate-600">{app.mission}</p>
-                  )}
-                </Link>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Architecture Info */}
-      <div className="mt-8 grid md:grid-cols-3 gap-6">
-        <div className="card bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Database className="w-5 h-5 text-white" />
-            </div>
-            <h3 className="font-bold text-slate-900">Step 1: Strategy</h3>
-          </div>
-          <p className="text-sm text-slate-700">
-            目的特化型テンプレートを選択。在庫管理、日報、CRMなど、業務に最適なスキーマとロジックがプリセットされます。
-          </p>
-        </div>
-        <div className="card bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
-              <Palette className="w-5 h-5 text-white" />
-            </div>
-            <h3 className="font-bold text-slate-900">Step 2: Design</h3>
-          </div>
-          <p className="text-sm text-slate-700">
-            テーマエンジンでブランディング。プライマリカラー、フォント、UIキットを適用し、顧客のブランドに合わせます。
-          </p>
-        </div>
-        <div className="card bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
-              <Settings className="w-5 h-5 text-white" />
-            </div>
-            <h3 className="font-bold text-slate-900">Step 3: Data</h3>
-          </div>
-          <p className="text-sm text-slate-700">
-            データソースを接続。Google Sheets/Excelを直接DBとして使用するか、PostgreSQLに移行。Zero Migrationを実現。
-          </p>
-        </div>
-      </div>
     </div>
   )
 }
 
-export default Dashboard
+export default AppList
+

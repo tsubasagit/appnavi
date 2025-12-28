@@ -3,7 +3,9 @@ import { getAnalytics } from 'firebase/analytics'
 import { 
   getAuth, 
   GoogleAuthProvider, 
-  signInWithPopup, 
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut, 
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -24,7 +26,15 @@ const firebaseConfig = {
 // Firebase初期化
 const app = initializeApp(firebaseConfig)
 export const auth = getAuth(app)
+
+// Google認証プロバイダーの設定
 export const googleProvider = new GoogleAuthProvider()
+// 追加のスコープが必要な場合はここで設定
+// googleProvider.addScope('https://www.googleapis.com/auth/spreadsheets.readonly')
+// アカウント選択を毎回表示
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+})
 
 // Analytics初期化（ブラウザ環境でのみ）
 if (typeof window !== 'undefined') {
@@ -35,13 +45,41 @@ if (typeof window !== 'undefined') {
   }
 }
 
-// Google認証
+// Google認証（ポップアップ方式）
 export const signInWithGoogle = async (): Promise<User> => {
   try {
     const result = await signInWithPopup(auth, googleProvider)
     return result.user
-  } catch (error) {
+  } catch (error: any) {
     console.error('Google認証エラー:', error)
+    // エラーコードを保持して再スロー
+    if (error.code) {
+      throw { code: error.code, message: error.message }
+    }
+    throw error
+  }
+}
+
+// Google認証（リダイレクト方式 - ポップアップがブロックされた場合に使用）
+export const signInWithGoogleRedirect = async (): Promise<void> => {
+  try {
+    await signInWithRedirect(auth, googleProvider)
+  } catch (error: any) {
+    console.error('Google認証リダイレクトエラー:', error)
+    throw error
+  }
+}
+
+// リダイレクト後の結果を取得
+export const getGoogleRedirectResult = async (): Promise<User | null> => {
+  try {
+    const result = await getRedirectResult(auth)
+    if (result) {
+      return result.user
+    }
+    return null
+  } catch (error: any) {
+    console.error('リダイレクト結果の取得エラー:', error)
     throw error
   }
 }
@@ -77,6 +115,9 @@ export const logout = async (): Promise<void> => {
     throw error
   }
 }
+
+// テストモードの判定
+export const isTestMode = import.meta.env.DEV || import.meta.env.VITE_ENABLE_TEST_MODE === 'true'
 
 export default app
 

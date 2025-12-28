@@ -25,6 +25,10 @@ AppNaviは、IT知識の少ない中小企業経営者向けのNo-Codeアプリ�
 # 依存関係のインストール
 npm install
 
+# 環境変数の設定（オプション）
+# env.example をコピーして .env.local を作成し、Firebase設定値を入力
+cp env.example .env.local
+
 # 開発サーバーの起動
 npm run dev
 
@@ -34,6 +38,12 @@ npm run build
 # プレビュー
 npm run preview
 ```
+
+### ローカル開発環境でのGoogle認証設定
+
+ローカル環境（`localhost`）でGoogle認証を動作させるには、Firebase ConsoleとGoogle Cloud Consoleでの設定が必要です。
+
+詳細な手順については、[docs/LOCAL_DEVELOPMENT_SETUP.md](docs/LOCAL_DEVELOPMENT_SETUP.md)を参照してください。
 
 ## プロジェクト構造
 

@@ -1,16 +1,14 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, FolderKanban, Settings, Info, LogOut, User } from 'lucide-react'
-import { logout } from '../utils/firebase'
 import { useAuth } from '../context/AuthContext'
 
 const Sidebar = () => {
   const location = useLocation()
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
 
   const navItems = [
-    { path: '/dashboard', icon: LayoutDashboard, label: 'ダッシュボード' },
-    { path: '/apps', icon: FolderKanban, label: 'マイアプリ' },
+    { path: '/apps', icon: FolderKanban, label: 'アプリ' },
     { path: '/about', icon: Info, label: 'About' },
     { path: '/settings', icon: Settings, label: '設定' },
   ]
@@ -41,8 +39,7 @@ const Sidebar = () => {
         {navItems.map((item) => {
           const Icon = item.icon
           const isActive = location.pathname === item.path || 
-            (item.path === '/apps' && location.pathname.startsWith('/apps')) ||
-            (item.path === '/dashboard' && location.pathname === '/dashboard')
+            (item.path === '/apps' && location.pathname.startsWith('/apps'))
           
           return (
             <Link

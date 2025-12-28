@@ -1,44 +1,17 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Search, Plus, Edit, ExternalLink, FileText } from 'lucide-react'
-import { App } from '../types'
+import { useApp } from '../context/AppContext'
 
 const MyApps = () => {
   const [searchQuery, setSearchQuery] = useState('')
+  const navigate = useNavigate()
+  const { apps, createNewApp } = useApp()
 
-  // サンプルデータ（実際の実装ではContextから取得）
-  const apps: App[] = [
-    {
-      id: '1',
-      name: '営業活動報告',
-      description: '日々の営業活動を記録し、チーム内で共有するアプリ',
-      dataSource: { type: 'google-sheets' },
-      status: 'published',
-      lastUpdated: '2023-10-24 14:30',
-      views: 1240,
-      createdAt: '2023-10-20',
-    },
-    {
-      id: '2',
-      name: '在庫管理台帳',
-      description: '在庫の一元管理とリアルタイム更新',
-      dataSource: { type: 'excel', fileName: '在庫管理.xlsx' },
-      status: 'draft',
-      lastUpdated: '2023-10-23 09:15',
-      views: 0,
-      createdAt: '2023-10-22',
-    },
-    {
-      id: '3',
-      name: '顧客アンケート集計',
-      description: '顧客満足度調査の集計と可視化',
-      dataSource: { type: 'csv', fileName: 'survey.csv' },
-      status: 'published',
-      lastUpdated: '2023-10-20 18:00',
-      views: 856,
-      createdAt: '2023-10-18',
-    },
-  ]
+  const handleCreateNewApp = () => {
+    const newAppId = createNewApp()
+    navigate(`/apps/${newAppId}`)
+  }
 
   const filteredApps = apps.filter((app) =>
     app.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -77,15 +50,19 @@ const MyApps = () => {
             className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
         </div>
-        <button className="btn-primary flex items-center justify-center space-x-2">
+        <button 
+          onClick={handleCreateNewApp}
+          className="btn-primary flex items-center justify-center space-x-2"
+        >
           <Plus className="w-5 h-5" />
           <span>新規作成</span>
         </button>
       </div>
 
       {/* App Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredApps.map((app) => (
+      {filteredApps.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredApps.map((app) => (
           <div key={app.id} className="card hover:shadow-md transition">
             {/* Icon and Status */}
             <div className="flex items-start justify-between mb-4">
@@ -135,7 +112,21 @@ const MyApps = () => {
             </div>
           </div>
         ))}
-      </div>
+        </div>
+      ) : (
+        <div className="card text-center py-12">
+          <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-slate-900 mb-2">アプリがまだありません</h3>
+          <p className="text-slate-600 mb-6">新しいアプリを作成して始めましょう</p>
+          <button 
+            onClick={handleCreateNewApp}
+            className="btn-primary inline-flex items-center space-x-2"
+          >
+            <Plus className="w-5 h-5" />
+            <span>新規アプリを作成</span>
+          </button>
+        </div>
+      )}
     </div>
   )
 }

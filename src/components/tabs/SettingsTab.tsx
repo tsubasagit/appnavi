@@ -1,19 +1,51 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Settings, Users, Link2, Save, Mail, X } from 'lucide-react'
+import { useApp } from '../../context/AppContext'
 
 const SettingsTab = () => {
-  const [appName, setAppName] = useState('サンプルアプリ')
-  const [description, setDescription] = useState('営業活動の報告用アプリです。')
+  const { apps, activeAppId, setApps } = useApp()
+  const app = apps.find(a => a.id === activeAppId)
+  
+  const [appName, setAppName] = useState(app?.name || '新しいアプリ')
+  const [description, setDescription] = useState(app?.description || '')
   const [internalOnly, setInternalOnly] = useState(true)
   const [inviteEmail, setInviteEmail] = useState('email@example.com')
+
+  // アプリ情報が変更されたときに状態を更新
+  useEffect(() => {
+    if (app) {
+      setAppName(app.name || '新しいアプリ')
+      setDescription(app.description || '')
+    }
+  }, [app])
 
   const members = [
     { id: '1', name: '田中 部長', role: '管理者', avatar: '田' },
     { id: '2', name: '鈴木 花子', role: '編集者', avatar: '鈴' },
   ]
 
+  // 設定を保存
+  const handleSave = () => {
+    if (!app || !activeAppId) return
+
+    const updatedApps = apps.map(a => 
+      a.id === activeAppId 
+        ? { 
+            ...a, 
+            name: appName,
+            description: description,
+            lastUpdated: new Date().toISOString().slice(0, 16).replace('T', ' ')
+          }
+        : a
+    )
+    setApps(updatedApps)
+    
+    // 保存成功のフィードバック
+    alert('設定を保存しました')
+  }
+
   return (
-    <div className="p-6 md:p-8 max-w-4xl mx-auto pb-24">
+    <div className="p-6 md:p-8 max-w-4xl mx-auto">
       {/* 基本情報 */}
       <div className="card mb-6">
         <div className="flex items-center space-x-2 mb-4">
@@ -143,13 +175,18 @@ const SettingsTab = () => {
         </div>
       </div>
 
-      {/* Sticky Footer */}
-      <div className="fixed bottom-0 left-64 right-0 bg-slate-900 text-white px-6 py-4 flex items-center justify-between shadow-lg">
-        <p className="text-sm">変更内容を保存しますか?</p>
-        <button className="btn-primary bg-white text-primary-600 hover:bg-slate-100 flex items-center space-x-2">
-          <Save className="w-4 h-4" />
-          <span>設定を保存</span>
-        </button>
+      {/* Save Section */}
+      <div className="card mt-6">
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-slate-700">変更内容を保存しますか?</p>
+          <button 
+            onClick={handleSave}
+            className="btn-primary flex items-center space-x-2"
+          >
+            <Save className="w-4 h-4" />
+            <span>設定を保存</span>
+          </button>
+        </div>
       </div>
     </div>
   )

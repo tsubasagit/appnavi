@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
-import { RefreshCw, Download, CheckCircle2, ExternalLink, ShieldCheck, FileSpreadsheet, Table as TableIcon, Users, LayoutTemplate, Plus, ChevronRight, Filter, Search, X, Database, Wrench } from 'lucide-react'
+import { RefreshCw, Download, CheckCircle2, ExternalLink, ShieldCheck, FileSpreadsheet, Table as TableIcon, Plus, ChevronRight, Filter, Search, X, Database, Wrench } from 'lucide-react'
 import { signInWithGoogle, auth } from '../../utils/firebase'
 import { onAuthStateChanged } from 'firebase/auth'
+import { useApp } from '../../context/AppContext'
 
 const DataTab = () => {
-  const [selectedSheet, setSelectedSheet] = useState('営業活動報告')
+  const [selectedSheet, setSelectedSheet] = useState<string | null>(null)
   const [isAddDataModalOpen, setIsAddDataModalOpen] = useState(false)
   const [isAuthenticating, setIsAuthenticating] = useState(false)
+  const { dataSources } = useApp()
 
   // 認証状態の監視（認証状態を監視するだけで、user変数は使用しない）
   useEffect(() => {
@@ -16,42 +18,9 @@ const DataTab = () => {
     return () => unsubscribe()
   }, [])
 
-  const sampleData = [
-    {
-      日時: '2023/10/24',
-      担当者: '山田 太郎',
-      '顧客/案件名': '株式会社A',
-      訪問目的: '商談',
-      活動内容: '契約内定',
-      メモ: '',
-    },
-    {
-      日時: '2023/10/24',
-      担当者: '鈴木 花子',
-      '顧客/案件名': 'B商事',
-      訪問目的: '定期訪問',
-      活動内容: '次回見積もり提出',
-      メモ: '',
-    },
-    {
-      日時: '2023/10/23',
-      担当者: '佐藤 次郎',
-      '顧客/案件名': 'Cテック',
-      訪問目的: 'トラブル対応',
-      活動内容: '解決済み',
-      メモ: '',
-    },
-    {
-      日時: '2023/10/22',
-      担当者: '山田 太郎',
-      '顧客/案件名': 'D産業',
-      訪問目的: '挨拶',
-      活動内容: '担当者不在',
-      メモ: '',
-    },
-  ]
-
-  const columns = Object.keys(sampleData[0])
+  // データソースからデータを取得（現在は空）
+  const sampleData: any[] = []
+  const columns = sampleData.length > 0 ? Object.keys(sampleData[0]) : []
 
   // Google認証処理
   const handleGoogleAuth = async () => {
@@ -80,47 +49,58 @@ const DataTab = () => {
   }
 
   return (
-    <div className="flex h-full">
-      {/* Sub Sidebar */}
-      <div className="w-64 bg-white border-r border-slate-200 hidden lg:flex flex-col">
+    <div className="flex flex-col h-full">
+      {/* Header Section for Engineers */}
+      <div className="bg-slate-50 border-b border-slate-200 p-4 flex-shrink-0">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 flex items-center">
+                <Database className="mr-2 text-primary-600" size={24} /> Step 3: Data - データソース接続
+              </h2>
+              <p className="text-sm text-slate-600 mt-1">
+                「Zero Migration」を実現。Google Sheets/Excelを直接DBとして使用するか、PostgreSQLに移行可能です。
+              </p>
+            </div>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-xs max-w-xs">
+              <p className="font-semibold text-slate-900 mb-1">エンジニア向け:</p>
+              <p className="text-slate-700">
+                Spreadsheet Direct: Google Sheets/Excelを「書き込み可能なDB」として扱います。データ量が増えた場合、スプレッドシートからPostgreSQLへシームレスにデータ移行（Eject）可能。
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sub Sidebar */}
+        <div className="w-64 bg-white border-r border-slate-200 hidden lg:flex flex-col">
         <div className="p-4 border-b border-slate-100">
           <h3 className="font-bold text-slate-700 text-sm">データリスト</h3>
           <p className="text-xs text-slate-400 mt-1">連携中のシート一覧</p>
         </div>
         <div className="p-2 space-y-1 flex-1 overflow-y-auto">
-          <div
-            onClick={() => setSelectedSheet('営業活動報告')}
-            className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm cursor-pointer transition ${
-              selectedSheet === '営業活動報告'
-                ? 'bg-primary-50 text-primary-700 font-medium'
-                : 'text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            <TableIcon size={16} />
-            <span>営業活動報告</span>
-          </div>
-          <div
-            onClick={() => setSelectedSheet('顧客台帳')}
-            className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm cursor-pointer transition ${
-              selectedSheet === '顧客台帳'
-                ? 'bg-primary-50 text-primary-700 font-medium'
-                : 'text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            <Users size={16} />
-            <span>顧客台帳</span>
-          </div>
-          <div
-            onClick={() => setSelectedSheet('商品リスト')}
-            className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm cursor-pointer transition ${
-              selectedSheet === '商品リスト'
-                ? 'bg-primary-50 text-primary-700 font-medium'
-                : 'text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            <LayoutTemplate size={16} />
-            <span>商品リスト</span>
-          </div>
+          {dataSources.length > 0 ? (
+            dataSources.map((ds) => (
+              <div
+                key={ds.id}
+                onClick={() => setSelectedSheet(ds.name)}
+                className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm cursor-pointer transition ${
+                  selectedSheet === ds.name
+                    ? 'bg-primary-50 text-primary-700 font-medium'
+                    : 'text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <TableIcon size={16} />
+                <span>{ds.name}</span>
+              </div>
+            ))
+          ) : (
+            <div className="p-4 text-center text-sm text-slate-500">
+              <p>データソースがありません</p>
+              <p className="text-xs mt-1">データを追加してください</p>
+            </div>
+          )}
         </div>
         <div className="p-4 border-t border-slate-100">
           <button className="w-full py-2 border border-dashed border-slate-300 rounded-lg text-slate-500 text-sm hover:border-primary-400 hover:text-primary-600 transition flex items-center justify-center space-x-2">
@@ -128,16 +108,16 @@ const DataTab = () => {
             <span>新しい連携を追加</span>
           </button>
         </div>
-      </div>
+        </div>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto p-6">
+        {/* Main Content */}
+        <main className="flex-1 overflow-auto p-6">
         {/* Breadcrumb & Tools */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
           <div className="flex items-center text-sm text-slate-500">
             <span>データ管理</span>
             <ChevronRight size={14} className="mx-2" />
-            <span className="font-bold text-slate-800">{selectedSheet}</span>
+            <span className="font-bold text-slate-800">{selectedSheet || 'データソースを選択'}</span>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
@@ -150,6 +130,7 @@ const DataTab = () => {
         </div>
 
         {/* Info Banner with Security Assurance */}
+        {selectedSheet && (
         <div className="bg-white border border-green-200 rounded-xl p-4 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm relative overflow-hidden">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-green-500"></div>
           <div className="flex items-start space-x-4">
@@ -183,61 +164,93 @@ const DataTab = () => {
             連携設定を確認
           </button>
         </div>
+        )}
 
         {/* Data Table Card */}
-        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-          {/* Toolbar */}
-          <div className="p-4 border-b border-slate-100 flex flex-wrap gap-3 justify-between items-center bg-white">
-            <div className="flex items-center space-x-4">
-              <button className="flex items-center space-x-2 bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-primary-700 transition shadow-sm">
-                <RefreshCw size={16} />
-                <span>最新データ取得</span>
-              </button>
-              <span className="text-slate-500 text-sm">全 {sampleData.length} 件</span>
+        {selectedSheet ? (
+          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+            {/* Toolbar */}
+            <div className="p-4 border-b border-slate-100 flex flex-wrap gap-3 justify-between items-center bg-white">
+              <div className="flex items-center space-x-4">
+                <button className="flex items-center space-x-2 bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-primary-700 transition shadow-sm">
+                  <RefreshCw size={16} />
+                  <span>最新データ取得</span>
+                </button>
+                <span className="text-slate-500 text-sm">全 {sampleData.length} 件</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => setIsAddDataModalOpen(true)}
+                  className="flex items-center space-x-2 bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-primary-700 transition shadow-sm"
+                >
+                  <Plus size={16} />
+                  <span>新規データ追加</span>
+                </button>
+                <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg border border-slate-200" title="絞り込み">
+                  <Filter size={16} />
+                </button>
+                <button className="flex items-center space-x-2 bg-white border border-slate-200 text-slate-600 px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition">
+                  <Download size={16} />
+                  <span>CSV保存</span>
+                </button>
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <button 
-                onClick={() => setIsAddDataModalOpen(true)}
-                className="flex items-center space-x-2 bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-primary-700 transition shadow-sm"
-              >
-                <Plus size={16} />
-                <span>新規データ追加</span>
-              </button>
-              <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg border border-slate-200" title="絞り込み">
-                <Filter size={16} />
-              </button>
-              <button className="flex items-center space-x-2 bg-white border border-slate-200 text-slate-600 px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition">
-                <Download size={16} />
-                <span>CSV保存</span>
-              </button>
-            </div>
-          </div>
 
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-600">
-              <thead className="bg-slate-50 border-b border-slate-100 text-xs uppercase font-semibold text-slate-500">
-                <tr>
-                  {columns.map((col, idx) => (
-                    <th key={idx} className="px-6 py-4">{col}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {sampleData.map((row, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50 transition">
-                    {columns.map((col) => (
-                      <td key={col} className="px-6 py-4 whitespace-nowrap">
-                        {row[col as keyof typeof row] || '-'}
-                      </td>
+            {/* Table */}
+            {sampleData.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm text-slate-600">
+                  <thead className="bg-slate-50 border-b border-slate-100 text-xs uppercase font-semibold text-slate-500">
+                    <tr>
+                      {columns.map((col, idx) => (
+                        <th key={idx} className="px-6 py-4">{col}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {sampleData.map((row, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50 transition">
+                        {columns.map((col) => (
+                          <td key={col} className="px-6 py-4 whitespace-nowrap">
+                            {row[col as keyof typeof row] || '-'}
+                          </td>
+                        ))}
+                      </tr>
                     ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="p-12 text-center">
+                <TableIcon className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">データがありません</h3>
+                <p className="text-slate-600 mb-6">データを追加してください</p>
+                <button 
+                  onClick={() => setIsAddDataModalOpen(true)}
+                  className="btn-primary inline-flex items-center space-x-2"
+                >
+                  <Plus size={16} />
+                  <span>新規データ追加</span>
+                </button>
+              </div>
+            )}
           </div>
-        </div>
-      </main>
+        ) : (
+          <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-12 text-center">
+            <TableIcon className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">データソースがありません</h3>
+            <p className="text-slate-600 mb-6">左側のメニューからデータソースを追加してください</p>
+            <button 
+              onClick={() => setIsAddDataModalOpen(true)}
+              className="btn-primary inline-flex items-center space-x-2"
+            >
+              <Plus size={16} />
+              <span>データソースを追加</span>
+            </button>
+          </div>
+        )}
+        </main>
+      </div>
 
       {/* 新規データ追加モーダル */}
       {isAddDataModalOpen && (

@@ -7,7 +7,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { currentUser, loading } = useAuth()
+  const { currentUser, user, loading } = useAuth()
 
   if (loading) {
     return (
@@ -20,7 +20,8 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     )
   }
 
-  if (!currentUser) {
+  // テストユーザーまたはFirebase認証ユーザーがいる場合のみアクセス許可
+  if (!user && !currentUser) {
     return <Navigate to="/login" replace />
   }
 
