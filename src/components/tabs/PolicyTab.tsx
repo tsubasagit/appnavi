@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Save, Lightbulb, Target, BarChart3, Sparkles, Compass, Package, ClipboardList, UserCheck, Calendar, Settings, Search, FileText, ShoppingCart, Building2, Truck, CreditCard, Users, Briefcase, FileCheck, BarChart, PieChart, TrendingUp } from 'lucide-react'
+import { Save, Lightbulb, Target, BarChart3, Sparkles, Compass, Package, ClipboardList, UserCheck, Calendar, Settings, Search, FileText, ShoppingCart, Building2, Truck, CreditCard, Users, Briefcase, FileCheck, BarChart, PieChart, TrendingUp, X } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { App } from '../../types'
 
@@ -172,6 +172,8 @@ const PolicyTab = () => {
   const app = apps.find(a => a.id === activeAppId)
   
   const [searchQuery, setSearchQuery] = useState('')
+  const [selectedTemplateForModal, setSelectedTemplateForModal] = useState<typeof allTemplates[number] | null>(null)
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false)
 
   // デフォルトでCRMを選択
   useEffect(() => {
@@ -198,9 +200,16 @@ const PolicyTab = () => {
     alert('保存しました。AIに学習させました。')
   }
 
-  const handleTemplateSelect = (templateId: typeof allTemplates[number]['id']) => {
-    if (app) {
-      updateApp(app.id, { template: templateId as App['template'] })
+  const handleTemplateClick = (template: typeof allTemplates[number]) => {
+    setSelectedTemplateForModal(template)
+    setIsTemplateModalOpen(true)
+  }
+
+  const handleTemplateSelect = () => {
+    if (app && selectedTemplateForModal) {
+      updateApp(app.id, { template: selectedTemplateForModal.id as App['template'] })
+      setIsTemplateModalOpen(false)
+      setSelectedTemplateForModal(null)
     }
   }
 
@@ -259,7 +268,7 @@ const PolicyTab = () => {
               return (
                 <button
                   key={template.id}
-                  onClick={() => handleTemplateSelect(template.id)}
+                  onClick={() => handleTemplateClick(template)}
                   className={`p-4 border-2 rounded-xl transition text-left relative ${colorClasses[template.color as keyof typeof colorClasses]} ${selectedClasses} hover:shadow-md`}
                 >
                   {isSelected && (
@@ -608,6 +617,169 @@ const PolicyTab = () => {
           </>
         )}
       </div>
+
+      {/* テンプレート詳細モーダル */}
+      {isTemplateModalOpen && selectedTemplateForModal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={() => {
+            setIsTemplateModalOpen(false)
+            setSelectedTemplateForModal(null)
+          }}
+        >
+          <div 
+            className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* モーダルヘッダー */}
+            <div className="flex items-center justify-between p-6 border-b border-slate-200">
+              <div className="flex items-center space-x-3">
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                  selectedTemplateForModal.color === 'blue' ? 'bg-blue-600' :
+                  selectedTemplateForModal.color === 'green' ? 'bg-green-600' :
+                  selectedTemplateForModal.color === 'purple' ? 'bg-purple-600' :
+                  selectedTemplateForModal.color === 'orange' ? 'bg-orange-600' :
+                  'bg-slate-600'
+                }`}>
+                  {(() => {
+                    const Icon = selectedTemplateForModal.icon
+                    return <Icon className="w-6 h-6 text-white" />
+                  })()}
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900">{selectedTemplateForModal.name}</h2>
+                  <p className="text-sm text-slate-500">{selectedTemplateForModal.category}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setIsTemplateModalOpen(false)
+                  setSelectedTemplateForModal(null)
+                }}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 transition"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* モーダルコンテンツ */}
+            <div className="p-6 space-y-6">
+              {/* 説明 */}
+              <div>
+                <h3 className="font-bold text-slate-900 mb-2">説明</h3>
+                <p className="text-slate-600">{selectedTemplateForModal.description}</p>
+              </div>
+
+              {/* 作成者 */}
+              <div>
+                <h3 className="font-bold text-slate-900 mb-2">作成者</h3>
+                <p className="text-slate-600">{selectedTemplateForModal.author}</p>
+              </div>
+
+              {/* プレビュー */}
+              <div>
+                <h3 className="font-bold text-slate-900 mb-2">プレビュー</h3>
+                <p className="text-sm text-slate-600 mb-3">{selectedTemplateForModal.preview}</p>
+                <div className="w-full h-48 bg-slate-50 rounded-lg border border-slate-200 overflow-hidden shadow-sm p-3">
+                  {selectedTemplateForModal.id === 'inventory' && (
+                    <div className="h-full flex flex-col gap-1">
+                      <div className="flex gap-1">
+                        <div className="flex-1 h-4 bg-blue-200 rounded"></div>
+                        <div className="flex-1 h-4 bg-blue-200 rounded"></div>
+                        <div className="flex-1 h-4 bg-blue-200 rounded"></div>
+                      </div>
+                      <div className="flex-1 grid grid-cols-3 gap-1">
+                        <div className="bg-slate-100 rounded p-1">
+                          <div className="h-2 bg-slate-300 rounded mb-1"></div>
+                          <div className="h-1 bg-slate-200 rounded"></div>
+                        </div>
+                        <div className="bg-slate-100 rounded p-1">
+                          <div className="h-2 bg-slate-300 rounded mb-1"></div>
+                          <div className="h-1 bg-slate-200 rounded"></div>
+                        </div>
+                        <div className="bg-slate-100 rounded p-1">
+                          <div className="h-2 bg-slate-300 rounded mb-1"></div>
+                          <div className="h-1 bg-slate-200 rounded"></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {selectedTemplateForModal.id === 'daily-report' && (
+                    <div className="h-full flex gap-2">
+                      <div className="flex-1 bg-green-50 rounded p-1.5">
+                        <div className="h-2 bg-green-200 rounded mb-1"></div>
+                        <div className="h-1 bg-green-100 rounded mb-1"></div>
+                        <div className="h-1 bg-green-100 rounded"></div>
+                      </div>
+                      <div className="w-16 bg-green-50 rounded p-1.5">
+                        <div className="grid grid-cols-2 gap-0.5">
+                          {[...Array(6)].map((_, i) => (
+                            <div key={i} className={`h-3 rounded ${i < 2 ? 'bg-green-300' : 'bg-green-100'}`}></div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {selectedTemplateForModal.id === 'crm' && (
+                    <div className="h-full flex flex-col gap-1.5">
+                      <div className="flex gap-1.5">
+                        <div className="flex-1 h-6 bg-purple-100 rounded"></div>
+                        <div className="w-6 h-6 bg-purple-200 rounded-full"></div>
+                      </div>
+                      <div className="flex-1 bg-purple-50 rounded p-1.5">
+                        <div className="h-2 bg-purple-200 rounded mb-1"></div>
+                        <div className="h-1 bg-purple-100 rounded"></div>
+                      </div>
+                      <div className="flex gap-1">
+                        <div className="flex-1 h-4 bg-purple-100 rounded"></div>
+                        <div className="flex-1 h-4 bg-purple-100 rounded"></div>
+                      </div>
+                    </div>
+                  )}
+                  {selectedTemplateForModal.id === 'reservation' && (
+                    <div className="h-full bg-orange-50 rounded p-2">
+                      <div className="grid grid-cols-7 gap-1 mb-2">
+                        {[...Array(7)].map((_, i) => (
+                          <div key={i} className="h-2 bg-orange-200 rounded"></div>
+                        ))}
+                      </div>
+                      <div className="grid grid-cols-2 gap-1">
+                        {[...Array(4)].map((_, i) => (
+                          <div key={i} className={`h-8 rounded ${i < 2 ? 'bg-orange-300' : 'bg-orange-100'}`}></div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {!['inventory', 'daily-report', 'crm', 'reservation'].includes(selectedTemplateForModal.id) && (
+                    <div className="h-full flex items-center justify-center text-slate-400 text-sm">
+                      プレビュー画像
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* アクションボタン */}
+              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-200">
+                <button
+                  onClick={() => {
+                    setIsTemplateModalOpen(false)
+                    setSelectedTemplateForModal(null)
+                  }}
+                  className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition"
+                >
+                  キャンセル
+                </button>
+                <button
+                  onClick={handleTemplateSelect}
+                  className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-medium"
+                >
+                  このテンプレートに変更
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

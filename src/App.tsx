@@ -108,7 +108,13 @@ function App() {
   return (
     <AuthProvider>
       <AppProvider>
-        <BrowserRouter basename="/appnavi">
+        <BrowserRouter 
+          basename="/appnavi"
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
+        >
           <AuthRedirectHandler>
             <AppContent />
           </AuthRedirectHandler>

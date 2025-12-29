@@ -52,9 +52,13 @@ export const signInWithGoogle = async (): Promise<User> => {
     return result.user
   } catch (error: any) {
     console.error('Google認証エラー:', error)
-    // エラーコードを保持して再スロー
+    // エラーコード、メッセージ、Request IDを保持して再スロー
     if (error.code) {
-      throw { code: error.code, message: error.message }
+      throw { 
+        code: error.code, 
+        message: error.message,
+        requestId: error.customData?.requestId || error.requestId || null
+      }
     }
     throw error
   }

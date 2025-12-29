@@ -57,6 +57,45 @@ export interface User {
   avatar?: string;
 }
 
+// デザイン・構成画面の型定義
+export type ComponentType = 'heading' | 'kpi_grid' | 'table' | 'chart' | 'grid' | 'search' | 'form' | 'kanban' | 'calendar' | 'list' | 'card' | 'stats' | 'action_bar'
+
+export interface ComponentConfig {
+  id: string;
+  type: ComponentType;
+  label?: string;
+  visible?: boolean;
+  props?: Record<string, any>;
+  dataSource?: string; // データバインディング用
+}
+
+export interface Page {
+  id: number | string;
+  name: string;
+  path: string;
+  template?: string;
+}
+
+export interface PageConfig {
+  [pageId: string]: ComponentConfig[];
+}
+
+export interface UIState {
+  activePageId: number | string | null;
+  selectedComponentId: string | null;
+}
+
+export interface ThemeConfig {
+  mode: 'light' | 'dark';
+  primaryColor: string;
+  radius: 'none' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
+}
+
+export interface DesignConfig {
+  pages: PageConfig;
+  theme: ThemeConfig;
+}
+
 
 
 

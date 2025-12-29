@@ -124,7 +124,7 @@ const Landing = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               {currentUser ? (
                 <Link
-                  to="/dashboard"
+                  to="/apps"
                   className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-bold text-lg shadow-lg transition transform hover:-translate-y-1 flex items-center justify-center gap-2"
                 >
                   ダッシュボードへ

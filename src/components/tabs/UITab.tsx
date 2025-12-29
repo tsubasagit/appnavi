@@ -1,508 +1,695 @@
-import { useState, useEffect } from 'react'
-import { Monitor, Smartphone, Eye, Rocket, Plus, Search, Sparkles, X, FileSpreadsheet, FileText, LayoutDashboard, ClipboardList, PenTool } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Monitor, Smartphone, Eye, Rocket, Plus, X, PenTool, ChevronDown, ChevronRight, BarChart3, Grid3x3, FileText, Type, Trash2 } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
+import { ComponentConfig, Page, PageConfig, UIState, ComponentType } from '../../types'
 
 const UITab = () => {
-  const [selectedLayout] = useState('list')
+  const { dataSources, apps, activeAppId } = useApp()
+  const app = apps.find(a => a.id === activeAppId)
+
+  // State管理（仕様書に基づく）
+  const [pages, setPages] = useState<Page[]>([
+    { id: 1, name: 'Dashboard', path: '/', template: 'dashboard' },
+  ])
+  
+  const [pageComponents, setPageComponents] = useState<PageConfig>({
+    '1': [
+      {
+        id: 'c_123456789',
+        type: 'heading',
+        props: {
+          text: 'Dashboard Overview',
+          align: 'left'
+        }
+      },
+      {
+        id: 'c_987654321',
+        type: 'kpi_grid',
+        props: {
+          title: 'Monthly Stats',
+          dataSource: 'kpi_summary_sheet'
+        }
+      }
+    ]
+  })
+
+  const [uiState, setUIState] = useState<UIState>({
+    activePageId: 1,
+    selectedComponentId: null
+  })
+
   const [previewMode, setPreviewMode] = useState<'pc' | 'mobile'>('pc')
-  const [selectedElement, setSelectedElement] = useState<string | null>(null)
-  const [appStructureTab, setAppStructureTab] = useState<'screens' | 'components'>('screens')
-  const [selectedScreen, setSelectedScreen] = useState<string | null>('一覧ページ')
-  const [isNewScreenModalOpen, setIsNewScreenModalOpen] = useState(false)
-  const { dataSources } = useApp()
+  const [isPageDropdownOpen, setIsPageDropdownOpen] = useState(false)
+  const [isComponentPickerOpen, setIsComponentPickerOpen] = useState(false)
+  const [hoveredSlotIndex, setHoveredSlotIndex] = useState<number | null>(null)
+  const [componentPickerSlotIndex, setComponentPickerSlotIndex] = useState<number | null>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
-  // サンプルデータ
-  const sampleData = [
-    { 日時: '2024/01/15 10:00', 担当者: '山田太郎', 顧客名: '株式会社ABC', 案件名: '新規システム導入', ステータス: '進行中' },
-    { 日時: '2024/01/14 14:30', 担当者: '佐藤花子', 顧客名: 'XYZ商事', 案件名: '既存システム改修', ステータス: '提案中' },
-    { 日時: '2024/01/13 09:15', 担当者: '鈴木一郎', 顧客名: 'DEF工業', 案件名: '保守契約', ステータス: '完了' },
-    { 日時: '2024/01/12 16:45', 担当者: '山田太郎', 顧客名: 'GHI株式会社', 案件名: '新規システム導入', ステータス: '進行中' },
-    { 日時: '2024/01/11 11:20', 担当者: '佐藤花子', 顧客名: 'JKL商会', 案件名: '既存システム改修', ステータス: '提案中' },
-  ]
-
-  // データソース（AppContextから取得）
-  const availableDataSources = dataSources.map(ds => ({
-    ...ds,
-    generatedScreens: ds.type === 'google-sheets' 
-      ? '自動生成される画面: **一覧 (検索/フィルタ付)**+**詳細/編集フォーム**'
-      : '自動生成される画面: **一覧 (グラフ付)** + **詳細/在庫更新フォーム**',
-    lastSynced: ds.lastSynced || '未同期',
-  }))
-
-  // テンプレートリスト
-  const templates = [
-    {
-      id: 'blank',
-      name: '空白のページから開始',
-      description: '** 【デザイン優先】 ** ゼロから自由に設計します。データ連携は後からいつでも可能です。',
-      dataRequired: false,
-      icon: Plus,
-    },
-    {
-      id: 'dashboard',
-      name: '総合ダッシュボード',
-      description: '複数のデータソースに対応。全体像を把握するのに最適です。',
-      dataRequired: true,
-      dataCount: '複数',
-      icon: LayoutDashboard,
-    },
-    {
-      id: 'form',
-      name: 'データ入力フォーム',
-      description: 'データソース：1つ必須（登録用）。手動でのデータ入力に便利です。',
-      dataRequired: true,
-      dataCount: '1つ必須',
-      icon: FileText,
-    },
-    {
-      id: 'kanban',
-      name: 'カンバン/タスクリスト',
-      description: 'データソース：1つ必須（タスク用）。進捗を視覚的に管理できます。',
-      dataRequired: true,
-      dataCount: '1つ必須',
-      icon: ClipboardList,
-    },
-  ]
-
-  const handleDataSourceClick = (dataSourceId: string) => {
-    // ダミー: 画面生成APIを呼び出す
-    alert(`データソース ${dataSourceId} から画面を生成します`)
-    setIsNewScreenModalOpen(false)
-  }
-
-  const handleTemplateClick = (templateId: string) => {
-    // ダミー: テンプレート選択後の画面名入力ステップ
-    alert(`テンプレート ${templateId} を選択しました。画面名を入力してください。`)
-    setIsNewScreenModalOpen(false)
-  }
-
-  // ESCキーでモーダルを閉じる
+  // ドロップダウン外クリックで閉じる
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isNewScreenModalOpen) {
-        setIsNewScreenModalOpen(false)
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsPageDropdownOpen(false)
       }
     }
-    if (isNewScreenModalOpen) {
-      document.addEventListener('keydown', handleEscape)
-      // モーダルが開いている時は背景のスクロールを無効化
-      document.body.style.overflow = 'hidden'
-    }
-    return () => {
-      document.removeEventListener('keydown', handleEscape)
-      document.body.style.overflow = 'unset'
-    }
-  }, [isNewScreenModalOpen])
 
-  const getDataSourceIcon = (type: string) => {
+    if (isPageDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isPageDropdownOpen])
+
+  // 現在のページのコンポーネントを取得
+  const currentPageComponents = pageComponents[String(uiState.activePageId)] || []
+
+  // ページ切り替え
+  const handlePageChange = (pageId: number | string) => {
+    setUIState({
+      activePageId: pageId,
+      selectedComponentId: null // ページ切り替え時は選択をリセット
+    })
+    setIsPageDropdownOpen(false)
+  }
+
+  // コンポーネント選択
+  const handleComponentSelect = (componentId: string) => {
+    setUIState(prev => ({
+      ...prev,
+      selectedComponentId: componentId
+    }))
+  }
+
+  // コンポーネント追加（Slot位置に挿入）
+  const handleAddComponent = (type: ComponentType, slotIndex: number) => {
+    const newComponent: ComponentConfig = {
+      id: `c_${Date.now()}`,
+      type,
+      props: getDefaultProps(type)
+    }
+
+    const currentComponents = [...currentPageComponents]
+    currentComponents.splice(slotIndex, 0, newComponent)
+
+    setPageComponents(prev => ({
+      ...prev,
+      [String(uiState.activePageId)]: currentComponents
+    }))
+
+    setIsComponentPickerOpen(false)
+    setComponentPickerSlotIndex(null)
+    setHoveredSlotIndex(null)
+  }
+
+  // コンポーネント削除
+  const handleDeleteComponent = (componentId: string) => {
+    const currentComponents = currentPageComponents.filter(c => c.id !== componentId)
+    setPageComponents(prev => ({
+      ...prev,
+      [String(uiState.activePageId)]: currentComponents
+    }))
+    setUIState(prev => ({
+      ...prev,
+      selectedComponentId: null
+    }))
+  }
+
+  // 新規ページ作成
+  const handleCreatePage = () => {
+    const newPageId = pages.length + 1
+    const newPage: Page = {
+      id: newPageId,
+      name: `Page ${newPageId}`,
+      path: `/page-${newPageId}`,
+      template: 'blank'
+    }
+    setPages([...pages, newPage])
+    setPageComponents(prev => ({
+      ...prev,
+      [String(newPageId)]: []
+    }))
+    handlePageChange(newPageId)
+  }
+
+  // デフォルトプロパティ
+  const getDefaultProps = (type: ComponentType): Record<string, any> => {
     switch (type) {
-      case 'google-sheets':
-        return <div className="w-8 h-8 bg-green-600 rounded flex items-center justify-center text-white font-bold text-xs">GS</div>
-      case 'excel':
-        return <FileSpreadsheet className="w-8 h-8 text-green-600" />
+      case 'heading':
+        return { text: 'New Heading', align: 'left' }
+      case 'kpi_grid':
+        return { title: 'KPI Grid', dataSource: '' }
+      case 'table':
+        return { title: 'Table', dataSource: '' }
       default:
-        return <FileText className="w-8 h-8 text-slate-400" />
+        return {}
     }
   }
+
+  // コンポーネントアイコン取得
+  const getComponentIcon = (type: ComponentType) => {
+    switch (type) {
+      case 'heading':
+        return <Type className="w-4 h-4" />
+      case 'kpi_grid':
+        return <Grid3x3 className="w-4 h-4" />
+      case 'table':
+        return <FileText className="w-4 h-4" />
+      case 'chart':
+        return <BarChart3 className="w-4 h-4" />
+      default:
+        return <FileText className="w-4 h-4" />
+    }
+  }
+
+  // コンポーネントレンダリング（Safe Rendering）
+  const renderComponent = (component: ComponentConfig) => {
+    const isSelected = component.id === uiState.selectedComponentId
+
+    switch (component.type) {
+      case 'heading':
+        return (
+          <div
+            className={`p-4 ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation()
+              handleComponentSelect(component.id)
+            }}
+          >
+            <h2 style={{ textAlign: component.props?.align || 'left' }}>
+              {component.props?.text || 'Heading'}
+            </h2>
+          </div>
+        )
+      case 'kpi_grid':
+        return (
+          <div
+            className={`p-4 bg-slate-50 rounded-lg ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation()
+              handleComponentSelect(component.id)
+            }}
+          >
+            <h3 className="font-bold mb-2">{component.props?.title || 'KPI Grid'}</h3>
+            <div className="grid grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-white p-4 rounded border">
+                  <div className="text-2xl font-bold">0</div>
+                  <div className="text-sm text-slate-600">Metric {i}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      case 'table':
+        return (
+          <div
+            className={`p-4 ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation()
+              handleComponentSelect(component.id)
+            }}
+          >
+            <h3 className="font-bold mb-2">{component.props?.title || 'Table'}</h3>
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left p-2">Column 1</th>
+                  <th className="text-left p-2">Column 2</th>
+                  <th className="text-left p-2">Column 3</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b">
+                  <td className="p-2">Row 1</td>
+                  <td className="p-2">Data</td>
+                  <td className="p-2">Data</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )
+      default:
+        return (
+          <div
+            className={`p-4 border-2 border-dashed border-slate-300 rounded ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation()
+              handleComponentSelect(component.id)
+            }}
+          >
+            <p className="text-slate-500">Unknown Component: {component.type}</p>
+          </div>
+        )
+    }
+  }
+
+  // コンポーネントタイプ一覧
+  const componentTypes: { type: ComponentType; label: string; icon: any }[] = [
+    { type: 'heading', label: 'Heading', icon: Type },
+    { type: 'kpi_grid', label: 'KPI Grid', icon: Grid3x3 },
+    { type: 'table', label: 'Table', icon: FileText },
+    { type: 'chart', label: 'Chart', icon: BarChart3 },
+  ]
+
+  // 選択中のコンポーネント
+  const selectedComponent = currentPageComponents.find(c => c.id === uiState.selectedComponentId)
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header Section for Engineers */}
+      {/* Header Section */}
       <div className="bg-slate-50 border-b border-slate-200 p-4 flex-shrink-0">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-bold text-slate-900 flex items-center">
-                <PenTool className="mr-2 text-primary-600" size={24} /> Step 2: Design - テーマエンジン
-              </h2>
-              <p className="text-sm text-slate-600 mt-1">
-                顧客のブランディングに合わせるためのレイヤー。Tailwind Config injection、Component Swapにより、ホワイトラベル対応が可能です。
-              </p>
-            </div>
-            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 text-xs max-w-xs">
-              <p className="font-semibold text-slate-900 mb-1">エンジニア向け:</p>
-              <p className="text-slate-700">
-                プライマリカラー、フォント設定を tailwind.config.js に注入。「管理画面ライク」「SaaSライク」「現場向けモバイルライク」など、UIキット自体を差し替え可能。
-              </p>
-            </div>
+          <div>
+            <h2 className="text-xl font-bold text-slate-900 flex items-center">
+              <PenTool className="mr-2 text-primary-600" size={24} /> Step 2: Design - テーマエンジン
+            </h2>
+            <p className="text-sm text-slate-600 mt-1">
+              デザインをカスタマイズして、アプリの見た目を調整します。
+            </p>
           </div>
         </div>
       </div>
       
       <div className="flex flex-1 overflow-hidden">
-        {/* New Screen Modal */}
-      {isNewScreenModalOpen && (
+        {/* Left Panel - Structure & Navigation */}
+        <aside className="w-80 bg-slate-50 border-r border-slate-200 p-6 overflow-auto">
+          {/* Page Selector */}
+          <div className="mb-6" ref={dropdownRef}>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-bold text-slate-900">Pages</h3>
+              <button
+                onClick={handleCreatePage}
+                className="flex items-center space-x-1 px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition text-sm font-medium"
+              >
+                <Plus size={16} />
+                <span>新規</span>
+              </button>
+            </div>
+            
+            <div className="relative">
+              <button
+                onClick={() => setIsPageDropdownOpen(!isPageDropdownOpen)}
+                className="w-full flex items-center justify-between px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 hover:bg-slate-50 transition"
+              >
+                <span>
+                  {pages.find(p => p.id === uiState.activePageId)?.name || 'ページを選択'}
+                </span>
+                <ChevronDown 
+                  className={`w-4 h-4 text-slate-500 transition-transform ${isPageDropdownOpen ? 'transform rotate-180' : ''}`} 
+                />
+              </button>
+              
+              {isPageDropdownOpen && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {pages.map((page) => (
+                    <button
+                      key={page.id}
+                      onClick={() => handlePageChange(page.id)}
+                      className={`w-full text-left px-4 py-2 text-sm transition ${
+                        uiState.activePageId === page.id
+                          ? 'bg-primary-50 text-primary-700 font-medium'
+                          : 'text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {page.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Component Tree */}
+          <div>
+            <h4 className="text-sm font-medium text-slate-700 mb-2">Components</h4>
+            <div className="space-y-1">
+              {currentPageComponents.length === 0 ? (
+                <p className="text-sm text-slate-500 px-4 py-2">コンポーネントがありません</p>
+              ) : (
+                currentPageComponents.map((component) => {
+                  const isSelected = component.id === uiState.selectedComponentId
+                  const Icon = getComponentIcon(component.type)
+                  
+                  return (
+                    <div
+                      key={component.id}
+                      onClick={() => handleComponentSelect(component.id)}
+                      className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition cursor-pointer ${
+                        isSelected
+                          ? 'bg-blue-900 text-white'
+                          : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2">
+                        {Icon}
+                        <span>{component.type}</span>
+                      </div>
+                      {isSelected && (
+                        <ChevronRight className="w-4 h-4" />
+                      )}
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          </div>
+        </aside>
+
+        {/* Center Panel - Canvas / Preview */}
+        <main className="flex-1 flex flex-col overflow-hidden bg-slate-100">
+          {/* Preview Controls */}
+          <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 bg-slate-100 rounded-lg p-1">
+                <button
+                  onClick={() => setPreviewMode('pc')}
+                  className={`px-3 py-1 rounded text-sm font-medium transition ${
+                    previewMode === 'pc'
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-600'
+                  }`}
+                >
+                  <Monitor className="w-4 h-4 inline mr-1" />
+                  PC
+                </button>
+                <button
+                  onClick={() => setPreviewMode('mobile')}
+                  className={`px-3 py-1 rounded text-sm font-medium transition ${
+                    previewMode === 'mobile'
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-600'
+                  }`}
+                >
+                  <Smartphone className="w-4 h-4 inline mr-1" />
+                  Mobile
+                </button>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition text-sm">
+                <Eye className="w-4 h-4 inline mr-1" />
+                プレビュー
+              </button>
+              <button className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition text-sm">
+                <Rocket className="w-4 h-4 inline mr-1" />
+                公開する
+              </button>
+            </div>
+          </div>
+
+          {/* Preview Canvas */}
+          <div className="flex-1 overflow-auto p-8">
+            <div
+              className={`bg-white rounded-xl shadow-lg mx-auto ${
+                previewMode === 'mobile' ? 'max-w-sm' : 'max-w-5xl'
+              }`}
+              onClick={() => setUIState(prev => ({ ...prev, selectedComponentId: null }))}
+            >
+              {/* App Header */}
+              <div className="bg-primary-600 text-white px-6 py-4 rounded-t-xl">
+                <h2 className="font-bold">
+                  {app?.template === 'crm' ? '顧客管理（CRM）' :
+                   app?.template === 'inventory' ? '在庫管理' :
+                   app?.template === 'daily-report' ? '日報・活動報告' :
+                   app?.template === 'reservation' ? '予約管理' :
+                   app?.name || 'App'}
+                </h2>
+              </div>
+
+              {/* Components with Slots */}
+              <div className="p-6">
+                {currentPageComponents.length === 0 ? (
+                  <div className="text-center py-12 text-slate-500">
+                    <p>コンポーネントを追加してください</p>
+                  </div>
+                ) : (
+                  currentPageComponents.map((component, index) => (
+                    <div key={component.id} className="relative">
+                      {/* Slot (Before Component) */}
+                      <div
+                        className="relative h-2 -mt-1 group"
+                        onMouseEnter={() => setHoveredSlotIndex(index)}
+                        onMouseLeave={() => {
+                          if (componentPickerSlotIndex !== index) {
+                            setHoveredSlotIndex(null)
+                          }
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setComponentPickerSlotIndex(index)
+                          setIsComponentPickerOpen(true)
+                        }}
+                      >
+                        {hoveredSlotIndex === index && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-blue-100 border-2 border-blue-500 border-dashed rounded cursor-pointer">
+                            <Plus className="w-5 h-5 text-blue-600" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Component with Delete Button */}
+                      <div className="relative">
+                        {uiState.selectedComponentId === component.id && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteComponent(component.id)
+                            }}
+                            className="absolute -top-2 -right-2 z-10 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        )}
+                        {renderComponent(component)}
+                      </div>
+                    </div>
+                  ))
+                )}
+
+                {/* Slot (After Last Component) */}
+                <div
+                  className="relative h-12 mt-4 group border-2 border-dashed border-slate-300 rounded flex items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition"
+                  onMouseEnter={() => setHoveredSlotIndex(currentPageComponents.length)}
+                  onMouseLeave={() => {
+                    if (componentPickerSlotIndex !== currentPageComponents.length) {
+                      setHoveredSlotIndex(null)
+                    }
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setComponentPickerSlotIndex(currentPageComponents.length)
+                    setIsComponentPickerOpen(true)
+                  }}
+                >
+                  <Plus className="w-5 h-5 text-slate-400 group-hover:text-blue-600" />
+                  <span className="ml-2 text-sm text-slate-500 group-hover:text-blue-600">コンポーネントを追加</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+
+        {/* Right Panel - Property Inspector */}
+        <aside className="w-80 bg-white border-l border-slate-200 p-6 overflow-auto">
+          {selectedComponent ? (
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 mb-4">Properties</h3>
+              
+              {/* Dynamic Props Form */}
+              {selectedComponent.type === 'heading' && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Text</label>
+                    <input
+                      type="text"
+                      value={selectedComponent.props?.text || ''}
+                      onChange={(e) => {
+                        const updated = currentPageComponents.map(c =>
+                          c.id === selectedComponent.id
+                            ? { ...c, props: { ...c.props, text: e.target.value } }
+                            : c
+                        )
+                        setPageComponents(prev => ({
+                          ...prev,
+                          [String(uiState.activePageId)]: updated
+                        }))
+                      }}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Align</label>
+                    <select
+                      value={selectedComponent.props?.align || 'left'}
+                      onChange={(e) => {
+                        const updated = currentPageComponents.map(c =>
+                          c.id === selectedComponent.id
+                            ? { ...c, props: { ...c.props, align: e.target.value } }
+                            : c
+                        )
+                        setPageComponents(prev => ({
+                          ...prev,
+                          [String(uiState.activePageId)]: updated
+                        }))
+                      }}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    >
+                      <option value="left">Left</option>
+                      <option value="center">Center</option>
+                      <option value="right">Right</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {selectedComponent.type === 'kpi_grid' && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Title</label>
+                    <input
+                      type="text"
+                      value={selectedComponent.props?.title || ''}
+                      onChange={(e) => {
+                        const updated = currentPageComponents.map(c =>
+                          c.id === selectedComponent.id
+                            ? { ...c, props: { ...c.props, title: e.target.value } }
+                            : c
+                        )
+                        setPageComponents(prev => ({
+                          ...prev,
+                          [String(uiState.activePageId)]: updated
+                        }))
+                      }}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Data Source</label>
+                    <select
+                      value={selectedComponent.props?.dataSource || ''}
+                      onChange={(e) => {
+                        const updated = currentPageComponents.map(c =>
+                          c.id === selectedComponent.id
+                            ? { ...c, props: { ...c.props, dataSource: e.target.value } }
+                            : c
+                        )
+                        setPageComponents(prev => ({
+                          ...prev,
+                          [String(uiState.activePageId)]: updated
+                        }))
+                      }}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    >
+                      <option value="">データソースを選択</option>
+                      {dataSources.map(ds => (
+                        <option key={ds.id} value={ds.id}>{ds.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {selectedComponent.type === 'table' && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Title</label>
+                    <input
+                      type="text"
+                      value={selectedComponent.props?.title || ''}
+                      onChange={(e) => {
+                        const updated = currentPageComponents.map(c =>
+                          c.id === selectedComponent.id
+                            ? { ...c, props: { ...c.props, title: e.target.value } }
+                            : c
+                        )
+                        setPageComponents(prev => ({
+                          ...prev,
+                          [String(uiState.activePageId)]: updated
+                        }))
+                      }}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Data Source</label>
+                    <select
+                      value={selectedComponent.props?.dataSource || ''}
+                      onChange={(e) => {
+                        const updated = currentPageComponents.map(c =>
+                          c.id === selectedComponent.id
+                            ? { ...c, props: { ...c.props, dataSource: e.target.value } }
+                            : c
+                        )
+                        setPageComponents(prev => ({
+                          ...prev,
+                          [String(uiState.activePageId)]: updated
+                        }))
+                      }}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    >
+                      <option value="">データソースを選択</option>
+                      {dataSources.map(ds => (
+                        <option key={ds.id} value={ds.id}>{ds.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-slate-500">
+              <p>コンポーネントを選択してください</p>
+            </div>
+          )}
+        </aside>
+      </div>
+
+      {/* Component Picker Modal */}
+      {isComponentPickerOpen && componentPickerSlotIndex !== null && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-          onClick={(e) => {
-            // 背景クリックでモーダルを閉じる
-            if (e.target === e.currentTarget) {
-              setIsNewScreenModalOpen(false)
-            }
+          onClick={() => {
+            setIsComponentPickerOpen(false)
+            setComponentPickerSlotIndex(null)
+            setHoveredSlotIndex(null)
           }}
         >
           <div 
-            className="bg-white rounded-xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-slate-200">
-              <h2 className="text-2xl font-bold text-slate-900">新しい画面を作成</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-slate-900">コンポーネントを選択</h3>
               <button
-                onClick={() => setIsNewScreenModalOpen(false)}
+                onClick={() => {
+                  setIsComponentPickerOpen(false)
+                  setComponentPickerSlotIndex(null)
+                  setHoveredSlotIndex(null)
+                }}
                 className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 transition"
               >
                 <X size={20} />
               </button>
             </div>
-
-            {/* Modal Content */}
-            <div className="p-6 space-y-8">
-              {/* Section 1: AI Auto-generation from Data */}
-              <div>
-                <div className="mb-4">
-                  <h3 className="text-lg font-bold text-indigo-700 mb-2">
-                    データからAI自動生成 (No Codeの最適解)
-                  </h3>
-                  <p className="text-sm text-slate-600">
-                    既存のデータソースを選択するだけで、AIが実用的な画面セット（一覧、詳細、編集フォーム）を自動構築します。
-                  </p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {availableDataSources.map((dataSource, index) => (
-                    <div
-                      key={dataSource.id}
-                      className={`border-2 rounded-lg overflow-hidden cursor-pointer transition ${
-                        index === 0
-                          ? 'border-indigo-500 bg-indigo-50 shadow-md'
-                          : 'border-slate-200 bg-white hover:border-slate-300'
-                      }`}
-                      onClick={() => handleDataSourceClick(dataSource.id)}
-                    >
-                      {/* データカードのヘッダー部分にインディゴ系のアクセント */}
-                      <div className={`px-4 py-3 ${
-                        index === 0 ? 'bg-indigo-600' : 'bg-slate-50'
-                      }`}>
-                        <div className="flex items-start space-x-3">
-                          {getDataSourceIcon(dataSource.type)}
-                          <div className="flex-1">
-                            <h4 className={`font-bold mb-1 ${
-                              index === 0 ? 'text-white' : 'text-slate-900'
-                            }`}>
-                              {dataSource.name}
-                            </h4>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="p-4">
-                        <p className="text-xs text-slate-600 mb-2">
-                          {dataSource.generatedScreens.split('**').map((part, idx) => 
-                            idx % 2 === 1 ? (
-                              <strong key={idx} className="font-bold">{part}</strong>
-                            ) : (
-                              <span key={idx}>{part}</span>
-                            )
-                          )}
-                        </p>
-                        <p className="text-xs text-slate-500 mb-3">最終更新: {dataSource.lastSynced}</p>
-                        <button
-                          className={`w-full py-2 rounded-lg text-sm font-medium transition ${
-                            index === 0
-                              ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-                              : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
-                          }`}
-                        >
-                          このデータで生成開始
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Section 2: Templates */}
-              <div>
-                <h3 className="text-lg font-bold text-slate-900 mb-2">
-                  テンプレートから作成(用途に合わせたガイド)
-                </h3>
-                <p className="text-sm text-slate-600 mb-4">
-                  デザイン済みのレイアウトから始められます。必要なデータソースは後から連携可能です。プレビュー画像を確認してから選択してください。
-                </p>
-                <div className="space-y-3">
-                  {templates.map((template) => {
-                    const Icon = template.icon
-                    const isBlank = template.id === 'blank'
-                    return (
-                      <div
-                        key={template.id}
-                        className={`rounded-lg p-4 cursor-pointer transition ${
-                          isBlank
-                            ? 'border-4 border-indigo-300 bg-indigo-50 shadow-lg hover:shadow-xl hover:border-indigo-400'
-                            : 'border border-slate-200 hover:border-primary-300 hover:bg-primary-50'
-                        }`}
-                        onClick={() => handleTemplateClick(template.id)}
-                      >
-                        <div className="flex items-start space-x-4">
-                          {isBlank ? (
-                            <div className="w-16 h-16 border-2 border-dashed border-indigo-400 bg-white rounded-lg flex items-center justify-center">
-                              <Plus className="w-6 h-6 text-indigo-600" />
-                            </div>
-                          ) : (
-                            <div className="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center">
-                              <Icon className="w-8 h-8 text-slate-600" />
-                            </div>
-                          )}
-                          <div className="flex-1">
-                            <h4 className="font-bold text-slate-900 mb-1">{template.name}</h4>
-                            <p className="text-sm text-slate-600 mb-2">
-                              {template.description.split('**').map((part, idx) => 
-                                idx % 2 === 1 ? (
-                                  <strong key={idx} className="font-bold">{part}</strong>
-                                ) : (
-                                  <span key={idx}>{part}</span>
-                                )
-                              )}
-                            </p>
-                            {template.dataRequired && (
-                              <p className="text-xs text-slate-500">
-                                データ連携：<span className="font-medium">{template.dataCount}</span>
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
+            <div className="grid grid-cols-2 gap-4">
+              {componentTypes.map(({ type, label, icon: Icon }) => (
+                <button
+                  key={type}
+                  onClick={() => handleAddComponent(type, componentPickerSlotIndex)}
+                  className="p-4 border-2 border-slate-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition text-left"
+                >
+                  <Icon className="w-6 h-6 text-slate-600 mb-2" />
+                  <div className="font-medium text-slate-900">{label}</div>
+                </button>
+              ))}
             </div>
           </div>
         </div>
       )}
-      {/* Left Panel - App Structure & Add Elements */}
-      <aside className="w-80 bg-slate-50 border-r border-slate-200 p-6 overflow-auto pt-4">
-        {/* App Structure Section */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-lg font-bold text-slate-900">App Structure</h3>
-            <button 
-              onClick={() => setIsNewScreenModalOpen(true)}
-              className="flex items-center space-x-1 px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition text-sm font-medium"
-            >
-              <Plus size={16} />
-              <span>新規画面</span>
-            </button>
-          </div>
-          
-          {/* Tabs */}
-          <div className="flex border-b border-slate-200 mb-3">
-            <button
-              onClick={() => setAppStructureTab('screens')}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition ${
-                appStructureTab === 'screens'
-                  ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Screens
-            </button>
-            <button
-              onClick={() => setAppStructureTab('components')}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition ${
-                appStructureTab === 'components'
-                  ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Components
-            </button>
-          </div>
-
-          {/* Search */}
-          <div className="relative mb-3">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
-            <input
-              type="text"
-              placeholder="Q Find screen..."
-              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-          </div>
-
-          {/* Screen/Component List */}
-          {appStructureTab === 'screens' && (
-            <div className="space-y-1">
-              <button
-                onClick={() => setSelectedScreen('一覧ページ')}
-                className={`w-full text-left px-4 py-2 rounded-lg text-sm transition ${
-                  selectedScreen === '一覧ページ'
-                    ? 'bg-primary-50 border-2 border-primary-300 text-primary-700 font-medium'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                {selectedScreen === '一覧ページ' && (
-                  <span className="w-2 h-2 bg-primary-600 rounded-full inline-block mr-2"></span>
-                )}
-                一覧ページ
-              </button>
-              <button
-                onClick={() => setSelectedScreen('詳細ページ')}
-                className={`w-full text-left px-4 py-2 rounded-lg text-sm transition ${
-                  selectedScreen === '詳細ページ'
-                    ? 'bg-primary-50 border-2 border-primary-300 text-primary-700 font-medium'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                詳細ページ
-              </button>
-              <button
-                onClick={() => setSelectedScreen('設定画面')}
-                className={`w-full text-left px-4 py-2 rounded-lg text-sm transition ${
-                  selectedScreen === '設定画面'
-                    ? 'bg-primary-50 border-2 border-primary-300 text-primary-700 font-medium'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                設定画面
-              </button>
-              <button
-                onClick={() => setSelectedScreen('ログイン')}
-                className={`w-full text-left px-4 py-2 rounded-lg text-sm transition ${
-                  selectedScreen === 'ログイン'
-                    ? 'bg-primary-50 border-2 border-primary-300 text-primary-700 font-medium'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                ログイン
-              </button>
-            </div>
-          )}
-
-          {appStructureTab === 'components' && (
-            <div className="space-y-1">
-              <p className="text-sm text-slate-500 px-4 py-2">コンポーネント一覧</p>
-            </div>
-          )}
-        </div>
-
-
-        {selectedElement && (
-          <div className="bg-white border border-slate-200 rounded-lg p-4">
-            <p className="text-sm text-slate-600">
-              右側のプレビュー画面で変更したい箇所をクリックすると、ここに設定が表示されます。
-            </p>
-          </div>
-        )}
-      </aside>
-
-      {/* Right Panel - Preview */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Preview Controls */}
-        <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2 bg-slate-100 rounded-lg p-1">
-              <button
-                onClick={() => setPreviewMode('pc')}
-                className={`px-3 py-1 rounded text-sm font-medium transition ${
-                  previewMode === 'pc'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-600'
-                }`}
-              >
-                <Monitor className="w-4 h-4 inline mr-1" />
-                PC
-              </button>
-              <button
-                onClick={() => setPreviewMode('mobile')}
-                className={`px-3 py-1 rounded text-sm font-medium transition ${
-                  previewMode === 'mobile'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-600'
-                }`}
-              >
-                <Smartphone className="w-4 h-4 inline mr-1" />
-                Mobile
-              </button>
-            </div>
-            <span className="text-sm text-green-600 flex items-center">
-              <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-              自動保存済み
-            </span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <button className="btn-secondary flex items-center space-x-2">
-              <Eye className="w-4 h-4" />
-              <span>プレビュー</span>
-            </button>
-            <button className="btn-primary flex items-center space-x-2">
-              <Rocket className="w-4 h-4" />
-              <span>公開する</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Preview Canvas */}
-        <div className="flex-1 overflow-auto bg-slate-100 p-8">
-          <div
-            className={`bg-white rounded-xl shadow-lg border-2 border-dashed border-slate-300 mx-auto ${
-              previewMode === 'mobile' ? 'max-w-sm' : 'max-w-5xl'
-            }`}
-          >
-            {/* App Header */}
-            <div
-              className="bg-primary-600 text-white px-6 py-4 flex items-center justify-between rounded-t-xl cursor-pointer"
-              onClick={() => setSelectedElement('header')}
-            >
-              <h2 className="font-bold">営業活動報告</h2>
-              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-sm">
-                U
-              </div>
-            </div>
-
-            {/* Hint Banner */}
-            <div className="bg-yellow-50 border-b border-yellow-200 px-6 py-3">
-              <div className="flex items-center space-x-2 text-sm text-slate-700">
-                <Sparkles className="w-4 h-4 text-yellow-600" />
-                <span>変更したい箇所をクリックしてください</span>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="p-6">
-              {selectedLayout === 'list' && (
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-slate-200">
-                      <th className="text-left py-3 px-4 text-sm font-medium text-slate-700">日時</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-slate-700">担当者</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-slate-700">顧客名</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-slate-700">案件名</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-slate-700">ステータス</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sampleData.map((row, idx) => (
-                      <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
-                        <td className="py-3 px-4 text-sm text-slate-600">{row.日時}</td>
-                        <td className="py-3 px-4 text-sm text-slate-600">{row.担当者}</td>
-                        <td className="py-3 px-4 text-sm text-slate-600">{row.顧客名}</td>
-                        <td className="py-3 px-4 text-sm text-slate-600">{row.案件名}</td>
-                        <td className="py-3 px-4 text-sm">
-                          <span className="text-green-600 font-medium">{row.ステータス}</span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-        </div>
-      </main>
-      </div>
     </div>
   )
 }
 
 export default UITab
-
-

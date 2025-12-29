@@ -50,24 +50,16 @@ const DataTab = () => {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header Section for Engineers */}
+      {/* Header Section */}
       <div className="bg-slate-50 border-b border-slate-200 p-4 flex-shrink-0">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-bold text-slate-900 flex items-center">
-                <Database className="mr-2 text-primary-600" size={24} /> Step 3: Data - データソース接続
-              </h2>
-              <p className="text-sm text-slate-600 mt-1">
-                「Zero Migration」を実現。Google Sheets/Excelを直接DBとして使用するか、PostgreSQLに移行可能です。
-              </p>
-            </div>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-xs max-w-xs">
-              <p className="font-semibold text-slate-900 mb-1">エンジニア向け:</p>
-              <p className="text-slate-700">
-                Spreadsheet Direct: Google Sheets/Excelを「書き込み可能なDB」として扱います。データ量が増えた場合、スプレッドシートからPostgreSQLへシームレスにデータ移行（Eject）可能。
-              </p>
-            </div>
+          <div>
+            <h2 className="text-xl font-bold text-slate-900 flex items-center">
+              <Database className="mr-2 text-primary-600" size={24} /> Step 3: Data - データソース接続
+            </h2>
+            <p className="text-sm text-slate-600 mt-1">
+              データソースを接続して、アプリで使用するデータを管理します。
+            </p>
           </div>
         </div>
       </div>

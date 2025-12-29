@@ -76,41 +76,57 @@ const Login = () => {
           setLoading(false)
           return
         } catch (redirectErr: any) {
-          setError(getErrorMessage(redirectErr.code))
+          setError(getErrorMessage(redirectErr.code, redirectErr.requestId))
         }
       } else {
-        setError(getErrorMessage(err.code))
+        setError(getErrorMessage(err.code, err.requestId))
       }
     } finally {
       setLoading(false)
     }
   }
 
-  const getErrorMessage = (code?: string): string => {
+  const getErrorMessage = (code?: string, requestId?: string | null): string => {
     if (!code) {
       return 'ログインに失敗しました。もう一度お試しください'
     }
     
+    let baseMessage = ''
     switch (code) {
       case 'auth/popup-closed-by-user':
-        return 'ログインがキャンセルされました'
+        baseMessage = 'ログインがキャンセルされました'
+        break
       case 'auth/popup-blocked':
-        return 'ポップアップがブロックされました。リダイレクト方式で認証を試みます...'
+        baseMessage = 'ポップアップがブロックされました。リダイレクト方式で認証を試みます...'
+        break
       case 'auth/network-request-failed':
-        return 'ネットワークエラーが発生しました。接続を確認してください'
+        baseMessage = 'ネットワークエラーが発生しました。接続を確認してください'
+        break
       case 'auth/cancelled-popup-request':
-        return '別のログイン処理が進行中です。しばらくお待ちください'
+        baseMessage = '別のログイン処理が進行中です。しばらくお待ちください'
+        break
       case 'auth/account-exists-with-different-credential':
-        return 'このメールアドレスは別の認証方法で既に登録されています'
+        baseMessage = 'このメールアドレスは別の認証方法で既に登録されています'
+        break
       case 'auth/unauthorized-domain':
-        return 'このドメインは認証に使用できません。Firebase Consoleでlocalhostが承認済みドメインに追加されているか確認してください。詳細は docs/LOCAL_DEVELOPMENT_SETUP.md を参照してください。'
+        baseMessage = 'このドメインは認証に使用できません。Firebase Consoleでlocalhostが承認済みドメインに追加されているか確認してください。詳細は docs/LOCAL_DEVELOPMENT_SETUP.md を参照してください。'
+        break
       case 'auth/operation-not-allowed':
-        return 'この認証方法は有効になっていません。Firebase ConsoleでGoogle認証が有効になっているか確認してください。'
+        baseMessage = 'この認証方法は有効になっていません。Firebase ConsoleでGoogle認証が有効になっているか確認してください。'
+        break
       case 'auth/invalid-api-key':
-        return 'Firebase APIキーが無効です。環境変数またはFirebase設定を確認してください。'
+        baseMessage = 'Firebase APIキーが無効です。環境変数またはFirebase設定を確認してください。'
+        break
       default:
-        return `ログインに失敗しました: ${code}。詳細はブラウザのコンソールを確認してください。`
+        baseMessage = `ログインに失敗しました: ${code}。詳細はブラウザのコンソールを確認してください。`
     }
+    
+    // Request IDがある場合は追加
+    if (requestId) {
+      return `${baseMessage}\n\nRequest ID: ${requestId}\nこのRequest IDをFirebaseサポートに報告してください。`
+    }
+    
+    return baseMessage
   }
 
   return (
@@ -130,7 +146,7 @@ const Login = () => {
           <h2 className="text-2xl font-bold text-slate-900 mb-6">ログイン</h2>
 
           {error && (
-            <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm whitespace-pre-line">
               {error}
             </div>
           )}
