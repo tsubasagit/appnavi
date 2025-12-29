@@ -105,11 +105,14 @@ function AppContent() {
 }
 
 function App() {
+  // 開発環境ではbasenameなし、本番環境（GitHub Pages）では/appnavi
+  const basename = import.meta.env.PROD ? '/appnavi' : undefined
+
   return (
     <AuthProvider>
       <AppProvider>
         <BrowserRouter 
-          basename="/appnavi"
+          basename={basename}
           future={{
             v7_startTransition: true,
             v7_relativeSplatPath: true,
@@ -137,7 +140,8 @@ function AuthRedirectHandler({ children }: { children: React.ReactNode }) {
           if (currentPath.includes('/login') || currentPath.includes('/register')) {
             // 少し待ってからリダイレクト（AuthContextの更新を待つ）
             setTimeout(() => {
-              window.location.href = '/appnavi/apps'
+              const basePath = import.meta.env.PROD ? '/appnavi' : ''
+              window.location.href = `${basePath}/apps`
             }, 500)
           }
           console.log('リダイレクト認証成功:', user)
