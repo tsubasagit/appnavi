@@ -24,13 +24,17 @@ const firebaseConfig = {
 }
 
 // Firebase初期化
-const app = initializeApp(firebaseConfig)
+export const app = initializeApp(firebaseConfig)
 export const auth = getAuth(app)
+
+// 注意: 開発環境では `__/firebase/init.json` の404エラーが表示されることがありますが、
+// これは正常な動作です。Firebase SDKは自動的にフォールバックして、直接設定を使用します。
+// 認証機能には影響しません。このエラーは無視して問題ありません。
 
 // Google認証プロバイダーの設定
 export const googleProvider = new GoogleAuthProvider()
-// 追加のスコープが必要な場合はここで設定
-// googleProvider.addScope('https://www.googleapis.com/auth/spreadsheets.readonly')
+// 重要: スプレッドシートへのアクセス権限を追加
+googleProvider.addScope('https://www.googleapis.com/auth/spreadsheets')
 // アカウント選択を毎回表示
 googleProvider.setCustomParameters({
   prompt: 'select_account'
@@ -49,6 +53,17 @@ if (typeof window !== 'undefined') {
 export const signInWithGoogle = async (): Promise<User> => {
   try {
     const result = await signInWithPopup(auth, googleProvider)
+    
+    // アクセストークンを取得して保存
+    const credential = GoogleAuthProvider.credentialFromResult(result)
+    const token = credential?.accessToken
+    
+    if (token) {
+      // MVP暫定対応: SessionStorageに保存
+      // 注意: 本番運用（Phase 2）ではHttpOnly Cookieやメモリ内管理への移行を検討すること
+      sessionStorage.setItem('googleAccessToken', token)
+    }
+    
     return result.user
   } catch (error: any) {
     console.error('Google認証エラー:', error)
@@ -79,6 +94,16 @@ export const getGoogleRedirectResult = async (): Promise<User | null> => {
   try {
     const result = await getRedirectResult(auth)
     if (result) {
+      // アクセストークンを取得して保存
+      const credential = GoogleAuthProvider.credentialFromResult(result)
+      const token = credential?.accessToken
+      
+      if (token) {
+        // MVP暫定対応: SessionStorageに保存
+        // 注意: 本番運用（Phase 2）ではHttpOnly Cookieやメモリ内管理への移行を検討すること
+        sessionStorage.setItem('googleAccessToken', token)
+      }
+      
       return result.user
     }
     return null

@@ -4,7 +4,8 @@ export interface App {
   name: string;
   description?: string;
   icon?: string;
-  template: 'inventory' | 'daily-report' | 'crm' | 'reservation' | 'custom' | 'document-management' | 'e-commerce' | 'asset-management' | 'logistics' | 'expense-management' | 'hr-management' | 'project-management' | 'quality-control' | 'sales-analysis' | 'budget-management' | 'performance-tracking' | null; // 目的特化型テンプレート
+  template: 'crm' | 'google-calendar-group' | 'daily-report' | 'auto-integration' | 'custom' | null; // 目的特化型テンプレート（後方互換性のため保持）
+  templateId?: string; // 現在選択されているテンプレートID（優先的に使用）
   mission: string; // 「One App, One Mission」の目的
   dataSource: {
     type: 'google-sheets' | 'excel' | 'csv' | 'postgresql';
@@ -50,11 +51,14 @@ export interface DataSource {
   lastSynced?: string;
 }
 
+export type UserRole = 'user' | 'vendor' | 'admin'
+
 export interface User {
   id: string;
   name: string;
   email: string;
   avatar?: string;
+  role?: UserRole; // デフォルトは 'user'
 }
 
 // デザイン・構成画面の型定義
@@ -94,6 +98,26 @@ export interface ThemeConfig {
 export interface DesignConfig {
   pages: PageConfig;
   theme: ThemeConfig;
+}
+
+// ベンダーモード関連の型定義
+export type Environment = 'dev' | 'prod'
+
+export interface EnvironmentConfig {
+  mode: Environment;
+  dataSource: {
+    dev: string;
+    prod: string;
+  };
+}
+
+export interface CodeOverride {
+  componentId: string;
+  overrideType: 'props' | 'logic' | 'render';
+  code: string;
+  environment: Environment;
+  createdAt: string;
+  updatedAt: string;
 }
 
 

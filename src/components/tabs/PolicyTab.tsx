@@ -1,179 +1,22 @@
 import { useState, useEffect } from 'react'
-import { Save, Lightbulb, Target, BarChart3, Sparkles, Compass, Package, ClipboardList, UserCheck, Calendar, Settings, Search, FileText, ShoppingCart, Building2, Truck, CreditCard, Users, Briefcase, FileCheck, BarChart, PieChart, TrendingUp, X } from 'lucide-react'
+import { Save, Lightbulb, Target, BarChart3, Sparkles, Compass, Search, X, Settings, Upload, Download, Github, Loader2, AlertCircle } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { App } from '../../types'
-
-// テンプレート定義（目的特化型）- 多数のテンプレートを追加
-const allTemplates = [
-  {
-    id: 'crm' as const,
-    name: '顧客管理（CRM）',
-    description: '顧客情報、商談管理、活動履歴',
-    icon: UserCheck,
-    color: 'purple',
-    category: '営業・マーケティング',
-    preview: '顧客一覧、商談パイプライン、活動履歴タイムライン、営業ダッシュボード',
-    author: 'AppTalentHub',
-  },
-  {
-    id: 'inventory' as const,
-    name: '在庫管理',
-    description: '在庫の入出荷、在庫数管理、ロケーション管理',
-    icon: Package,
-    color: 'blue',
-    category: '在庫・物流',
-    preview: '在庫一覧表、入出荷履歴、在庫数ダッシュボード、ロケーション管理画面',
-    author: 'AppTalentHub',
-  },
-  {
-    id: 'daily-report' as const,
-    name: '日報・活動報告',
-    description: '日々の業務活動の記録と共有',
-    icon: ClipboardList,
-    color: 'green',
-    category: '業務管理',
-    preview: '日報入力フォーム、活動一覧、カレンダー表示、チーム共有ダッシュボード',
-    author: 'AppTalentHub',
-  },
-  {
-    id: 'reservation' as const,
-    name: '予約管理',
-    description: '会議室、設備、サービスの予約管理',
-    icon: Calendar,
-    color: 'orange',
-    category: '予約・スケジュール',
-    preview: '予約カレンダー、空き状況表示、予約フォーム、利用履歴一覧',
-    author: 'AppTalentHub',
-  },
-  {
-    id: 'document-management' as const,
-    name: '文書管理',
-    description: '契約書、資料、ファイルの一元管理',
-    icon: FileText,
-    color: 'blue',
-    category: '文書・情報管理',
-    preview: '文書一覧、フォルダ階層、検索機能、バージョン管理画面',
-    author: 'AppTalentHub',
-  },
-  {
-    id: 'e-commerce' as const,
-    name: 'EC管理',
-    description: '商品管理、注文処理、在庫連携',
-    icon: ShoppingCart,
-    color: 'green',
-    category: 'EC・販売',
-    preview: '商品一覧、注文管理画面、在庫状況、売上ダッシュボード',
-    author: 'AppTalentHub',
-  },
-  {
-    id: 'asset-management' as const,
-    name: '資産管理',
-    description: '固定資産、設備、備品の管理',
-    icon: Building2,
-    color: 'purple',
-    category: '資産・設備',
-    preview: '資産一覧、設備台帳、メンテナンス履歴、資産評価ダッシュボード',
-    author: 'AppTalentHub',
-  },
-  {
-    id: 'logistics' as const,
-    name: '物流管理',
-    description: '配送管理、配送ルート最適化',
-    icon: Truck,
-    color: 'orange',
-    category: '在庫・物流',
-    preview: '配送一覧、ルートマップ、配送状況追跡、配送実績ダッシュボード',
-    author: 'AppTalentHub',
-  },
-  {
-    id: 'expense-management' as const,
-    name: '経費精算',
-    description: '経費申請、承認フロー、集計',
-    icon: CreditCard,
-    color: 'blue',
-    category: '財務・会計',
-    preview: '経費申請フォーム、承認フロー、経費一覧、集計レポート',
-    author: 'AppTalentHub',
-  },
-  {
-    id: 'hr-management' as const,
-    name: '人事管理',
-    description: '従業員情報、勤怠管理、評価',
-    icon: Users,
-    color: 'green',
-    category: '人事・労務',
-    preview: '従業員一覧、勤怠管理画面、評価シート、人事統計ダッシュボード',
-    author: 'AppTalentHub',
-  },
-  {
-    id: 'project-management' as const,
-    name: 'プロジェクト管理',
-    description: 'タスク管理、進捗管理、リソース管理',
-    icon: Briefcase,
-    color: 'purple',
-    category: 'プロジェクト',
-    preview: 'プロジェクト一覧、ガントチャート、タスクボード、進捗ダッシュボード',
-    author: 'AppTalentHub',
-  },
-  {
-    id: 'quality-control' as const,
-    name: '品質管理',
-    description: '検査記録、不良品管理、改善活動',
-    icon: FileCheck,
-    color: 'orange',
-    category: '品質・製造',
-    preview: '検査記録一覧、不良品管理画面、改善活動ログ、品質指標ダッシュボード',
-    author: 'AppTalentHub',
-  },
-  {
-    id: 'sales-analysis' as const,
-    name: '売上分析',
-    description: '売上データの可視化と分析',
-    icon: BarChart,
-    color: 'blue',
-    category: '分析・レポート',
-    preview: '売上グラフ、時系列分析、商品別売上、地域別分析ダッシュボード',
-    author: 'AppTalentHub',
-  },
-  {
-    id: 'budget-management' as const,
-    name: '予算管理',
-    description: '予算計画、実績管理、差異分析',
-    icon: PieChart,
-    color: 'green',
-    category: '財務・会計',
-    preview: '予算計画表、実績入力画面、差異分析グラフ、予算ダッシュボード',
-    author: 'AppTalentHub',
-  },
-  {
-    id: 'performance-tracking' as const,
-    name: '業績管理',
-    description: 'KPI追跡、目標管理、ダッシュボード',
-    icon: TrendingUp,
-    color: 'purple',
-    category: '分析・レポート',
-    preview: 'KPI一覧、目標設定画面、進捗グラフ、業績ダッシュボード',
-    author: 'AppTalentHub',
-  },
-  {
-    id: 'custom' as const,
-    name: 'カスタム',
-    description: 'ゼロから自由に設計',
-    icon: Settings,
-    color: 'slate',
-    category: 'その他',
-    preview: '自由にカスタマイズ可能な画面構成',
-    author: 'AppTalentHub',
-  },
-]
+import { allTemplates, Template } from '../../utils/templates'
+import { fetchTemplates, installAsset, uploadAsset, AssetMetadata } from '../../utils/githubAsset'
 
 const PolicyTab = () => {
   const { apps, activeAppId, updateApp } = useApp()
   const app = apps.find(a => a.id === activeAppId)
   
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedTemplateForModal, setSelectedTemplateForModal] = useState<typeof allTemplates[number] | null>(null)
+  const [selectedTemplateForModal, setSelectedTemplateForModal] = useState<Template | null>(null)
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false)
+  const [isInstallModalOpen, setIsInstallModalOpen] = useState(false)
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
+  const [githubTemplates, setGithubTemplates] = useState<AssetMetadata[]>([])
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false)
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
 
   // デフォルトでCRMを選択
   useEffect(() => {
@@ -194,59 +37,182 @@ const PolicyTab = () => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleSave = () => {
-    // 保存処理（実際の実装ではAPI呼び出し）
+  const [isAILoading, setIsAILoading] = useState(false)
+  const [aiSuggestion, setAISuggestion] = useState<any>(null)
+
+  const handleSave = async () => {
+    // 保存処理
     console.log('Policy data saved:', formData)
-    alert('保存しました。AIに学習させました。')
+    
+    // AI提案を生成
+    setIsAILoading(true)
+    try {
+      const { generateAISuggestion } = await import('../../utils/ai')
+      const suggestion = await generateAISuggestion(formData)
+      setAISuggestion(suggestion)
+      
+      // 提案されたテンプレートがあれば適用
+      if (suggestion.template && app) {
+        updateApp(app.id, { template: suggestion.template as App['template'] })
+      }
+      
+      alert('保存しました。AIが最適なテンプレートとUI構成を提案しました。')
+    } catch (error) {
+      console.error('AI提案の生成に失敗しました:', error)
+      alert('保存しました。AI提案の生成に失敗しましたが、手動で設定を続けることができます。')
+    } finally {
+      setIsAILoading(false)
+    }
   }
 
-  const handleTemplateClick = (template: typeof allTemplates[number]) => {
+  const handleTemplateClick = (template: Template) => {
     setSelectedTemplateForModal(template)
     setIsTemplateModalOpen(true)
   }
 
-  const handleTemplateSelect = () => {
+  const handleTemplateSelect = async () => {
     if (app && selectedTemplateForModal) {
-      updateApp(app.id, { template: selectedTemplateForModal.id as App['template'] })
-      setIsTemplateModalOpen(false)
-      setSelectedTemplateForModal(null)
+      // 確認ダイアログを表示
+      setIsConfirmDialogOpen(true)
+    }
+  }
+
+  const confirmTemplateChange = async () => {
+    if (app && selectedTemplateForModal) {
+      setIsConfirmDialogOpen(false)
+      
+      // テンプレートIDとtemplateフィールドを更新（Firestoreの取得に失敗しても続行）
+      const templateId = selectedTemplateForModal.id
+      const templateValue = templateId as App['template']
+      
+      try {
+        // テンプレートIDとtemplateフィールドを更新
+        await updateApp(app.id, {
+          templateId: templateId,
+          template: templateValue,
+        })
+        
+        console.log('テンプレートIDを更新しました:', templateId)
+        
+        // Firestoreからテンプレート情報を取得（オプション、エラーは無視）
+        try {
+          const { getTemplate } = await import('../../utils/firestore')
+          const templateData = await getTemplate(templateId)
+          
+          if (templateData && templateData.uiStructure) {
+            // テンプレートのUI構成を適用
+            const uiStructure = templateData.uiStructure
+            
+            // テーマ設定を適用
+            if (uiStructure.theme) {
+              await updateApp(app.id, {
+                theme: uiStructure.theme,
+              })
+            }
+            
+            console.log('テンプレートのUI構成を適用しました:', templateData.name)
+          }
+        } catch (firestoreError: any) {
+          // Firestoreからの取得に失敗しても、テンプレートIDの更新は成功しているので続行
+          // エラーはログに記録するだけで、ユーザーには表示しない
+          console.log('Firestoreからテンプレート情報を取得できませんでした（テンプレートが未作成の可能性があります）:', firestoreError?.message)
+        }
+        
+        setIsTemplateModalOpen(false)
+        setSelectedTemplateForModal(null)
+        
+        // 成功メッセージ（Firestoreの取得に失敗しても、テンプレートIDの更新は成功している）
+        alert(`テンプレート「${selectedTemplateForModal.name}」を適用しました。`)
+      } catch (error: any) {
+        console.error('テンプレート適用エラー:', error)
+        setIsTemplateModalOpen(false)
+        setSelectedTemplateForModal(null)
+        alert(`テンプレートの適用に失敗しました: ${error?.message || '不明なエラー'}`)
+      }
     }
   }
 
   // 検索フィルタリング
-  const filteredTemplates = allTemplates.filter(template => {
+  const filteredTemplates = allTemplates?.filter(template => {
     const query = searchQuery.toLowerCase()
     return (
       template.name.toLowerCase().includes(query) ||
       template.description.toLowerCase().includes(query) ||
       template.category.toLowerCase().includes(query)
     )
-  })
+  }) || []
+
+  // allTemplatesが読み込まれていない場合のエラーハンドリング
+  if (!allTemplates || allTemplates.length === 0) {
+    return (
+      <div className="flex-1 bg-slate-50 p-6 md:p-8 overflow-auto">
+        <div className="max-w-4xl mx-auto">
+          <div className="card">
+            <p className="text-slate-600">テンプレートを読み込んでいます...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="flex-1 bg-slate-50 p-6 md:p-8 overflow-auto">
+    <div className="flex-1 bg-slate-50 dark:bg-black p-6 md:p-8 overflow-auto">
       <div className="max-w-4xl mx-auto">
         {/* Template Selection */}
         <div className="card mb-8">
-          <h3 className="font-bold text-lg text-slate-700 mb-4 flex items-center">
-            <Target size={20} className="mr-2 text-primary-500" /> Step 1: Strategy - テンプレート選択
-          </h3>
-          <p className="text-sm text-slate-600 mb-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <Target size={20} className="mr-2 text-primary-500 dark:text-primary-400" />
+              <h3 className="font-bold text-lg text-slate-700 dark:text-white">Step 1: Strategy - テンプレート選択</h3>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={async () => {
+                  setIsLoadingTemplates(true)
+                  try {
+                    const templates = await fetchTemplates()
+                    setGithubTemplates(templates)
+                    setIsInstallModalOpen(true)
+                  } catch (error) {
+                    alert('GitHubからテンプレートを取得できませんでした。')
+                    console.error(error)
+                  } finally {
+                    setIsLoadingTemplates(false)
+                  }
+                }}
+                className="btn-secondary flex items-center space-x-2"
+                disabled={isLoadingTemplates}
+              >
+                <Download size={16} />
+                <span>新規インストール</span>
+              </button>
+              <button
+                onClick={() => setIsUploadModalOpen(true)}
+                className="btn-secondary flex items-center space-x-2 relative"
+                title="OSS版のみ"
+              >
+                <Upload size={16} />
+                <span>アップロード</span>
+                <span className="absolute -top-1 -right-1 bg-yellow-500 text-white text-[10px] px-1 rounded">OSS</span>
+              </button>
+            </div>
+          </div>
+          <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
             目的特化型テンプレートから選択してください。各テンプレートには、その業務に必要な標準的なビジネスロジック（在庫引き当て、ステータス遷移など）がプリセットされています。
           </p>
           
           {/* 検索バー */}
           <div className="relative mb-6">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-500" size={18} />
             <input
               type="text"
               placeholder="テンプレートを検索... (例: 在庫、日報、顧客管理、予約など)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none bg-white"
+              className="w-full pl-10 pr-4 py-3 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
             />
             {searchQuery && (
-              <div className="mt-2 text-sm text-slate-500">
+              <div className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                 {filteredTemplates.length}件のテンプレートが見つかりました
               </div>
             )}
@@ -255,7 +221,9 @@ const PolicyTab = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredTemplates.map((template) => {
               const Icon = template.icon
-              const isSelected = app?.template === template.id
+              // templateIdとtemplateの両方をチェック
+              const currentTemplateId = app?.templateId || app?.template
+              const isSelected = currentTemplateId === template.id
               const colorClasses: Record<string, string> = {
                 blue: 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100',
                 green: 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100',
@@ -296,26 +264,36 @@ const PolicyTab = () => {
                   <div className="mt-3 pt-3 border-t border-current border-opacity-20">
                     <p className="text-xs font-semibold mb-2 opacity-90">プレビュー:</p>
                     <div className="w-full h-32 bg-white rounded-lg border border-current border-opacity-20 overflow-hidden shadow-sm p-2">
-                      {template.id === 'inventory' && (
-                        <div className="h-full flex flex-col gap-1">
-                          <div className="flex gap-1">
-                            <div className="flex-1 h-4 bg-blue-200 rounded"></div>
-                            <div className="flex-1 h-4 bg-blue-200 rounded"></div>
-                            <div className="flex-1 h-4 bg-blue-200 rounded"></div>
+                      {template.id === 'crm' && (
+                        <div className="h-full flex flex-col gap-1.5">
+                          <div className="flex gap-1.5">
+                            <div className="flex-1 h-6 bg-purple-100 rounded"></div>
+                            <div className="w-6 h-6 bg-purple-200 rounded-full"></div>
                           </div>
-                          <div className="flex-1 grid grid-cols-3 gap-1">
-                            <div className="bg-slate-100 rounded p-1">
-                              <div className="h-2 bg-slate-300 rounded mb-1"></div>
-                              <div className="h-1 bg-slate-200 rounded"></div>
-                            </div>
-                            <div className="bg-slate-100 rounded p-1">
-                              <div className="h-2 bg-slate-300 rounded mb-1"></div>
-                              <div className="h-1 bg-slate-200 rounded"></div>
-                            </div>
-                            <div className="bg-slate-100 rounded p-1">
-                              <div className="h-2 bg-slate-300 rounded mb-1"></div>
-                              <div className="h-1 bg-slate-200 rounded"></div>
-                            </div>
+                          <div className="flex-1 bg-purple-50 rounded p-1.5">
+                            <div className="h-2 bg-purple-200 rounded mb-1"></div>
+                            <div className="h-1 bg-purple-100 rounded"></div>
+                          </div>
+                          <div className="flex gap-1">
+                            <div className="flex-1 h-3 bg-purple-100 rounded"></div>
+                            <div className="flex-1 h-3 bg-purple-200 rounded"></div>
+                          </div>
+                        </div>
+                      )}
+                      {template.id === 'google-calendar-group' && (
+                        <div className="h-full bg-orange-50 rounded p-1.5">
+                          <div className="grid grid-cols-7 gap-0.5 mb-1">
+                            {[...Array(7)].map((_, i) => (
+                              <div key={i} className={`h-2 rounded ${i === 2 || i === 4 ? 'bg-orange-300' : 'bg-orange-100'}`}></div>
+                            ))}
+                          </div>
+                          <div className="flex gap-1 mb-1">
+                            <div className="flex-1 h-3 bg-orange-200 rounded"></div>
+                            <div className="w-8 h-3 bg-orange-300 rounded"></div>
+                          </div>
+                          <div className="flex gap-1">
+                            <div className="flex-1 h-3 bg-orange-200 rounded"></div>
+                            <div className="w-8 h-3 bg-orange-300 rounded"></div>
                           </div>
                         </div>
                       )}
@@ -335,169 +313,20 @@ const PolicyTab = () => {
                           </div>
                         </div>
                       )}
-                      {template.id === 'crm' && (
-                        <div className="h-full flex flex-col gap-1.5">
-                          <div className="flex gap-1.5">
-                            <div className="flex-1 h-6 bg-purple-100 rounded"></div>
-                            <div className="w-6 h-6 bg-purple-200 rounded-full"></div>
-                          </div>
-                          <div className="flex-1 bg-purple-50 rounded p-1.5">
-                            <div className="h-2 bg-purple-200 rounded mb-1"></div>
-                            <div className="h-1 bg-purple-100 rounded"></div>
-                          </div>
-                          <div className="flex gap-1">
-                            <div className="flex-1 h-3 bg-purple-100 rounded"></div>
-                            <div className="flex-1 h-3 bg-purple-200 rounded"></div>
-                          </div>
-                        </div>
-                      )}
-                      {template.id === 'reservation' && (
-                        <div className="h-full bg-orange-50 rounded p-1.5">
-                          <div className="grid grid-cols-7 gap-0.5 mb-1">
-                            {[...Array(7)].map((_, i) => (
-                              <div key={i} className={`h-2 rounded ${i === 2 ? 'bg-orange-300' : 'bg-orange-100'}`}></div>
-                            ))}
-                          </div>
-                          <div className="grid grid-cols-4 gap-1">
-                            {[...Array(4)].map((_, i) => (
-                              <div key={i} className={`h-4 rounded ${i === 0 ? 'bg-orange-300' : 'bg-orange-100'}`}></div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {template.id === 'document-management' && (
-                        <div className="h-full flex gap-1.5">
-                          <div className="w-12 bg-blue-50 rounded p-1.5">
-                            {[...Array(4)].map((_, i) => (
-                              <div key={i} className="h-3 bg-blue-200 rounded mb-1"></div>
-                            ))}
-                          </div>
-                          <div className="flex-1 bg-blue-50 rounded p-1.5">
-                            <div className="h-2 bg-blue-200 rounded mb-1"></div>
-                            <div className="h-1 bg-blue-100 rounded mb-1"></div>
-                            <div className="h-1 bg-blue-100 rounded"></div>
-                          </div>
-                        </div>
-                      )}
-                      {template.id === 'e-commerce' && (
-                        <div className="h-full grid grid-cols-2 gap-1.5">
-                          <div className="bg-green-50 rounded p-1.5">
-                            <div className="h-8 bg-green-200 rounded mb-1"></div>
-                            <div className="h-2 bg-green-100 rounded"></div>
-                          </div>
-                          <div className="bg-green-50 rounded p-1.5">
-                            <div className="h-8 bg-green-200 rounded mb-1"></div>
-                            <div className="h-2 bg-green-100 rounded"></div>
-                          </div>
-                        </div>
-                      )}
-                      {template.id === 'asset-management' && (
-                        <div className="h-full flex flex-col gap-1">
-                          <div className="flex gap-1">
-                            <div className="w-8 h-8 bg-purple-200 rounded"></div>
-                            <div className="flex-1">
-                              <div className="h-2 bg-purple-100 rounded mb-1"></div>
-                              <div className="h-1 bg-purple-50 rounded"></div>
-                            </div>
-                          </div>
-                          <div className="flex gap-1">
-                            <div className="w-8 h-8 bg-purple-200 rounded"></div>
-                            <div className="flex-1">
-                              <div className="h-2 bg-purple-100 rounded mb-1"></div>
-                              <div className="h-1 bg-purple-50 rounded"></div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      {template.id === 'logistics' && (
-                        <div className="h-full bg-orange-50 rounded p-1.5">
+                      {template.id === 'auto-integration' && (
+                        <div className="h-full bg-blue-50 rounded p-1.5">
                           <div className="flex items-center gap-1 mb-1">
-                            <div className="w-4 h-4 bg-orange-300 rounded"></div>
-                            <div className="flex-1 h-2 bg-orange-200 rounded"></div>
+                            <div className="w-3 h-3 bg-blue-300 rounded-full"></div>
+                            <div className="flex-1 h-2 bg-blue-200 rounded"></div>
+                            <div className="w-4 h-2 bg-blue-400 rounded"></div>
                           </div>
                           <div className="flex items-center gap-1 mb-1">
-                            <div className="w-4 h-4 bg-orange-300 rounded"></div>
-                            <div className="flex-1 h-2 bg-orange-200 rounded"></div>
+                            <div className="w-3 h-3 bg-blue-300 rounded-full"></div>
+                            <div className="flex-1 h-2 bg-blue-200 rounded"></div>
+                            <div className="w-4 h-2 bg-blue-400 rounded"></div>
                           </div>
-                          <div className="h-6 bg-orange-100 rounded"></div>
-                        </div>
-                      )}
-                      {template.id === 'expense-management' && (
-                        <div className="h-full bg-blue-50 rounded p-1.5">
-                          <div className="h-3 bg-blue-200 rounded mb-1"></div>
-                          <div className="flex gap-1 mb-1">
-                            <div className="flex-1 h-2 bg-blue-100 rounded"></div>
-                            <div className="w-8 h-2 bg-blue-300 rounded"></div>
-                          </div>
-                          <div className="h-2 bg-blue-100 rounded"></div>
-                        </div>
-                      )}
-                      {template.id === 'hr-management' && (
-                        <div className="h-full flex gap-1.5">
-                          <div className="w-8 h-8 bg-green-200 rounded-full"></div>
-                          <div className="flex-1 bg-green-50 rounded p-1.5">
-                            <div className="h-2 bg-green-200 rounded mb-1"></div>
-                            <div className="h-1 bg-green-100 rounded"></div>
-                          </div>
-                        </div>
-                      )}
-                      {template.id === 'project-management' && (
-                        <div className="h-full bg-purple-50 rounded p-1.5">
-                          <div className="flex gap-1 mb-1">
-                            <div className="flex-1 h-2 bg-purple-200 rounded"></div>
-                            <div className="w-4 h-2 bg-purple-300 rounded"></div>
-                          </div>
-                          <div className="flex gap-1 mb-1">
-                            <div className="flex-1 h-2 bg-purple-200 rounded"></div>
-                            <div className="w-6 h-2 bg-purple-300 rounded"></div>
-                          </div>
-                          <div className="h-4 bg-purple-100 rounded"></div>
-                        </div>
-                      )}
-                      {template.id === 'quality-control' && (
-                        <div className="h-full bg-orange-50 rounded p-1.5">
-                          <div className="h-2 bg-orange-200 rounded mb-1"></div>
-                          <div className="grid grid-cols-3 gap-0.5 mb-1">
-                            {[...Array(6)].map((_, i) => (
-                              <div key={i} className={`h-2 rounded ${i < 3 ? 'bg-orange-300' : 'bg-orange-100'}`}></div>
-                            ))}
-                          </div>
-                          <div className="h-2 bg-orange-100 rounded"></div>
-                        </div>
-                      )}
-                      {template.id === 'sales-analysis' && (
-                        <div className="h-full bg-blue-50 rounded p-1.5">
-                          <div className="h-8 bg-blue-200 rounded mb-1 flex items-end gap-0.5 px-1 pb-1">
-                            {[4, 6, 3, 5, 7, 4].map((h, i) => (
-                              <div key={i} className="flex-1 bg-blue-400 rounded-t" style={{ height: `${h * 4}px` }}></div>
-                            ))}
-                          </div>
-                          <div className="h-1 bg-blue-100 rounded"></div>
-                        </div>
-                      )}
-                      {template.id === 'budget-management' && (
-                        <div className="h-full bg-green-50 rounded p-1.5">
-                          <div className="flex items-center justify-center h-12 mb-1">
-                            <div className="w-12 h-12 border-4 border-green-300 border-t-green-500 rounded-full"></div>
-                          </div>
-                          <div className="h-2 bg-green-200 rounded"></div>
-                        </div>
-                      )}
-                      {template.id === 'performance-tracking' && (
-                        <div className="h-full bg-purple-50 rounded p-1.5">
-                          <div className="flex items-end gap-0.5 h-8 mb-1">
-                            {[3, 5, 4, 6, 5, 7].map((h, i) => (
-                              <div key={i} className="flex-1 bg-purple-300 rounded-t" style={{ height: `${h * 3}px` }}></div>
-                            ))}
-                          </div>
-                          <div className="h-1 bg-purple-100 rounded"></div>
-                        </div>
-                      )}
-                      {template.id === 'custom' && (
-                        <div className="h-full bg-slate-50 rounded p-1.5 flex items-center justify-center">
-                          <div className="text-center">
-                            <Settings className="w-6 h-6 text-slate-400 mx-auto mb-1" />
-                            <div className="h-1 bg-slate-200 rounded w-16"></div>
+                          <div className="h-4 bg-blue-100 rounded flex items-center justify-center">
+                            <div className="w-2 h-2 bg-blue-300 rounded-full"></div>
                           </div>
                         </div>
                       )}
@@ -528,9 +357,19 @@ const PolicyTab = () => {
               <button
                 onClick={handleSave}
                 className="btn-primary flex items-center space-x-2"
+                disabled={isAILoading}
               >
-                <Save size={18} />
-                <span>保存してAIに学習させる</span>
+                {isAILoading ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    <span>AIが分析中...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save size={18} />
+                    <span>保存してAIに学習させる</span>
+                  </>
+                )}
               </button>
             </div>
 
@@ -776,6 +615,206 @@ const PolicyTab = () => {
                   このテンプレートに変更
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* インストールモーダル */}
+      {isInstallModalOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={() => {
+            setIsInstallModalOpen(false)
+            setGithubTemplates([])
+          }}
+        >
+          <div 
+            className="bg-white rounded-xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 border-b border-slate-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <Github className="w-6 h-6 text-slate-700" />
+                  <h2 className="text-2xl font-bold text-slate-900">GitHubからテンプレートをインストール</h2>
+                </div>
+                <button
+                  onClick={() => {
+                    setIsInstallModalOpen(false)
+                    setGithubTemplates([])
+                  }}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 transition"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <p className="text-sm text-slate-600 mt-2">
+                GitHubリポジトリ（tsubasagit/AppNavi-asset）から利用可能なテンプレートをインストールできます。
+              </p>
+            </div>
+            <div className="p-6">
+              {githubTemplates.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-slate-600">利用可能なテンプレートが見つかりませんでした。</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {githubTemplates.map((template) => (
+                    <div
+                      key={template.id}
+                      className="border border-slate-200 rounded-lg p-4 hover:shadow-md transition"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 className="font-bold text-slate-900">{template.name}</h3>
+                          <p className="text-xs text-slate-500">v{template.version}</p>
+                        </div>
+                        <span className="px-2 py-1 bg-slate-100 rounded text-xs text-slate-600">
+                          {template.category}
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-600 mb-4 line-clamp-2">{template.description}</p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-slate-500">作成者: {template.author}</p>
+                        <button
+                          onClick={async () => {
+                            try {
+                              await installAsset(template)
+                              setIsInstallModalOpen(false)
+                              setGithubTemplates([])
+                            } catch (error) {
+                              alert('インストールに失敗しました。')
+                              console.error(error)
+                            }
+                          }}
+                          className="btn-primary text-xs px-3 py-1"
+                        >
+                          インストール
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* アップロードモーダル */}
+      {isUploadModalOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={() => setIsUploadModalOpen(false)}
+        >
+          <div 
+            className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 border-b border-slate-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <Upload className="w-6 h-6 text-slate-700" />
+                  <h2 className="text-2xl font-bold text-slate-900">テンプレートをアップロード</h2>
+                </div>
+                <button
+                  onClick={() => setIsUploadModalOpen(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 transition"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <p className="text-slate-600 mb-6">
+                テンプレートをGitHubリポジトリ（tsubasagit/AppNavi-asset）にアップロードします。
+              </p>
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6">
+                <p className="text-sm text-slate-700 mb-2">
+                  <strong>アップロード方法:</strong>
+                </p>
+                <ol className="text-sm text-slate-600 list-decimal list-inside space-y-1">
+                  <li>GitHubリポジトリ（<a href="https://github.com/tsubasagit/AppNavi-asset" target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:underline">tsubasagit/AppNavi-asset</a>）にアクセス</li>
+                  <li>templatesディレクトリに新しいテンプレートフォルダを作成</li>
+                  <li>metadata.jsonとテンプレートファイルを追加</li>
+                  <li>Pull Requestを作成してレビューを依頼</li>
+                </ol>
+              </div>
+              <div className="flex items-center justify-end space-x-3">
+                <button
+                  onClick={() => setIsUploadModalOpen(false)}
+                  className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition"
+                >
+                  閉じる
+                </button>
+                <a
+                  href="https://github.com/tsubasagit/AppNavi-asset"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary flex items-center space-x-2"
+                >
+                  <Github size={16} />
+                  <span>GitHubで開く</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* テンプレート変更確認ダイアログ */}
+      {isConfirmDialogOpen && selectedTemplateForModal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={() => setIsConfirmDialogOpen(false)}
+        >
+          <div 
+            className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl max-w-md w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* ダイアログヘッダー */}
+            <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">テンプレート変更の確認</h3>
+            </div>
+
+            {/* ダイアログコンテンツ */}
+            <div className="p-6">
+              <div className="mb-4">
+                <div className="flex items-start gap-3 mb-4">
+                  <AlertCircle className="w-6 h-6 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-slate-900 dark:text-white font-medium mb-2">
+                      テンプレート「{selectedTemplateForModal.name}」に変更しますか？
+                    </p>
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                      <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">
+                        <strong className="text-yellow-800 dark:text-yellow-200">⚠️ 注意事項</strong>
+                      </p>
+                      <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-1 list-disc list-inside">
+                        <li>今まで作ったページがすべて消えます</li>
+                        <li>データが消えることはありません</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ダイアログフッター */}
+            <div className="flex items-center justify-end space-x-3 p-6 border-t border-slate-200 dark:border-slate-700">
+              <button
+                onClick={() => setIsConfirmDialogOpen(false)}
+                className="px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={confirmTemplateChange}
+                className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-medium"
+              >
+                このテンプレートに変更する
+              </button>
             </div>
           </div>
         </div>

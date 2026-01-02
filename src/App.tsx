@@ -6,14 +6,16 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Landing from './pages/Landing'
 import DeveloperLP from './pages/DeveloperLP'
 import AppDetail from './pages/AppDetail'
-import AppRedirect from './pages/AppRedirect'
+import MyApps from './pages/MyApps'
 import About from './pages/About'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import TestLogin from './pages/TestLogin'
+import { CreateSampleApps } from './pages/CreateSampleApps'
 import { AppProvider } from './context/AppContext'
 import { AuthProvider } from './context/AuthContext'
 import { getGoogleRedirectResult } from './utils/firebase'
+import './utils/errorLogger' // エラーロガーを初期化
 
 // リダイレクト後の認証結果を処理するコンポーネント
 function RedirectHandler() {
@@ -66,38 +68,47 @@ function AppContent() {
       <Route 
         path="/apps" 
         element={
-          <div className="flex h-screen overflow-hidden bg-slate-50">
-            <main className="flex-1 overflow-auto">
-              <ProtectedRoute>
-                <AppRedirect />
-              </ProtectedRoute>
-            </main>
-          </div>
+          <ProtectedRoute>
+            <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-black">
+              <Sidebar />
+              <main className="flex-1 overflow-auto">
+                <MyApps />
+              </main>
+            </div>
+          </ProtectedRoute>
         } 
       />
       <Route 
         path="/apps/:appId" 
         element={
-          <div className="flex h-screen overflow-hidden bg-slate-50">
-            <main className="flex-1 overflow-auto">
-              <ProtectedRoute>
+          <ProtectedRoute>
+            <div className="flex h-screen overflow-hidden bg-slate-50">
+              <main className="flex-1 overflow-auto">
                 <AppDetail />
-              </ProtectedRoute>
-            </main>
-          </div>
+              </main>
+            </div>
+          </ProtectedRoute>
         } 
       />
       <Route 
         path="/about" 
         element={
-          <div className="flex h-screen overflow-hidden bg-slate-50">
-            <Sidebar />
-            <main className="flex-1 overflow-auto">
-              <ProtectedRoute>
+          <ProtectedRoute>
+            <div className="flex h-screen overflow-hidden bg-slate-50">
+              <Sidebar />
+              <main className="flex-1 overflow-auto">
                 <About />
-              </ProtectedRoute>
-            </main>
-          </div>
+              </main>
+            </div>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/create-sample-apps" 
+        element={
+          <ProtectedRoute>
+            <CreateSampleApps />
+          </ProtectedRoute>
         } 
       />
     </Routes>
@@ -107,6 +118,53 @@ function AppContent() {
 function App() {
   // 開発環境ではbasenameなし、本番環境（GitHub Pages）では/appnavi
   const basename = import.meta.env.PROD ? '/appnavi' : undefined
+
+  // グローバルエラーハンドラー（開発環境のみ）
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      const errorHandler = (event: ErrorEvent) => {
+        const errorInfo = {
+          type: 'error',
+          message: event.message,
+          filename: event.filename,
+          lineno: event.lineno,
+          colno: event.colno,
+          error: event.error?.toString(),
+          stack: event.error?.stack,
+          timestamp: new Date().toISOString()
+        }
+        
+        const existingErrors = JSON.parse(localStorage.getItem('globalErrors') || '[]')
+        existingErrors.push(errorInfo)
+        localStorage.setItem('globalErrors', JSON.stringify(existingErrors))
+        
+        console.error('グローバルエラーが記録されました:', errorInfo)
+      }
+      
+      const rejectionHandler = (event: PromiseRejectionEvent) => {
+        const errorInfo = {
+          type: 'unhandledRejection',
+          reason: event.reason?.toString(),
+          stack: event.reason?.stack,
+          timestamp: new Date().toISOString()
+        }
+        
+        const existingErrors = JSON.parse(localStorage.getItem('globalErrors') || '[]')
+        existingErrors.push(errorInfo)
+        localStorage.setItem('globalErrors', JSON.stringify(existingErrors))
+        
+        console.error('未処理のPromise拒否が記録されました:', errorInfo)
+      }
+      
+      window.addEventListener('error', errorHandler)
+      window.addEventListener('unhandledrejection', rejectionHandler)
+      
+      return () => {
+        window.removeEventListener('error', errorHandler)
+        window.removeEventListener('unhandledrejection', rejectionHandler)
+      }
+    }
+  }, [])
 
   return (
     <AuthProvider>
@@ -132,8 +190,10 @@ function AuthRedirectHandler({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handleRedirectResult = async () => {
       try {
+        console.log('AuthRedirectHandler - リダイレクト結果を確認中...')
         const user = await getGoogleRedirectResult()
         if (user) {
+          console.log('AuthRedirectHandler - リダイレクト認証成功:', user.email)
           // リダイレクト認証が成功した場合、AuthContextのonAuthStateChangedが自動的に処理する
           // 現在のURLがログインページまたは登録ページの場合、最初のアプリにリダイレクト
           const currentPath = window.location.pathname
@@ -141,13 +201,15 @@ function AuthRedirectHandler({ children }: { children: React.ReactNode }) {
             // 少し待ってからリダイレクト（AuthContextの更新を待つ）
             setTimeout(() => {
               const basePath = import.meta.env.PROD ? '/appnavi' : ''
+              console.log('AuthRedirectHandler - ダッシュボードにリダイレクト:', `${basePath}/apps`)
               window.location.href = `${basePath}/apps`
-            }, 500)
+            }, 1500)
           }
-          console.log('リダイレクト認証成功:', user)
+        } else {
+          console.log('AuthRedirectHandler - リダイレクト結果なし')
         }
       } catch (err: any) {
-        console.error('リダイレクト認証エラー:', err)
+        console.error('AuthRedirectHandler - リダイレクト認証エラー:', err)
         // エラーは各ページで処理される
       }
     }

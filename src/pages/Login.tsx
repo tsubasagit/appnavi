@@ -1,21 +1,24 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Chrome } from 'lucide-react'
-import { signInWithGoogle, signInWithGoogleRedirect, getGoogleRedirectResult } from '../utils/firebase'
+import { signInWithGoogle, signInWithGoogleRedirect, getGoogleRedirectResult, auth } from '../utils/firebase'
+import { onAuthStateChanged } from 'firebase/auth'
 import { useAuth } from '../context/AuthContext'
+import { displayErrors, getLoginErrors } from '../utils/errorLogger'
 
 const Login = () => {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
-  const { currentUser, loading: authLoading } = useAuth()
+  const { currentUser, user, loading: authLoading } = useAuth()
 
   // 既にログインしている場合はリダイレクト
   useEffect(() => {
-    if (!authLoading && currentUser) {
-      navigate('/apps')
+    if (!authLoading && (currentUser || user)) {
+      console.log('既にログイン済み、ダッシュボードにリダイレクト:', { currentUser: currentUser?.email, user: user?.email })
+      navigate('/apps', { replace: true })
     }
-  }, [currentUser, authLoading, navigate])
+  }, [currentUser, user, authLoading, navigate])
 
   // リダイレクト後の認証結果を処理（URLパラメータからエラーがある場合）
   useEffect(() => {
@@ -28,14 +31,23 @@ const Login = () => {
     // リダイレクト結果をチェック（App.tsxで処理されるが、念のため）
     const handleRedirectResult = async () => {
       try {
+        console.log('Login.tsx - リダイレクト結果を確認中...')
         const user = await getGoogleRedirectResult()
         if (user) {
-          // リダイレクト認証が成功した場合、アプリ一覧に移動
+          console.log('Login.tsx - リダイレクト認証成功:', user.email)
+          // リダイレクト認証が成功した場合、少し待ってからアプリ一覧に移動
+          // AuthContextの状態更新を待つ
+          await new Promise(resolve => setTimeout(resolve, 1000))
           navigate('/apps', { replace: true })
+        } else {
+          console.log('Login.tsx - リダイレクト結果なし')
         }
       } catch (err: any) {
-        // エラーは既にApp.tsxで処理されているため、ここでは無視
-        console.log('リダイレクト結果:', err)
+        console.error('Login.tsx - リダイレクト結果のエラー:', err)
+        // エラーがある場合は表示
+        if (err.code) {
+          setError(getErrorMessage(err.code, err.requestId))
+        }
       }
     }
     handleRedirectResult()
@@ -54,34 +66,160 @@ const Login = () => {
   }
 
   // 既にログインしている場合は何も表示しない（リダイレクト中）
-  if (currentUser) {
-    return null
+  if (currentUser || user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+          <p className="mt-4 text-slate-600">リダイレクト中...</p>
+        </div>
+      </div>
+    )
   }
 
   const handleGoogleSignIn = async () => {
     setError('')
     setLoading(true)
 
+    // エラーをキャプチャするためのグローバルエラーハンドラーを一時的に設定
+    const errorLog: any[] = []
+    const originalError = console.error
+    const originalWarn = console.warn
+    
+    const errorHandler = (message: any, ...args: any[]) => {
+      errorLog.push({ type: 'error', message, args, timestamp: new Date().toISOString() })
+      originalError(message, ...args)
+    }
+    
+    const warnHandler = (message: any, ...args: any[]) => {
+      errorLog.push({ type: 'warn', message, args, timestamp: new Date().toISOString() })
+      originalWarn(message, ...args)
+    }
+    
+    console.error = errorHandler
+    console.warn = warnHandler
+    
+    // 未処理のエラーをキャプチャ
+    const unhandledErrorHandler = (event: ErrorEvent) => {
+      errorLog.push({ 
+        type: 'unhandled', 
+        message: event.message, 
+        filename: event.filename, 
+        lineno: event.lineno, 
+        colno: event.colno,
+        error: event.error,
+        timestamp: new Date().toISOString() 
+      })
+    }
+    
+    const unhandledRejectionHandler = (event: PromiseRejectionEvent) => {
+      errorLog.push({ 
+        type: 'unhandledRejection', 
+        reason: event.reason, 
+        timestamp: new Date().toISOString() 
+      })
+    }
+    
+    window.addEventListener('error', unhandledErrorHandler)
+    window.addEventListener('unhandledrejection', unhandledRejectionHandler)
+
     try {
       // まずポップアップ方式を試す
-      await signInWithGoogle()
-      navigate('/apps')
-    } catch (err: any) {
-      // ポップアップがブロックされた場合、リダイレクト方式にフォールバック
-      if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user') {
-        try {
-          await signInWithGoogleRedirect()
-          // リダイレクトが開始された場合、この関数は完了するがページ遷移は発生しない
-          // リダイレクト後の処理はuseEffectで処理される
-          setLoading(false)
-          return
-        } catch (redirectErr: any) {
-          setError(getErrorMessage(redirectErr.code, redirectErr.requestId))
-        }
+      const user = await signInWithGoogle()
+      console.log('signInWithGoogle成功:', user.email)
+      
+      // 認証成功後、auth.currentUserを確認
+      if (auth.currentUser) {
+        console.log('auth.currentUser確認:', auth.currentUser.email)
+        // 少し待ってからナビゲーション（AuthContextの状態更新を待つ）
+        await new Promise(resolve => setTimeout(resolve, 500))
+        navigate('/apps', { replace: true })
       } else {
-        setError(getErrorMessage(err.code, err.requestId))
+        // auth.currentUserがnullの場合、onAuthStateChangedを待つ
+        console.log('auth.currentUserがnull、onAuthStateChangedを待機...')
+        await new Promise<void>((resolve, reject) => {
+          let resolved = false
+          const timeout = setTimeout(() => {
+            if (!resolved) {
+              resolved = true
+              console.error('認証状態の更新がタイムアウトしました')
+              reject(new Error('認証状態の更新がタイムアウトしました'))
+            }
+          }, 5000)
+          
+          const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+            console.log('Login.tsx - onAuthStateChanged:', firebaseUser?.email || 'null')
+            if (firebaseUser && !resolved) {
+              resolved = true
+              clearTimeout(timeout)
+              unsubscribe()
+              resolve()
+            } else if (!firebaseUser && !resolved) {
+              // nullが返された場合でも、少し待ってから再確認
+              setTimeout(() => {
+                if (auth.currentUser && !resolved) {
+                  resolved = true
+                  clearTimeout(timeout)
+                  unsubscribe()
+                  resolve()
+                }
+              }, 1000)
+            }
+          })
+        })
+        
+        // 認証状態が更新されたら、ダッシュボードに遷移
+        navigate('/apps', { replace: true })
+      }
+      
+      // エラーが記録されていた場合、localStorageに保存
+      if (errorLog.length > 0) {
+        const existingErrors = JSON.parse(localStorage.getItem('loginErrors') || '[]')
+        existingErrors.push({
+          timestamp: new Date().toISOString(),
+          errors: errorLog,
+          userEmail: user?.email
+        })
+        localStorage.setItem('loginErrors', JSON.stringify(existingErrors))
+        console.warn('ログイン中にエラーが記録されました。localStorageのloginErrorsを確認してください。', errorLog)
+      }
+    } catch (err: any) {
+      console.error('Googleログインエラー:', err)
+      
+      // エラーも記録
+      errorLog.push({ 
+        type: 'catch', 
+        error: err, 
+        message: err?.message, 
+        code: err?.code,
+        stack: err?.stack,
+        timestamp: new Date().toISOString() 
+      })
+      
+      const existingErrors = JSON.parse(localStorage.getItem('loginErrors') || '[]')
+      existingErrors.push({
+        timestamp: new Date().toISOString(),
+        errors: errorLog,
+        error: err
+      })
+      localStorage.setItem('loginErrors', JSON.stringify(existingErrors))
+      console.error('エラーが記録されました。localStorageのloginErrorsを確認してください。', errorLog)
+      // ポップアップがブロックされた場合、ユーザーに選択肢を提示
+      if (err.code === 'auth/popup-blocked') {
+        console.log('ポップアップがブロックされました。')
+        setError('ポップアップがブロックされました。\n\nCursorの内蔵ブラウザでは、ポップアップの許可ができない場合があります。\n下の「リダイレクト方式でログイン」ボタンをクリックしてログインしてください。\n\n通常のブラウザ（Chrome、Firefox、Edgeなど）を使用する場合は、アドレスバーのポップアップブロックアイコンをクリックして許可することもできます。')
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        setError('ログインがキャンセルされました。もう一度お試しください。')
+      } else {
+        const errorMessage = err?.message || err?.code || '認証に失敗しました'
+        setError(getErrorMessage(err.code, err.requestId) || errorMessage)
       }
     } finally {
+      // エラーハンドラーを元に戻す
+      console.error = originalError
+      console.warn = originalWarn
+      window.removeEventListener('error', unhandledErrorHandler)
+      window.removeEventListener('unhandledrejection', unhandledRejectionHandler)
       setLoading(false)
     }
   }
@@ -97,7 +235,7 @@ const Login = () => {
         baseMessage = 'ログインがキャンセルされました'
         break
       case 'auth/popup-blocked':
-        baseMessage = 'ポップアップがブロックされました。リダイレクト方式で認証を試みます...'
+        baseMessage = 'ポップアップがブロックされました。\n\n解決方法:\n1. ブラウザのアドレスバーにあるポップアップブロックアイコンをクリックして、このサイトのポップアップを許可してください\n2. または、下の「リダイレクト方式でログイン」ボタンをクリックしてください'
         break
       case 'auth/network-request-failed':
         baseMessage = 'ネットワークエラーが発生しました。接続を確認してください'
@@ -165,6 +303,33 @@ const Login = () => {
               <Chrome className="w-5 h-5" />
               <span>{loading ? 'ログイン中...' : 'Googleでログイン'}</span>
             </button>
+            
+            {/* リダイレクト方式でログイン（ポップアップがブロックされている場合用） */}
+            <div className="mt-4 pt-4 border-t border-slate-200">
+              <p className="text-xs text-slate-500 mb-2 text-center">
+                ポップアップがブロックされている場合
+              </p>
+              <button
+                onClick={async () => {
+                  setError('')
+                  setLoading(true)
+                  try {
+                    console.log('リダイレクト方式で認証を開始します...')
+                    await signInWithGoogleRedirect()
+                    // リダイレクトが開始された場合、ページ遷移が発生する
+                    // この時点でreturnすると、finallyブロックが実行されないため、setLoading(false)は不要
+                  } catch (err: any) {
+                    console.error('リダイレクト方式の認証エラー:', err)
+                    setError(getErrorMessage(err.code, err.requestId) || 'リダイレクト方式での認証に失敗しました。')
+                    setLoading(false)
+                  }
+                }}
+                disabled={loading}
+                className="w-full text-sm text-slate-600 hover:text-slate-800 underline disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                リダイレクト方式でログイン
+              </button>
+            </div>
           </div>
 
           {/* Register Link */}
@@ -185,6 +350,26 @@ const Login = () => {
               </p>
             )}
           </div>
+          
+          {/* 開発環境: エラー確認ボタン */}
+          {import.meta.env.DEV && (
+            <div className="mt-4 pt-4 border-t border-slate-200">
+              <button
+                onClick={() => {
+                  const errors = getLoginErrors()
+                  if (errors.length > 0) {
+                    displayErrors()
+                    alert(`エラーが ${errors.length} 件記録されています。コンソールを確認してください。`)
+                  } else {
+                    alert('エラーは記録されていません。')
+                  }
+                }}
+                className="w-full text-xs text-slate-500 hover:text-slate-700 underline"
+              >
+                記録されたエラーを確認 (開発環境)
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,16 +1,27 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Search, Plus, Edit, ExternalLink, FileText } from 'lucide-react'
+import { Search, Plus, Edit, FileText, Trash2, Bell, Megaphone, CheckCircle2 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import { App } from '../types'
 
 const MyApps = () => {
   const [searchQuery, setSearchQuery] = useState('')
+  const [deletingAppId, setDeletingAppId] = useState<string | null>(null)
   const navigate = useNavigate()
-  const { apps, createNewApp } = useApp()
+  const { apps, createNewApp, deleteApp } = useApp()
+  
+  // デバッグ: アプリの状態を確認
+  console.log('MyApps - アプリ一覧:', apps)
+  console.log('MyApps - アプリ数:', apps.length)
 
-  const handleCreateNewApp = () => {
-    const newAppId = createNewApp()
-    navigate(`/apps/${newAppId}`)
+  const handleCreateNewApp = async () => {
+    try {
+      const newAppId = await createNewApp()
+      navigate(`/apps/${newAppId}`)
+    } catch (error) {
+      console.error('アプリ作成エラー:', error)
+      alert('アプリの作成に失敗しました')
+    }
   }
 
   const filteredApps = apps.filter((app) =>
@@ -30,12 +41,123 @@ const MyApps = () => {
     }
   }
 
+  const handleDeleteApp = async (appId: string, appName: string) => {
+    // 確認ダイアログを表示
+    const confirmed = window.confirm(
+      `本当に「${appName}」を削除しますか？\n\nこの操作は取り消せません。`
+    )
+    
+    if (!confirmed) {
+      return
+    }
+
+    try {
+      setDeletingAppId(appId)
+      await deleteApp(appId)
+      // 削除成功のメッセージ（オプション）
+      console.log('アプリを削除しました:', appName)
+    } catch (error) {
+      console.error('アプリの削除エラー:', error)
+      alert('アプリの削除に失敗しました')
+    } finally {
+      setDeletingAppId(null)
+    }
+  }
+
+  // お知らせデータ（サンプル）
+  const announcements = [
+    {
+      id: '1',
+      title: 'AppNavi v2.0 リリースのお知らせ',
+      content: '新しい「One App, One Mission」アーキテクチャが利用可能になりました。',
+      date: '2024-01-15',
+      type: 'info' as const,
+      isNew: true,
+    },
+    {
+      id: '2',
+      title: 'メンテナンス予定',
+      content: '2024年1月20日 2:00-4:00にメンテナンスを実施します。',
+      date: '2024-01-10',
+      type: 'warning' as const,
+      isNew: false,
+    },
+    {
+      id: '3',
+      title: '新機能: Docker出力機能',
+      content: 'アプリをDockerプロジェクトとして出力できるようになりました。',
+      date: '2024-01-08',
+      type: 'success' as const,
+      isNew: false,
+    },
+  ]
+
+  const getAnnouncementIcon = (type: 'info' | 'warning' | 'success') => {
+    switch (type) {
+      case 'info':
+        return <Bell className="w-5 h-5 text-blue-600" />
+      case 'warning':
+        return <Megaphone className="w-5 h-5 text-orange-600" />
+      case 'success':
+        return <CheckCircle2 className="w-5 h-5 text-green-600" />
+      default:
+        return <Bell className="w-5 h-5 text-slate-600" />
+    }
+  }
+
+  const getAnnouncementBgColor = (type: 'info' | 'warning' | 'success') => {
+    switch (type) {
+      case 'info':
+        return 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800'
+      case 'warning':
+        return 'bg-orange-50 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800'
+      case 'success':
+        return 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800'
+      default:
+        return 'bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700'
+    }
+  }
+
   return (
-    <div className="p-6 md:p-8">
+    <div className="p-6 md:p-8 bg-white dark:bg-black min-h-screen">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">マイアプリ</h1>
-        <p className="text-slate-600">作成したアプリケーションの管理・編集</p>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">ダッシュボード</h1>
+        <p className="text-slate-600 dark:text-slate-400">作成したアプリケーションの管理・編集</p>
+      </div>
+
+      {/* お知らせ一覧 */}
+      <div className="card mb-8 dark:bg-slate-900">
+        <div className="flex items-center gap-2 mb-4">
+          <Bell className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">お知らせ一覧</h3>
+        </div>
+        <div className="space-y-3">
+          {announcements.map((announcement) => (
+            <div
+              key={announcement.id}
+              className={`p-4 rounded-lg border-2 ${getAnnouncementBgColor(announcement.type)} transition hover:shadow-sm`}
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 mt-0.5">
+                  {getAnnouncementIcon(announcement.type)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-bold text-slate-900 dark:text-white text-sm">{announcement.title}</h4>
+                    {announcement.isNew && (
+                      <span className="bg-primary-600 text-white text-xs px-2 py-0.5 rounded-full font-medium">
+                        新着
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">{announcement.content}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{announcement.date}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Search and Create */}
@@ -47,7 +169,7 @@ const MyApps = () => {
             placeholder="アプリを検索..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
           />
         </div>
         <button 
@@ -63,7 +185,7 @@ const MyApps = () => {
       {filteredApps.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredApps.map((app) => (
-          <div key={app.id} className="card hover:shadow-md transition">
+          <div key={app.id} className="card dark:bg-slate-900 hover:shadow-md transition">
             {/* Icon and Status */}
             <div className="flex items-start justify-between mb-4">
               <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
@@ -81,23 +203,23 @@ const MyApps = () => {
             </div>
 
             {/* App Info */}
-            <h3 className="text-lg font-bold text-slate-900 mb-2">{app.name}</h3>
-            <p className="text-sm text-slate-600 mb-4 line-clamp-2">{app.description}</p>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{app.name}</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 line-clamp-2">{app.description}</p>
 
             {/* Data Source */}
-            <div className="flex items-center text-sm text-slate-500 mb-4">
+            <div className="flex items-center text-sm text-slate-500 dark:text-slate-400 mb-4">
               <FileText className="w-4 h-4 mr-2" />
               <span>{getDataSourceLabel(app)}</span>
             </div>
 
             {/* Stats */}
-            <div className="flex items-center justify-between text-sm text-slate-500 mb-4 pb-4 border-b border-slate-100">
+            <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400 mb-4 pb-4 border-b border-slate-100 dark:border-slate-800">
               <span>最終更新: {app.lastUpdated}</span>
               <span>{app.views} Views</span>
             </div>
 
             {/* Actions */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center justify-between">
               <Link
                 to={`/apps/${app.id}`}
                 className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center"
@@ -105,19 +227,23 @@ const MyApps = () => {
                 <Edit className="w-4 h-4 mr-1" />
                 編集
               </Link>
-              <button className="text-sm text-slate-600 hover:text-slate-900 font-medium flex items-center">
-                <ExternalLink className="w-4 h-4 mr-1" />
-                開く
+              <button
+                onClick={() => handleDeleteApp(app.id, app.name)}
+                disabled={deletingAppId === app.id}
+                className="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium flex items-center disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                <Trash2 className="w-4 h-4 mr-1" />
+                {deletingAppId === app.id ? '削除中...' : '削除'}
               </button>
             </div>
           </div>
         ))}
         </div>
       ) : (
-        <div className="card text-center py-12">
-          <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-slate-900 mb-2">アプリがまだありません</h3>
-          <p className="text-slate-600 mb-6">新しいアプリを作成して始めましょう</p>
+        <div className="card dark:bg-slate-900 text-center py-12">
+          <FileText className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">アプリがまだありません</h3>
+          <p className="text-slate-600 dark:text-slate-400 mb-6">新しいアプリを作成して始めましょう</p>
           <button 
             onClick={handleCreateNewApp}
             className="btn-primary inline-flex items-center space-x-2"

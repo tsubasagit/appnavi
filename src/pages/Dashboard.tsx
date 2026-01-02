@@ -16,7 +16,9 @@ import {
   Layers,
   Database,
   Palette,
-  Settings
+  Settings,
+  Bell,
+  Megaphone
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 
@@ -73,6 +75,60 @@ const Dashboard = () => {
     navigate(`/apps/${newAppId}`)
   }
 
+  // お知らせデータ（サンプル）
+  const announcements = [
+    {
+      id: '1',
+      title: 'AppNavi v2.0 リリースのお知らせ',
+      content: '新しい「One App, One Mission」アーキテクチャが利用可能になりました。',
+      date: '2024-01-15',
+      type: 'info' as const,
+      isNew: true,
+    },
+    {
+      id: '2',
+      title: 'メンテナンス予定',
+      content: '2024年1月20日 2:00-4:00にメンテナンスを実施します。',
+      date: '2024-01-10',
+      type: 'warning' as const,
+      isNew: false,
+    },
+    {
+      id: '3',
+      title: '新機能: Docker出力機能',
+      content: 'アプリをDockerプロジェクトとして出力できるようになりました。',
+      date: '2024-01-08',
+      type: 'success' as const,
+      isNew: false,
+    },
+  ]
+
+  const getAnnouncementIcon = (type: 'info' | 'warning' | 'success') => {
+    switch (type) {
+      case 'info':
+        return <Bell className="w-5 h-5 text-blue-600" />
+      case 'warning':
+        return <Megaphone className="w-5 h-5 text-orange-600" />
+      case 'success':
+        return <CheckCircle2 className="w-5 h-5 text-green-600" />
+      default:
+        return <Bell className="w-5 h-5 text-slate-600" />
+    }
+  }
+
+  const getAnnouncementBgColor = (type: 'info' | 'warning' | 'success') => {
+    switch (type) {
+      case 'info':
+        return 'bg-blue-50 border-blue-200'
+      case 'warning':
+        return 'bg-orange-50 border-orange-200'
+      case 'success':
+        return 'bg-green-50 border-green-200'
+      default:
+        return 'bg-slate-50 border-slate-200'
+    }
+  }
+
   return (
     <div className="p-6 md:p-8">
       {/* Welcome Banner */}
@@ -84,6 +140,40 @@ const Dashboard = () => {
         <p className="text-slate-600">
           「One App, One Mission」— 目的特化型アプリを3ステップで構築
         </p>
+      </div>
+
+      {/* お知らせ一覧 */}
+      <div className="card mb-8">
+        <div className="flex items-center gap-2 mb-4">
+          <Bell className="w-5 h-5 text-slate-600" />
+          <h3 className="text-lg font-bold text-slate-900">お知らせ一覧</h3>
+        </div>
+        <div className="space-y-3">
+          {announcements.map((announcement) => (
+            <div
+              key={announcement.id}
+              className={`p-4 rounded-lg border-2 ${getAnnouncementBgColor(announcement.type)} transition hover:shadow-sm`}
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 mt-0.5">
+                  {getAnnouncementIcon(announcement.type)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-bold text-slate-900 text-sm">{announcement.title}</h4>
+                    {announcement.isNew && (
+                      <span className="bg-primary-600 text-white text-xs px-2 py-0.5 rounded-full font-medium">
+                        新着
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-slate-700 mb-2">{announcement.content}</p>
+                  <p className="text-xs text-slate-500">{announcement.date}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Philosophy Banner */}

@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
-import { Monitor, Smartphone, Eye, Rocket, Plus, X, PenTool, ChevronDown, ChevronRight, BarChart3, Grid3x3, FileText, Type, Trash2 } from 'lucide-react'
+import { Monitor, Smartphone, Eye, Rocket, Plus, X, PenTool, ChevronDown, ChevronRight, BarChart3, Grid3x3, FileText, Type, Trash2, Maximize2, Search, Users, Briefcase, AlertCircle, TrendingUp, Calendar, Clock, Filter, MoreVertical, Edit, Phone, Mail, MapPin, User } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { ComponentConfig, Page, PageConfig, UIState, ComponentType } from '../../types'
+import { useSheetData } from '../../hooks/useSheetData'
+import { extractSpreadsheetId } from '../../features/sheets/api'
 
 const UITab = () => {
   const { dataSources, apps, activeAppId } = useApp()
@@ -43,7 +45,90 @@ const UITab = () => {
   const [isComponentPickerOpen, setIsComponentPickerOpen] = useState(false)
   const [hoveredSlotIndex, setHoveredSlotIndex] = useState<number | null>(null)
   const [componentPickerSlotIndex, setComponentPickerSlotIndex] = useState<number | null>(null)
+  const [isFullScreenPreview, setIsFullScreenPreview] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // テンプレート変更時にUI構成を適用
+  useEffect(() => {
+    const applyTemplateUI = async () => {
+      if (!app?.templateId && !app?.template) {
+        console.log('UITab: テンプレートIDが設定されていません')
+        return
+      }
+
+      try {
+        const { getTemplate } = await import('../../utils/firestore')
+        const templateId = app.templateId || app.template
+        console.log(`UITab: テンプレート "${templateId}" を読み込み中...`)
+        
+        const templateData = await getTemplate(templateId)
+        
+        if (templateData && templateData.uiStructure) {
+          const uiStructure = templateData.uiStructure
+          
+          // ページ構成を適用
+          if (uiStructure.pages && uiStructure.pages.length > 0) {
+            const newPages: Page[] = uiStructure.pages.map((page, index) => ({
+              id: page.id || `page_${index + 1}`,
+              name: page.name,
+              path: page.path,
+              template: page.id,
+            }))
+            
+            const newPageComponents: PageConfig = {}
+            uiStructure.pages.forEach((page, pageIndex) => {
+              const pageId = page.id || `page_${pageIndex + 1}`
+              if (page.components && page.components.length > 0) {
+                newPageComponents[pageId] = page.components.map((comp) => ({
+                  id: comp.id,
+                  type: comp.type as ComponentType,
+                  props: comp.props || {},
+                  dataSource: comp.dataSourceId,
+                }))
+              }
+            })
+            
+            setPages(newPages)
+            setPageComponents(newPageComponents)
+            
+            // 最初のページをアクティブに
+            if (newPages.length > 0) {
+              setUIState(prev => ({ ...prev, activePageId: newPages[0].id }))
+            }
+            
+            console.log('UITab: テンプレートのUI構成を適用しました:', templateData.name)
+          } else {
+            console.warn(`UITab: テンプレート "${templateId}" にページ構成がありません`)
+          }
+        } else {
+          console.warn(`UITab: テンプレート "${templateId}" が見つかりませんでした。`)
+          console.warn('UITab: テンプレートを作成するには、scripts/create-templates.js を実行してください。')
+          console.warn('UITab: または、Firebase Consoleで手動でテンプレートを作成してください。')
+        }
+      } catch (error: any) {
+        console.error('UITab: テンプレートUI構成の適用エラー:', error)
+        if (error?.code === 'permission-denied' || error?.message?.includes('permission')) {
+          console.error('UITab: Firestoreのセキュリティルールを確認してください。テンプレートの読み込み権限がありません。')
+        } else {
+          console.error('UITab: エラー詳細:', {
+            code: error?.code,
+            message: error?.message,
+            stack: error?.stack
+          })
+        }
+      }
+    }
+
+    applyTemplateUI()
+  }, [app?.templateId, app?.template])
+
+  // データソースからスプレッドシートIDを取得
+  const getSpreadsheetIdFromDataSource = (dataSourceId: string | undefined): string | null => {
+    if (!dataSourceId) return null
+    const source = dataSources.find(ds => ds.id === dataSourceId)
+    if (!source || source.type !== 'google-sheets' || !source.url) return null
+    return extractSpreadsheetId(source.url)
+  }
 
   // ドロップダウン外クリックで閉じる
   useEffect(() => {
@@ -163,6 +248,410 @@ const UITab = () => {
     }
   }
 
+  // データ付きコンポーネントレンダリング用のコンポーネント
+  const DataTableComponent = ({ component, isSelected, onSelect }: { component: ComponentConfig; isSelected: boolean; onSelect: () => void }) => {
+    const spreadsheetId = getSpreadsheetIdFromDataSource(component.props?.dataSource)
+    const { headers, rows, isLoading, error } = useSheetData(spreadsheetId, 'Sheet1')
+
+    return (
+      <div
+        className={`p-4 ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+        onClick={(e) => {
+          e.stopPropagation()
+          onSelect()
+        }}
+      >
+        <h3 className="font-bold mb-2 text-slate-900 dark:text-white">{component.props?.title || 'Table'}</h3>
+        {isLoading ? (
+          <div className="text-center py-8 text-slate-500 dark:text-slate-400">読み込み中...</div>
+        ) : error ? (
+          <div className="text-center py-8 text-red-500">{error}</div>
+        ) : !spreadsheetId ? (
+          <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+            <p>データソースが設定されていません</p>
+            <p className="text-sm mt-2">右側のプロパティパネルでデータソースを選択してください</p>
+          </div>
+        ) : headers.length === 0 ? (
+          <div className="text-center py-8 text-slate-500 dark:text-slate-400">データがありません</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse border border-slate-200 dark:border-slate-700">
+              <thead>
+                <tr className="bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                  {headers.map((header, index) => (
+                    <th key={index} className="text-left p-2 text-slate-700 dark:text-slate-300 font-semibold">
+                      {header || `列${index + 1}`}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.slice(0, 10).map((row, rowIndex) => (
+                  <tr key={rowIndex} className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">
+                    {row.data.map((cell, cellIndex) => (
+                      <td key={cellIndex} className="p-2 text-slate-700 dark:text-slate-300">
+                        {cell || '-'}
+                      </td>
+                    ))}
+                    {/* 不足している列を埋める */}
+                    {row.data.length < headers.length && (
+                      Array.from({ length: headers.length - row.data.length }).map((_, index) => (
+                        <td key={`empty-${index}`} className="p-2 text-slate-400 dark:text-slate-500">
+                          -
+                        </td>
+                      ))
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {rows.length > 10 && (
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 text-center">
+                他 {rows.length - 10} 件のデータがあります
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  const KPIGridComponent = ({ component, isSelected, onSelect }: { component: ComponentConfig; isSelected: boolean; onSelect: () => void }) => {
+    const spreadsheetId = getSpreadsheetIdFromDataSource(component.props?.dataSource)
+    const { headers, rows, isLoading, error } = useSheetData(spreadsheetId, 'Sheet1')
+
+    // データからKPIを計算（最初の数値列を使用）
+    const kpiValues = rows.length > 0 && headers.length > 0
+      ? headers.map((header, index) => {
+          const values = rows.map(row => parseFloat(row.data[index] || '0')).filter(v => !isNaN(v))
+          return {
+            label: header || `列${index + 1}`,
+            value: values.length > 0 ? values.reduce((a, b) => a + b, 0).toLocaleString() : '0',
+            count: rows.length
+          }
+        }).slice(0, 3)
+      : []
+
+    return (
+      <div
+        className={`p-4 bg-slate-50 dark:bg-slate-800 rounded-lg ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+        onClick={(e) => {
+          e.stopPropagation()
+          onSelect()
+        }}
+      >
+        <h3 className="font-bold mb-2 text-slate-900 dark:text-white">{component.props?.title || 'KPI Grid'}</h3>
+        {isLoading ? (
+          <div className="text-center py-8 text-slate-500 dark:text-slate-400">読み込み中...</div>
+        ) : error ? (
+          <div className="text-center py-8 text-red-500">{error}</div>
+        ) : !spreadsheetId ? (
+          <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+            <p>データソースが設定されていません</p>
+            <p className="text-sm mt-2">右側のプロパティパネルでデータソースを選択してください</p>
+          </div>
+        ) : kpiValues.length === 0 ? (
+          <div className="grid grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white dark:bg-slate-900 p-4 rounded border border-slate-200 dark:border-slate-700">
+                <div className="text-2xl font-bold text-slate-900 dark:text-white">0</div>
+                <div className="text-sm text-slate-600 dark:text-slate-400">Metric {i}</div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-4">
+            {kpiValues.map((kpi, index) => (
+              <div key={index} className="bg-white dark:bg-slate-900 p-4 rounded border border-slate-200 dark:border-slate-700">
+                <div className="text-2xl font-bold text-slate-900 dark:text-white">{kpi.value}</div>
+                <div className="text-sm text-slate-600 dark:text-slate-400">{kpi.label}</div>
+                <div className="text-xs text-slate-500 dark:text-slate-500 mt-1">{kpi.count}件</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // KPIカードコンポーネント（CRM用）
+  const KPICardComponent = ({ component, isSelected, onSelect }: { component: ComponentConfig; isSelected: boolean; onSelect: () => void }) => {
+    const iconMap: Record<string, any> = {
+      'Users': Users,
+      'TrendingUp': TrendingUp,
+      'Briefcase': Briefcase,
+      'AlertCircle': AlertCircle,
+    }
+    const Icon = iconMap[component.props?.icon || 'Users'] || Users
+    const label = component.props?.label || 'KPI'
+    const value = component.props?.value || '0'
+
+    return (
+      <div
+        className={`p-4 bg-white dark:bg-slate-900 rounded-lg border-2 border-purple-200 dark:border-purple-800 shadow-lg hover:shadow-xl transition-shadow ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+        onClick={(e) => {
+          e.stopPropagation()
+          onSelect()
+        }}
+      >
+        <div className="flex items-center justify-between mb-2">
+          <Icon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+        </div>
+        <div className="text-2xl font-bold text-purple-900 dark:text-purple-100 mb-1">{value}</div>
+        <div className="text-sm text-purple-700 dark:text-purple-300">{label}</div>
+      </div>
+    )
+  }
+
+  // 検索コンポーネント（CRM用）
+  const SearchComponent = ({ component, isSelected, onSelect }: { component: ComponentConfig; isSelected: boolean; onSelect: () => void }) => {
+    const [searchValue, setSearchValue] = useState('')
+    const placeholder = component.props?.placeholder || '検索...'
+
+    return (
+      <div
+        className={`p-4 ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+        onClick={(e) => {
+          e.stopPropagation()
+          onSelect()
+        }}
+      >
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
+          <input
+            type="text"
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            placeholder={placeholder}
+            className="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  // フォームコンポーネント（CRM用）
+  const FormComponent = ({ component, isSelected, onSelect }: { component: ComponentConfig; isSelected: boolean; onSelect: () => void }) => {
+    const fields = component.props?.fields || []
+
+    return (
+      <div
+        className={`p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+        onClick={(e) => {
+          e.stopPropagation()
+          onSelect()
+        }}
+      >
+        <h3 className="font-bold mb-4 text-slate-900 dark:text-white">{component.props?.title || 'フォーム'}</h3>
+        <div className="space-y-4">
+          {fields.map((field: any, index: number) => (
+            <div key={index}>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                {field.name}
+                {field.required && <span className="text-red-500 ml-1">*</span>}
+              </label>
+              {field.type === 'select' ? (
+                <select className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
+                  <option value="">選択してください</option>
+                  {field.options?.map((opt: string, optIndex: number) => (
+                    <option key={optIndex} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type={field.type || 'text'}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                  placeholder={field.placeholder || ''}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  // カレンダーコンポーネント（Googleカレンダー用 - 週単位表示）
+  const CalendarComponent = ({ component, isSelected, onSelect, app }: { component: ComponentConfig; isSelected: boolean; onSelect: () => void; app?: any }) => {
+    const [currentWeek, setCurrentWeek] = useState(new Date())
+    const [selectedTeams, setSelectedTeams] = useState<string[]>(['営業', '開発', 'マーケティング'])
+    const spreadsheetId = getSpreadsheetIdFromDataSource(component.dataSource)
+    const { headers, rows, isLoading, error } = useSheetData(spreadsheetId, 'Sheet1')
+    
+    const view = component.props?.view || 'week'
+    const weekStart = new Date(currentWeek)
+    weekStart.setDate(currentWeek.getDate() - currentWeek.getDay())
+    
+    const days = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date(weekStart)
+      date.setDate(weekStart.getDate() + i)
+      return date
+    })
+
+    const dayNames = ['日', '月', '火', '水', '木', '金', '土']
+    const isGoogleCalendar = app?.templateId === 'google-calendar-group' || app?.template === 'google-calendar-group'
+    
+    // イベントデータのインデックスを取得
+    const eventNameIndex = headers.findIndex(h => h === 'イベント名' || h === 'タイトル' || h === '名前')
+    const startDateIndex = headers.findIndex(h => h === '開始日時' || h === '開始日' || h === '日時')
+    const groupIndex = headers.findIndex(h => h === 'グループ' || h === 'チーム')
+    const participantIndex = headers.findIndex(h => h === '参加者' || h === 'メンバー')
+    const locationIndex = headers.findIndex(h => h === '場所' || h === 'ロケーション')
+    
+    // 日付に基づいてイベントを分類
+    const eventsByDate: Record<string, any[]> = {}
+    days.forEach(day => {
+      const dateKey = day.toISOString().split('T')[0]
+      eventsByDate[dateKey] = []
+    })
+    
+    rows.forEach((row) => {
+      if (startDateIndex >= 0 && row.data[startDateIndex]) {
+        const dateStr = row.data[startDateIndex]
+        // 日付文字列を解析（YYYY-MM-DD形式を想定）
+        try {
+          const eventDate = new Date(dateStr)
+          if (!isNaN(eventDate.getTime())) {
+            const dateKey = eventDate.toISOString().split('T')[0]
+            
+            // 選択されたチームのみ表示
+            if (groupIndex >= 0 && row.data[groupIndex]) {
+              const group = row.data[groupIndex]
+              if (selectedTeams.includes(group) && eventsByDate[dateKey]) {
+                eventsByDate[dateKey].push(row)
+              }
+            } else if (eventsByDate[dateKey]) {
+              eventsByDate[dateKey].push(row)
+            }
+          }
+        } catch (e) {
+          // 日付解析エラーは無視
+        }
+      }
+    })
+
+    return (
+      <div
+        className={`p-4 bg-white dark:bg-slate-900 rounded-lg border-2 ${isGoogleCalendar ? 'border-orange-200 dark:border-orange-800' : 'border-slate-200 dark:border-slate-700'} ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+        onClick={(e) => {
+          e.stopPropagation()
+          onSelect()
+        }}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold text-slate-900 dark:text-white flex items-center">
+            <Calendar className="w-5 h-5 mr-2 text-orange-600 dark:text-orange-400" />
+            {component.props?.title || '週間カレンダー'}
+          </h3>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                const prevWeek = new Date(currentWeek)
+                prevWeek.setDate(currentWeek.getDate() - 7)
+                setCurrentWeek(prevWeek)
+              }}
+              className="px-2 py-1 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"
+            >
+              ←
+            </button>
+            <span className="text-sm text-slate-600 dark:text-slate-400">
+              {weekStart.toLocaleDateString('ja-JP', { month: 'long', year: 'numeric' })}
+            </span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                const nextWeek = new Date(currentWeek)
+                nextWeek.setDate(currentWeek.getDate() + 7)
+                setCurrentWeek(nextWeek)
+              }}
+              className="px-2 py-1 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"
+            >
+              →
+            </button>
+          </div>
+        </div>
+        
+        {/* 週間カレンダーグリッド */}
+        <div className="grid grid-cols-7 gap-2">
+          {days.map((day, index) => (
+            <div key={index} className={`text-center ${index === 0 ? 'border-l border-slate-200 dark:border-slate-700' : ''}`}>
+              <div className={`text-xs font-medium mb-1 ${day.getDay() === 0 ? 'text-red-500' : day.getDay() === 6 ? 'text-blue-500' : 'text-slate-600 dark:text-slate-400'}`}>
+                {dayNames[day.getDay()]}
+              </div>
+              <div className={`text-sm font-bold mb-2 ${day.toDateString() === new Date().toDateString() ? 'text-orange-600 dark:text-orange-400' : 'text-slate-900 dark:text-white'}`}>
+                {day.getDate()}
+              </div>
+              <div className="min-h-[80px] bg-orange-50 dark:bg-orange-900/20 rounded p-1 space-y-1">
+                {/* イベント表示エリア */}
+                {isLoading ? (
+                  <div className="text-xs text-slate-400 dark:text-slate-500 text-center pt-2">読み込み中...</div>
+                ) : error ? (
+                  <div className="text-xs text-red-500 text-center pt-2">エラー</div>
+                ) : !spreadsheetId ? (
+                  <div className="text-xs text-slate-400 dark:text-slate-500 text-center pt-2">データソース未設定</div>
+                ) : eventsByDate[day.toISOString().split('T')[0]]?.length > 0 ? (
+                  eventsByDate[day.toISOString().split('T')[0]].slice(0, 3).map((event, eventIndex) => (
+                    <div
+                      key={eventIndex}
+                      className="text-xs bg-orange-200 dark:bg-orange-800 text-orange-900 dark:text-orange-100 px-1 py-0.5 rounded truncate"
+                      title={eventNameIndex >= 0 ? event.data[eventNameIndex] : 'イベント'}
+                    >
+                      {eventNameIndex >= 0 ? event.data[eventNameIndex] : `イベント ${eventIndex + 1}`}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-xs text-slate-400 dark:text-slate-500 text-center pt-2">予定なし</div>
+                )}
+                {eventsByDate[day.toISOString().split('T')[0]]?.length > 3 && (
+                  <div className="text-xs text-orange-600 dark:text-orange-400 text-center">
+                    +{eventsByDate[day.toISOString().split('T')[0]].length - 3}件
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* チーム別フィルター（Googleカレンダー用） */}
+        {isGoogleCalendar && (
+          <div className="mt-4 pt-4 border-t border-orange-200 dark:border-orange-800">
+            <div className="flex items-center gap-2 mb-2">
+              <Filter className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+              <span className="text-sm font-medium text-orange-900 dark:text-orange-100">チームフィルター</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {['営業', '開発', 'マーケティング'].map((team) => {
+                const isSelected = selectedTeams.includes(team)
+                return (
+                  <button
+                    key={team}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSelectedTeams(prev => 
+                        isSelected 
+                          ? prev.filter(t => t !== team)
+                          : [...prev, team]
+                      )
+                    }}
+                    className={`px-3 py-1 text-xs rounded-full transition ${
+                      isSelected
+                        ? 'bg-orange-600 text-white dark:bg-orange-500'
+                        : 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-900/50'
+                    }`}
+                  >
+                    {team}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   // コンポーネントレンダリング（Safe Rendering）
   const renderComponent = (component: ComponentConfig) => {
     const isSelected = component.id === uiState.selectedComponentId
@@ -177,58 +666,99 @@ const UITab = () => {
               handleComponentSelect(component.id)
             }}
           >
-            <h2 style={{ textAlign: component.props?.align || 'left' }}>
+            <h2 style={{ textAlign: component.props?.align || 'left' }} className="text-slate-900 dark:text-white">
               {component.props?.text || 'Heading'}
             </h2>
           </div>
         )
       case 'kpi_grid':
         return (
-          <div
-            className={`p-4 bg-slate-50 rounded-lg ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
-            onClick={(e) => {
-              e.stopPropagation()
-              handleComponentSelect(component.id)
-            }}
-          >
-            <h3 className="font-bold mb-2">{component.props?.title || 'KPI Grid'}</h3>
-            <div className="grid grid-cols-3 gap-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white p-4 rounded border">
-                  <div className="text-2xl font-bold">0</div>
-                  <div className="text-sm text-slate-600">Metric {i}</div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <KPIGridComponent
+            component={component}
+            isSelected={isSelected}
+            onSelect={() => handleComponentSelect(component.id)}
+          />
         )
       case 'table':
         return (
+          <DataTableComponent
+            component={component}
+            isSelected={isSelected}
+            onSelect={() => handleComponentSelect(component.id)}
+          />
+        )
+      case 'chart':
+        return (
           <div
-            className={`p-4 ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+            className={`p-4 bg-slate-50 dark:bg-slate-800 rounded-lg ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
             onClick={(e) => {
               e.stopPropagation()
               handleComponentSelect(component.id)
             }}
           >
-            <h3 className="font-bold mb-2">{component.props?.title || 'Table'}</h3>
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left p-2">Column 1</th>
-                  <th className="text-left p-2">Column 2</th>
-                  <th className="text-left p-2">Column 3</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b">
-                  <td className="p-2">Row 1</td>
-                  <td className="p-2">Data</td>
-                  <td className="p-2">Data</td>
-                </tr>
-              </tbody>
-            </table>
+            <h3 className="font-bold mb-2 text-slate-900 dark:text-white">{component.props?.title || 'Chart'}</h3>
+            <div className="h-64 flex items-center justify-center bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-700">
+              <BarChart3 className="w-16 h-16 text-slate-400 dark:text-slate-500" />
+              <p className="ml-3 text-slate-500 dark:text-slate-400">グラフプレビュー（実装予定）</p>
+            </div>
           </div>
+        )
+      case 'kpi_card':
+        return (
+          <KPICardComponent
+            component={component}
+            isSelected={isSelected}
+            onSelect={() => handleComponentSelect(component.id)}
+          />
+        )
+      case 'search':
+        return (
+          <SearchComponent
+            component={component}
+            isSelected={isSelected}
+            onSelect={() => handleComponentSelect(component.id)}
+          />
+        )
+      case 'form':
+        return (
+          <FormComponent
+            component={component}
+            isSelected={isSelected}
+            onSelect={() => handleComponentSelect(component.id)}
+          />
+        )
+      case 'calendar':
+        return (
+          <CalendarComponent
+            component={component}
+            isSelected={isSelected}
+            onSelect={() => handleComponentSelect(component.id)}
+            app={app}
+          />
+        )
+      case 'kanban':
+        return (
+          <KanbanComponent
+            component={component}
+            isSelected={isSelected}
+            onSelect={() => handleComponentSelect(component.id)}
+          />
+        )
+      case 'timeline':
+        return (
+          <TimelineComponent
+            component={component}
+            isSelected={isSelected}
+            onSelect={() => handleComponentSelect(component.id)}
+          />
+        )
+      case 'list':
+        return (
+          <ListComponent
+            component={component}
+            isSelected={isSelected}
+            onSelect={() => handleComponentSelect(component.id)}
+          />
         )
       default:
         return (
@@ -239,7 +769,7 @@ const UITab = () => {
               handleComponentSelect(component.id)
             }}
           >
-            <p className="text-slate-500">Unknown Component: {component.type}</p>
+            <p className="text-slate-500 dark:text-slate-400">Unknown Component: {component.type}</p>
           </div>
         )
     }
@@ -249,8 +779,15 @@ const UITab = () => {
   const componentTypes: { type: ComponentType; label: string; icon: any }[] = [
     { type: 'heading', label: 'Heading', icon: Type },
     { type: 'kpi_grid', label: 'KPI Grid', icon: Grid3x3 },
+    { type: 'kpi_card', label: 'KPI Card', icon: Grid3x3 },
     { type: 'table', label: 'Table', icon: FileText },
     { type: 'chart', label: 'Chart', icon: BarChart3 },
+    { type: 'search', label: 'Search', icon: Search },
+    { type: 'form', label: 'Form', icon: FileText },
+    { type: 'calendar', label: 'Calendar', icon: Calendar },
+    { type: 'kanban', label: 'Kanban', icon: Grid3x3 },
+    { type: 'timeline', label: 'Timeline', icon: Clock },
+    { type: 'list', label: 'List', icon: FileText },
   ]
 
   // 選択中のコンポーネント
@@ -259,13 +796,13 @@ const UITab = () => {
   return (
     <div className="flex flex-col h-full">
       {/* Header Section */}
-      <div className="bg-slate-50 border-b border-slate-200 p-4 flex-shrink-0">
+      <div className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 flex-shrink-0">
         <div className="max-w-7xl mx-auto">
           <div>
-            <h2 className="text-xl font-bold text-slate-900 flex items-center">
-              <PenTool className="mr-2 text-primary-600" size={24} /> Step 2: Design - テーマエンジン
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center">
+              <PenTool className="mr-2 text-primary-600 dark:text-primary-400" size={24} /> Step 2: Design - テーマエンジン
             </h2>
-            <p className="text-sm text-slate-600 mt-1">
+            <p className="text-sm text-slate-600 dark:text-white mt-1">
               デザインをカスタマイズして、アプリの見た目を調整します。
             </p>
           </div>
@@ -274,11 +811,11 @@ const UITab = () => {
       
       <div className="flex flex-1 overflow-hidden">
         {/* Left Panel - Structure & Navigation */}
-        <aside className="w-80 bg-slate-50 border-r border-slate-200 p-6 overflow-auto">
+        <aside className="w-80 bg-slate-50 dark:bg-black border-r border-slate-200 dark:border-slate-800 p-6 overflow-auto">
           {/* Page Selector */}
           <div className="mb-6" ref={dropdownRef}>
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-bold text-slate-900">Pages</h3>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Pages</h3>
               <button
                 onClick={handleCreatePage}
                 className="flex items-center space-x-1 px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition text-sm font-medium"
@@ -291,26 +828,26 @@ const UITab = () => {
             <div className="relative">
               <button
                 onClick={() => setIsPageDropdownOpen(!isPageDropdownOpen)}
-                className="w-full flex items-center justify-between px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 hover:bg-slate-50 transition"
+                className="w-full flex items-center justify-between px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition"
               >
                 <span>
                   {pages.find(p => p.id === uiState.activePageId)?.name || 'ページを選択'}
                 </span>
                 <ChevronDown 
-                  className={`w-4 h-4 text-slate-500 transition-transform ${isPageDropdownOpen ? 'transform rotate-180' : ''}`} 
+                  className={`w-4 h-4 text-slate-500 dark:text-slate-400 transition-transform ${isPageDropdownOpen ? 'transform rotate-180' : ''}`} 
                 />
               </button>
               
               {isPageDropdownOpen && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                   {pages.map((page) => (
                     <button
                       key={page.id}
                       onClick={() => handlePageChange(page.id)}
                       className={`w-full text-left px-4 py-2 text-sm transition ${
                         uiState.activePageId === page.id
-                          ? 'bg-primary-50 text-primary-700 font-medium'
-                          : 'text-slate-600 hover:bg-slate-50'
+                          ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-medium'
+                          : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
                       }`}
                     >
                       {page.name}
@@ -323,10 +860,10 @@ const UITab = () => {
 
           {/* Component Tree */}
           <div>
-            <h4 className="text-sm font-medium text-slate-700 mb-2">Components</h4>
+            <h4 className="text-sm font-medium text-slate-700 dark:text-white mb-2">Components</h4>
             <div className="space-y-1">
               {currentPageComponents.length === 0 ? (
-                <p className="text-sm text-slate-500 px-4 py-2">コンポーネントがありません</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 px-4 py-2">コンポーネントがありません</p>
               ) : (
                 currentPageComponents.map((component) => {
                   const isSelected = component.id === uiState.selectedComponentId
@@ -338,8 +875,8 @@ const UITab = () => {
                       onClick={() => handleComponentSelect(component.id)}
                       className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition cursor-pointer ${
                         isSelected
-                          ? 'bg-blue-900 text-white'
-                          : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                          ? 'bg-blue-900 dark:bg-blue-800 text-white'
+                          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800'
                       }`}
                     >
                       <div className="flex items-center space-x-2">
@@ -358,17 +895,17 @@ const UITab = () => {
         </aside>
 
         {/* Center Panel - Canvas / Preview */}
-        <main className="flex-1 flex flex-col overflow-hidden bg-slate-100">
+        <main className="flex-1 flex flex-col overflow-hidden bg-slate-100 dark:bg-black">
           {/* Preview Controls */}
-          <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 bg-slate-100 rounded-lg p-1">
+              <div className="flex items-center space-x-2 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
                 <button
                   onClick={() => setPreviewMode('pc')}
                   className={`px-3 py-1 rounded text-sm font-medium transition ${
                     previewMode === 'pc'
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-slate-600'
+                      ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                      : 'text-slate-600 dark:text-slate-300'
                   }`}
                 >
                   <Monitor className="w-4 h-4 inline mr-1" />
@@ -378,8 +915,8 @@ const UITab = () => {
                   onClick={() => setPreviewMode('mobile')}
                   className={`px-3 py-1 rounded text-sm font-medium transition ${
                     previewMode === 'mobile'
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-slate-600'
+                      ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                      : 'text-slate-600 dark:text-slate-300'
                   }`}
                 >
                   <Smartphone className="w-4 h-4 inline mr-1" />
@@ -388,13 +925,16 @@ const UITab = () => {
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <button className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition text-sm">
-                <Eye className="w-4 h-4 inline mr-1" />
-                プレビュー
+              <button
+                onClick={() => setIsFullScreenPreview(true)}
+                className="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-white rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition text-sm flex items-center space-x-1"
+              >
+                <Maximize2 className="w-4 h-4" />
+                <span>全画面プレビュー</span>
               </button>
-              <button className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition text-sm">
-                <Rocket className="w-4 h-4 inline mr-1" />
-                公開する
+              <button className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition text-sm flex items-center space-x-1">
+                <Rocket className="w-4 h-4" />
+                <span>公開する</span>
               </button>
             </div>
           </div>
@@ -402,15 +942,20 @@ const UITab = () => {
           {/* Preview Canvas */}
           <div className="flex-1 overflow-auto p-8">
             <div
-              className={`bg-white rounded-xl shadow-lg mx-auto ${
+              className={`bg-white dark:bg-slate-900 rounded-xl shadow-lg mx-auto ${
                 previewMode === 'mobile' ? 'max-w-sm' : 'max-w-5xl'
               }`}
               onClick={() => setUIState(prev => ({ ...prev, selectedComponentId: null }))}
             >
               {/* App Header */}
-              <div className="bg-primary-600 text-white px-6 py-4 rounded-t-xl">
+              <div className={`px-6 py-4 rounded-t-xl ${
+                (app?.templateId === 'crm' || app?.template === 'crm') ? 'bg-purple-600' :
+                (app?.templateId === 'google-calendar-group' || app?.template === 'google-calendar-group') ? 'bg-orange-600' :
+                'bg-primary-600'
+              } text-white`}>
                 <h2 className="font-bold">
-                  {app?.template === 'crm' ? '顧客管理（CRM）' :
+                  {(app?.templateId === 'crm' || app?.template === 'crm') ? '顧客管理（CRM）' :
+                   (app?.templateId === 'google-calendar-group' || app?.template === 'google-calendar-group') ? 'Googleカレンダー管理' :
                    app?.template === 'inventory' ? '在庫管理' :
                    app?.template === 'daily-report' ? '日報・活動報告' :
                    app?.template === 'reservation' ? '予約管理' :
@@ -421,7 +966,7 @@ const UITab = () => {
               {/* Components with Slots */}
               <div className="p-6">
                 {currentPageComponents.length === 0 ? (
-                  <div className="text-center py-12 text-slate-500">
+                  <div className="text-center py-12 text-slate-500 dark:text-slate-400">
                     <p>コンポーネントを追加してください</p>
                   </div>
                 ) : (
@@ -492,16 +1037,16 @@ const UITab = () => {
         </main>
 
         {/* Right Panel - Property Inspector */}
-        <aside className="w-80 bg-white border-l border-slate-200 p-6 overflow-auto">
+        <aside className="w-80 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 p-6 overflow-auto">
           {selectedComponent ? (
             <div>
-              <h3 className="text-lg font-bold text-slate-900 mb-4">Properties</h3>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Properties</h3>
               
               {/* Dynamic Props Form */}
               {selectedComponent.type === 'heading' && (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Text</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-white mb-2">Text</label>
                     <input
                       type="text"
                       value={selectedComponent.props?.text || ''}
@@ -516,11 +1061,11 @@ const UITab = () => {
                           [String(uiState.activePageId)]: updated
                         }))
                       }}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Align</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-white mb-2">Align</label>
                     <select
                       value={selectedComponent.props?.align || 'left'}
                       onChange={(e) => {
@@ -534,7 +1079,7 @@ const UITab = () => {
                           [String(uiState.activePageId)]: updated
                         }))
                       }}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     >
                       <option value="left">Left</option>
                       <option value="center">Center</option>
@@ -547,7 +1092,7 @@ const UITab = () => {
               {selectedComponent.type === 'kpi_grid' && (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Title</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-white mb-2">Title</label>
                     <input
                       type="text"
                       value={selectedComponent.props?.title || ''}
@@ -562,11 +1107,11 @@ const UITab = () => {
                           [String(uiState.activePageId)]: updated
                         }))
                       }}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Data Source</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-white mb-2">Data Source</label>
                     <select
                       value={selectedComponent.props?.dataSource || ''}
                       onChange={(e) => {
@@ -580,7 +1125,7 @@ const UITab = () => {
                           [String(uiState.activePageId)]: updated
                         }))
                       }}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     >
                       <option value="">データソースを選択</option>
                       {dataSources.map(ds => (
@@ -594,7 +1139,7 @@ const UITab = () => {
               {selectedComponent.type === 'table' && (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Title</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-white mb-2">Title</label>
                     <input
                       type="text"
                       value={selectedComponent.props?.title || ''}
@@ -609,11 +1154,11 @@ const UITab = () => {
                           [String(uiState.activePageId)]: updated
                         }))
                       }}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Data Source</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-white mb-2">Data Source</label>
                     <select
                       value={selectedComponent.props?.dataSource || ''}
                       onChange={(e) => {
@@ -627,7 +1172,7 @@ const UITab = () => {
                           [String(uiState.activePageId)]: updated
                         }))
                       }}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     >
                       <option value="">データソースを選択</option>
                       {dataSources.map(ds => (
@@ -639,12 +1184,98 @@ const UITab = () => {
               )}
             </div>
           ) : (
-            <div className="text-center py-12 text-slate-500">
+            <div className="text-center py-12 text-slate-500 dark:text-slate-400">
               <p>コンポーネントを選択してください</p>
             </div>
           )}
         </aside>
       </div>
+
+      {/* Full Screen Preview Modal */}
+      {isFullScreenPreview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full h-full max-w-7xl max-h-[95vh] mx-4 my-4 flex flex-col">
+            {/* Preview Header */}
+            <div className="bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                  {app?.name || 'App'} - プレビュー
+                </h2>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setPreviewMode('pc')}
+                    className={`px-3 py-1.5 rounded-lg text-sm transition ${
+                      previewMode === 'pc'
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-600'
+                    }`}
+                  >
+                    <Monitor className="w-4 h-4 inline mr-1" />
+                    PC
+                  </button>
+                  <button
+                    onClick={() => setPreviewMode('mobile')}
+                    className={`px-3 py-1.5 rounded-lg text-sm transition ${
+                      previewMode === 'mobile'
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-600'
+                    }`}
+                  >
+                    <Smartphone className="w-4 h-4 inline mr-1" />
+                    モバイル
+                  </button>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsFullScreenPreview(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 transition"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Preview Content */}
+            <div className="flex-1 overflow-auto p-8 bg-slate-50 dark:bg-black">
+              <div
+                className={`bg-white dark:bg-slate-900 rounded-xl shadow-lg mx-auto ${
+                  previewMode === 'mobile' ? 'max-w-sm' : 'max-w-5xl'
+                }`}
+              >
+                {/* App Header */}
+                <div className={`px-6 py-4 rounded-t-xl ${
+                  (app?.templateId === 'crm' || app?.template === 'crm') ? 'bg-purple-600' :
+                  (app?.templateId === 'google-calendar-group' || app?.template === 'google-calendar-group') ? 'bg-orange-600' :
+                  'bg-primary-600'
+                } text-white`}>
+                  <h2 className="font-bold">
+                    {(app?.templateId === 'crm' || app?.template === 'crm') ? '顧客管理（CRM）' :
+                     (app?.templateId === 'google-calendar-group' || app?.template === 'google-calendar-group') ? 'Googleカレンダー管理' :
+                     app?.template === 'inventory' ? '在庫管理' :
+                     app?.template === 'daily-report' ? '日報・活動報告' :
+                     app?.template === 'reservation' ? '予約管理' :
+                     app?.name || 'App'}
+                  </h2>
+                </div>
+
+                {/* Components */}
+                <div className="p-6">
+                  {currentPageComponents.length === 0 ? (
+                    <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+                      <p>コンポーネントを追加してください</p>
+                    </div>
+                  ) : (
+                    currentPageComponents.map((component) => (
+                      <div key={component.id} className="mb-4">
+                        {renderComponent(component)}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Component Picker Modal */}
       {isComponentPickerOpen && componentPickerSlotIndex !== null && (

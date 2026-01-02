@@ -8,12 +8,13 @@ const TestLogin = () => {
   const navigate = useNavigate()
   const { user, loading: authLoading, signInAsTestUser, isTestMode } = useAuth()
 
-  // ログイン成功時にアプリ一覧にリダイレクト
+  // ログイン成功時にダッシュボード（アプリ一覧）にリダイレクト
   useEffect(() => {
-    if (!authLoading && user && !loading) {
+    if (!authLoading && user) {
+      // アプリ一覧ページにリダイレクト（AppRedirectが自動的に最初のアプリのダッシュボードに遷移）
       navigate('/apps', { replace: true })
     }
-  }, [user, authLoading, loading, navigate])
+  }, [user, authLoading, navigate])
 
   // テストモードが無効な場合は通常のログインページにリダイレクト
   useEffect(() => {
@@ -26,7 +27,11 @@ const TestLogin = () => {
     setLoading(true)
     try {
       signInAsTestUser()
-      // useEffectでuserの変更を監視して自動的にダッシュボードに遷移する
+      // signInAsTestUserは同期的に動作するため、すぐにリダイレクト可能
+      // useEffectでもリダイレクトされるが、念のためここでも実行
+      setTimeout(() => {
+        navigate('/apps', { replace: true })
+      }, 100)
     } catch (error) {
       console.error('テストログインエラー:', error)
       setLoading(false)

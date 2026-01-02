@@ -15,7 +15,7 @@ const About = () => {
         </Link>
         <h1 className="text-4xl font-bold text-slate-900 mb-4">AppNaviについて</h1>
         <p className="text-lg text-slate-600">
-          「データは個人のもの、プラットフォームはみんなのもの」
+          「データは個人に、プラットフォームはみんなに」
         </p>
       </div>
 

@@ -48,7 +48,7 @@ const Landing = () => {
             {/* Auth Buttons */}
             <div className="hidden md:flex items-center space-x-4">
               {currentUser ? (
-                <Link to="/dashboard" className="text-slate-600 hover:text-slate-900 font-medium px-4 py-2 transition">
+                <Link to="/apps" className="text-slate-600 hover:text-slate-900 font-medium px-4 py-2 transition">
                   ダッシュボード
                 </Link>
               ) : (
@@ -85,7 +85,7 @@ const Landing = () => {
               <Link to="/developer" className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50">開発者向け</Link>
               <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-2">
                 {currentUser ? (
-                  <Link to="/dashboard" className="w-full text-center text-slate-600 hover:text-slate-900 font-medium px-4 py-2 border border-slate-300 rounded-md">
+                  <Link to="/apps" className="w-full text-center text-slate-600 hover:text-slate-900 font-medium px-4 py-2 border border-slate-300 rounded-md">
                     ダッシュボード
                   </Link>
                 ) : (
