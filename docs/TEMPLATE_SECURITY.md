@@ -92,3 +92,4 @@ npm run create-templates
 2. AppNaviアプリケーションにログインしていることを確認
 3. 開発サーバーが起動していることを確認
 
+

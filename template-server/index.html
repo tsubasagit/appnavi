@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AppNavi テンプレート一覧</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    header {
+      text-align: center;
+      color: white;
+      margin-bottom: 3rem;
+    }
+    
+    header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    header p {
+      font-size: 1.2rem;
+      opacity: 0.9;
+    }
+    
+    .templates-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+    
+    .template-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    
+    .template-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .template-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    
+    .template-card h3 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: #1a202c;
+    }
+    
+    .template-card .category {
+      font-size: 0.875rem;
+      color: #718096;
+      margin-bottom: 1rem;
+    }
+    
+    .template-card .description {
+      color: #4a5568;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+    
+    .template-card .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    
+    .tag {
+      background: #edf2f7;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      color: #4a5568;
+    }
+    
+    .loading {
+      text-align: center;
+      color: white;
+      font-size: 1.2rem;
+      padding: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>AppNavi テンプレート一覧</h1>
+      <p>目的特化型テンプレートを選択して、すぐにアプリを作成</p>
+    </header>
+    
+    <div id="templates-container" class="loading">
+      テンプレートを読み込み中...
+    </div>
+  </div>
+  
+  <script>
+    // テンプレートデータを取得
+    async function loadTemplates() {
+      try {
+        const response = await fetch('/api/templates.json')
+        const data = await response.json()
+        renderTemplates(data.templates)
+      } catch (error) {
+        console.error('テンプレートの読み込みエラー:', error)
+        document.getElementById('templates-container').innerHTML = 
+          '<div class="loading">テンプレートの読み込みに失敗しました</div>'
+      }
+    }
+    
+    // テンプレートを表示
+    function renderTemplates(templates) {
+      const container = document.getElementById('templates-container')
+      container.className = 'templates-grid'
+      
+      const colorMap = {
+        'purple': { bg: '#8b5cf6', text: '#fff' },
+        'orange': { bg: '#f97316', text: '#fff' },
+        'green': { bg: '#10b981', text: '#fff' },
+        'blue': { bg: '#3b82f6', text: '#fff' },
+      }
+      
+      const iconMap = {
+        'crm': '👥',
+        'google-calendar-group': '📅',
+        'daily-report': '📋',
+        'auto-integration': '🔄',
+      }
+      
+      container.innerHTML = templates.map(template => {
+        const color = colorMap[template.color] || { bg: '#6b7280', text: '#fff' }
+        const icon = iconMap[template.templateId] || '📦'
+        
+        return `
+          <a href="${template.demoUrl || `/templates/${template.templateId}/`}" class="template-card">
+            <div class="template-icon" style="background: ${color.bg}; color: ${color.text};">
+              ${icon}
+            </div>
+            <h3>${template.name}</h3>
+            <div class="category">${template.category}</div>
+            <div class="description">${template.description}</div>
+            <div class="tags">
+              ${template.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+            </div>
+          </a>
+        `
+      }).join('')
+    }
+    
+    // ページ読み込み時にテンプレートを取得
+    loadTemplates()
+  </script>
+</body>
+</html>
+
+

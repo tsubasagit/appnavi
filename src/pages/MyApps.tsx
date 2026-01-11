@@ -1,12 +1,17 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Search, Plus, Edit, FileText, Trash2, Bell, Megaphone, CheckCircle2 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { App } from '../types'
+import { getAnnouncements } from '../utils/firestore'
+import type { Announcement } from '../types/firestore'
+import { Timestamp } from 'firebase/firestore'
 
 const MyApps = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [deletingAppId, setDeletingAppId] = useState<string | null>(null)
+  const [announcements, setAnnouncements] = useState<Announcement[]>([])
+  const [loadingAnnouncements, setLoadingAnnouncements] = useState(true)
   const navigate = useNavigate()
   const { apps, createNewApp, deleteApp } = useApp()
   
@@ -14,13 +19,51 @@ const MyApps = () => {
   console.log('MyApps - アプリ一覧:', apps)
   console.log('MyApps - アプリ数:', apps.length)
 
+  // Firestoreからお知らせを取得
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      try {
+        setLoadingAnnouncements(true)
+        const fetchedAnnouncements = await getAnnouncements()
+        setAnnouncements(fetchedAnnouncements)
+        console.log('MyApps - お知らせ取得成功:', fetchedAnnouncements.length, '件')
+      } catch (error) {
+        console.error('MyApps - お知らせ取得エラー:', error)
+        // エラーが発生した場合は空配列を設定（フォールバック）
+        setAnnouncements([])
+      } finally {
+        setLoadingAnnouncements(false)
+      }
+    }
+
+    fetchAnnouncements()
+  }, [])
+
   const handleCreateNewApp = async () => {
     try {
+      console.log('MyApps - アプリ作成を開始')
       const newAppId = await createNewApp()
+      console.log('MyApps - アプリ作成成功:', newAppId)
       navigate(`/apps/${newAppId}`)
-    } catch (error) {
-      console.error('アプリ作成エラー:', error)
-      alert('アプリの作成に失敗しました')
+    } catch (error: any) {
+      console.error('MyApps - アプリ作成エラー:', error)
+      console.error('MyApps - エラー詳細:', {
+        message: error?.message,
+        code: error?.code,
+        stack: error?.stack,
+        name: error?.name,
+        errorObject: error
+      })
+      
+      // エラーメッセージを改善
+      let errorMessage = 'アプリの作成に失敗しました'
+      if (error?.message) {
+        errorMessage = error.message
+      } else if (error?.code === 'permission-denied') {
+        errorMessage = 'Firestore権限エラー: アプリの作成に必要な権限がありません。ログイン状態を確認してください。'
+      }
+      
+      alert(errorMessage)
     }
   }
 
@@ -64,33 +107,17 @@ const MyApps = () => {
     }
   }
 
-  // お知らせデータ（サンプル）
-  const announcements = [
-    {
-      id: '1',
-      title: 'AppNavi v2.0 リリースのお知らせ',
-      content: '新しい「One App, One Mission」アーキテクチャが利用可能になりました。',
-      date: '2024-01-15',
-      type: 'info' as const,
-      isNew: true,
-    },
-    {
-      id: '2',
-      title: 'メンテナンス予定',
-      content: '2024年1月20日 2:00-4:00にメンテナンスを実施します。',
-      date: '2024-01-10',
-      type: 'warning' as const,
-      isNew: false,
-    },
-    {
-      id: '3',
-      title: '新機能: Docker出力機能',
-      content: 'アプリをDockerプロジェクトとして出力できるようになりました。',
-      date: '2024-01-08',
-      type: 'success' as const,
-      isNew: false,
-    },
-  ]
+  // お知らせの日付を文字列形式に変換するヘルパー関数
+  const formatAnnouncementDate = (timestamp: Timestamp | undefined): string => {
+    if (!timestamp) {
+      return '日付不明'
+    }
+    const date = timestamp.toDate()
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
 
   const getAnnouncementIcon = (type: 'info' | 'warning' | 'success') => {
     switch (type) {
@@ -128,35 +155,67 @@ const MyApps = () => {
 
       {/* お知らせ一覧 */}
       <div className="card mb-8 dark:bg-slate-900">
-        <div className="flex items-center gap-2 mb-4">
-          <Bell className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white">お知らせ一覧</h3>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Bell className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">お知らせ</h3>
+          </div>
+          {announcements.length > 3 && (
+            <Link
+              to="/announcements"
+              className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium"
+            >
+              すべて見る →
+            </Link>
+          )}
         </div>
         <div className="space-y-3">
-          {announcements.map((announcement) => (
-            <div
-              key={announcement.id}
-              className={`p-4 rounded-lg border-2 ${getAnnouncementBgColor(announcement.type)} transition hover:shadow-sm`}
-            >
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 mt-0.5">
-                  {getAnnouncementIcon(announcement.type)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-bold text-slate-900 dark:text-white text-sm">{announcement.title}</h4>
-                    {announcement.isNew && (
-                      <span className="bg-primary-600 text-white text-xs px-2 py-0.5 rounded-full font-medium">
-                        新着
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">{announcement.content}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{announcement.date}</p>
-                </div>
-              </div>
+          {loadingAnnouncements ? (
+            <div className="text-center py-4 text-slate-500 dark:text-slate-400">
+              お知らせを読み込み中...
             </div>
-          ))}
+          ) : announcements.length === 0 ? (
+            <div className="text-center py-4 text-slate-500 dark:text-slate-400">
+              お知らせはありません
+            </div>
+          ) : (
+            <>
+              {announcements.slice(0, 3).map((announcement) => (
+                <div
+                  key={announcement.id}
+                  className={`p-4 rounded-lg border-2 ${getAnnouncementBgColor(announcement.type)} transition hover:shadow-sm`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-0.5">
+                      {getAnnouncementIcon(announcement.type)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-bold text-slate-900 dark:text-white text-sm">{announcement.title}</h4>
+                        {announcement.isNew && (
+                          <span className="bg-primary-600 text-white text-xs px-2 py-0.5 rounded-full font-medium">
+                            新着
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">{announcement.content}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{formatAnnouncementDate(announcement.date)}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {announcements.length > 3 && (
+                <div className="text-center pt-2">
+                  <Link
+                    to="/announcements"
+                    className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium inline-flex items-center gap-1"
+                  >
+                    残り{announcements.length - 3}件のお知らせを見る →
+                  </Link>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
 

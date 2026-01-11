@@ -267,6 +267,22 @@ const Login = () => {
     return baseMessage
   }
 
+  // Firebase設定の診断（開発環境のみ）
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      console.log('=== Firebase設定診断 ===')
+      console.log('auth:', auth)
+      console.log('auth.app:', auth?.app)
+      console.log('auth.currentUser:', auth?.currentUser)
+      console.log('環境変数:', {
+        VITE_FIREBASE_API_KEY: import.meta.env.VITE_FIREBASE_API_KEY ? '設定済み' : '未設定',
+        VITE_FIREBASE_AUTH_DOMAIN: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'デフォルト値使用',
+        VITE_FIREBASE_PROJECT_ID: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'デフォルト値使用',
+      })
+      console.log('====================')
+    }
+  }, [])
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-slate-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">

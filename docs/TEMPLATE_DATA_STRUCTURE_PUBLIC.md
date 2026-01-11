@@ -380,3 +380,4 @@ match /templates/{templateId} {
 - [Firestoreセキュリティルール](./FIRESTORE_SECURITY_RULES.md)
 - [データストレージとテンプレート設計](./DATA_STORAGE_AND_TEMPLATE_DESIGN.md)
 
+

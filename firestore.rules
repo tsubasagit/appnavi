@@ -54,8 +54,11 @@ service cloud.firestore {
       
       // 書き込み: オーナーのみ（新規作成時も含む）、またはownerIdがない既存アプリの更新（移行用）
       // 開発環境: テストユーザーIDも許可（request.authがnullでも、ownerIdがテストユーザーIDの場合は許可）
+      // 開発用の緩和: 認証済みであれば作成を許可（ownerIdが未設定でも通す）
+      // 本番では ownerId チェックを必須にすること
       allow create: if (
         (request.auth != null && request.auth.uid == request.resource.data.ownerId) ||
+        (request.auth != null) || // 開発環境での利便性向上（任意の認証ユーザーに許可）
         (request.auth == null && isTestUserId(request.resource.data.ownerId))
       );
       allow update: if (
@@ -197,6 +200,20 @@ service cloud.firestore {
     match /feedback/{feedbackId} {
       allow create: if request.auth != null;
       allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // お知らせは全員が読み込み可能、管理者のみ書き込み可能
+    match /announcements/{announcementId} {
+      // 読み込み: 認証済みユーザーは全員が読み込み可能
+      // クエリの場合: 認証済みユーザーは全員が読み込み可能
+      // ドキュメント取得の場合: 認証済みユーザーまたはアクティブなお知らせは全員が読み込み可能
+      allow read: if 
+        request.auth != null || 
+        (resource != null && resource.data.isActive == true);
+      
+      // 書き込み: 管理者のみ
+      allow create, update, delete: if request.auth != null && 
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
   }

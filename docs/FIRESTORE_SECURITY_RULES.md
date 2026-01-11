@@ -78,3 +78,4 @@ firebase deploy --only firestore:rules --project your-production-project-id
 - [セキュリティルールのベストプラクティス](https://firebase.google.com/docs/firestore/security/rules-conditions)
 
 
+

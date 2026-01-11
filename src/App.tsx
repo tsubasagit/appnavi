@@ -12,6 +12,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import TestLogin from './pages/TestLogin'
 import { CreateSampleApps } from './pages/CreateSampleApps'
+import Announcements from './pages/Announcements'
 import { AppProvider } from './context/AppContext'
 import { AuthProvider } from './context/AuthContext'
 import { getGoogleRedirectResult } from './utils/firebase'
@@ -98,6 +99,19 @@ function AppContent() {
               <Sidebar />
               <main className="flex-1 overflow-auto">
                 <About />
+              </main>
+            </div>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/announcements" 
+        element={
+          <ProtectedRoute>
+            <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-black">
+              <Sidebar />
+              <main className="flex-1 overflow-auto">
+                <Announcements />
               </main>
             </div>
           </ProtectedRoute>

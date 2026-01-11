@@ -16,9 +16,8 @@ import {
   where,
   orderBy,
   limit,
-  Timestamp,
   serverTimestamp,
-  Firestore
+  type Firestore
 } from 'firebase/firestore'
 import { app } from './firebase'
 import type {
@@ -29,10 +28,10 @@ import type {
   DataSource,
   Deployment,
   Plugin,
-  PluginVersion,
   Template,
   SystemSettings,
   Feedback,
+  Announcement,
 } from '../types/firestore'
 import {
   FIRESTORE_COLLECTIONS,
@@ -46,7 +45,7 @@ console.log('[firestore.ts] app type:', typeof app, 'app:', app)
 // Firestoreインスタンス
 // Firebase v10のモジュラーAPIを使用
 // エラーハンドリングを追加して、初期化に失敗してもアプリがクラッシュしないようにする
-let dbInstance: ReturnType<typeof getFirestore> | null = null
+let dbInstance: Firestore | null = null
 
 try {
   if (typeof getFirestore !== 'function') {
@@ -67,7 +66,8 @@ try {
 }
 
 // dbをエクスポート（初期化に失敗した場合はnullになる可能性がある）
-export const db = dbInstance as ReturnType<typeof getFirestore>
+// 型アサーション: dbInstanceがnullでないことを保証（実際の使用時にエラーハンドリングを行う）
+export const db = dbInstance!
 
 // 開発環境でブラウザコンソールからアクセス可能にする
 if (typeof window !== 'undefined' && import.meta.env.DEV) {
@@ -99,18 +99,68 @@ if (typeof window !== 'undefined' && import.meta.env.DEV) {
 // ============================================================================
 
 export const createUser = async (uid: string, userData: Omit<FirestoreUser, 'createdAt' | 'updatedAt'>) => {
-  const userRef = doc(db, FIRESTORE_COLLECTIONS.USERS, uid)
-  await setDoc(userRef, {
-    ...userData,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  })
+  try {
+    console.log('[firestore.ts] createUser - 開始:', { uid, userData })
+    
+    if (!db) {
+      throw new Error('Firestoreデータベースが初期化されていません')
+    }
+    
+    const userRef = doc(db, FIRESTORE_COLLECTIONS.USERS, uid)
+    console.log('[firestore.ts] createUser - ドキュメント参照を作成:', userRef.path)
+    
+    await setDoc(userRef, {
+      ...userData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+    
+    console.log('[firestore.ts] createUser - 成功:', uid)
+  } catch (error: any) {
+    console.error('[firestore.ts] createUser - エラー:', error)
+    console.error('[firestore.ts] createUser - エラー詳細:', {
+      code: error?.code,
+      message: error?.message,
+      stack: error?.stack,
+      name: error?.name,
+    })
+    throw error
+  }
 }
 
 export const getUser = async (uid: string): Promise<FirestoreUser | null> => {
-  const userRef = doc(db, FIRESTORE_COLLECTIONS.USERS, uid)
-  const userSnap = await getDoc(userRef)
-  return userSnap.exists() ? (userSnap.data() as FirestoreUser) : null
+  try {
+    console.log('[firestore.ts] getUser - 開始:', uid)
+    
+    if (!db) {
+      console.error('[firestore.ts] getUser - Firestoreデータベースが初期化されていません')
+      throw new Error('Firestoreデータベースが初期化されていません')
+    }
+    
+    const userRef = doc(db, FIRESTORE_COLLECTIONS.USERS, uid)
+    console.log('[firestore.ts] getUser - ドキュメント参照を作成:', userRef.path)
+    
+    const userSnap = await getDoc(userRef)
+    console.log('[firestore.ts] getUser - ドキュメント存在確認:', userSnap.exists())
+    
+    if (userSnap.exists()) {
+      const userData = userSnap.data() as FirestoreUser
+      console.log('[firestore.ts] getUser - 成功:', uid)
+      return userData
+    } else {
+      console.log('[firestore.ts] getUser - ドキュメントが存在しません:', uid)
+      return null
+    }
+  } catch (error: any) {
+    console.error('[firestore.ts] getUser - エラー:', error)
+    console.error('[firestore.ts] getUser - エラー詳細:', {
+      code: error?.code,
+      message: error?.message,
+      stack: error?.stack,
+      name: error?.name,
+    })
+    throw error
+  }
 }
 
 export const updateUser = async (uid: string, updates: Partial<FirestoreUser>) => {
@@ -496,3 +546,141 @@ export const updateSystemSettings = async (updates: Partial<SystemSettings>) => 
   })
 }
 
+// ============================================================================
+// お知らせ管理
+// ============================================================================
+
+/**
+ * アクティブなお知らせ一覧を取得（日付順でソート）
+ */
+export const getAnnouncements = async (): Promise<Announcement[]> => {
+  try {
+    console.log('[firestore.ts] getAnnouncements - 開始')
+    
+    if (!db) {
+      console.error('[firestore.ts] getAnnouncements - Firestoreデータベースが初期化されていません')
+      throw new Error('Firestoreデータベースが初期化されていません')
+    }
+    
+    const announcementsRef = collection(db, FIRESTORE_COLLECTIONS.ANNOUNCEMENTS)
+    
+    // アクティブなお知らせのみを取得し、日付順でソート
+    const q = query(
+      announcementsRef,
+      where('isActive', '==', true),
+      orderBy('date', 'desc'),
+      limit(50) // 最大50件まで取得
+    )
+    
+    const querySnapshot = await getDocs(q)
+    const announcements: Announcement[] = []
+    
+    querySnapshot.forEach((doc) => {
+      const data = doc.data()
+      announcements.push({
+        id: doc.id,
+        ...data,
+      } as Announcement)
+    })
+    
+    console.log('[firestore.ts] getAnnouncements - 成功:', announcements.length, '件')
+    return announcements
+  } catch (error: any) {
+    console.error('[firestore.ts] getAnnouncements - エラー:', error)
+    if (error?.code === 'permission-denied') {
+      console.error('[firestore.ts] getAnnouncements - Firestoreのセキュリティルールで読み込みが拒否されました。')
+    }
+    throw error
+  }
+}
+
+/**
+ * お知らせを作成
+ */
+export const createAnnouncement = async (
+  announcementData: Omit<Announcement, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<string> => {
+  try {
+    console.log('[firestore.ts] createAnnouncement - 開始:', announcementData)
+    
+    if (!db) {
+      console.error('[firestore.ts] createAnnouncement - Firestoreデータベースが初期化されていません')
+      throw new Error('Firestoreデータベースが初期化されていません')
+    }
+    
+    const announcementRef = doc(collection(db, FIRESTORE_COLLECTIONS.ANNOUNCEMENTS))
+    
+    await setDoc(announcementRef, {
+      ...announcementData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+    
+    console.log('[firestore.ts] createAnnouncement - 成功:', announcementRef.id)
+    return announcementRef.id
+  } catch (error: any) {
+    console.error('[firestore.ts] createAnnouncement - エラー:', error)
+    if (error?.code === 'permission-denied') {
+      console.error('[firestore.ts] createAnnouncement - Firestoreのセキュリティルールで書き込みが拒否されました。')
+    }
+    throw error
+  }
+}
+
+/**
+ * お知らせを更新
+ */
+export const updateAnnouncement = async (
+  announcementId: string,
+  updates: Partial<Omit<Announcement, 'id' | 'createdAt' | 'updatedAt'>>
+): Promise<void> => {
+  try {
+    console.log('[firestore.ts] updateAnnouncement - 開始:', announcementId, updates)
+    
+    if (!db) {
+      console.error('[firestore.ts] updateAnnouncement - Firestoreデータベースが初期化されていません')
+      throw new Error('Firestoreデータベースが初期化されていません')
+    }
+    
+    const announcementRef = doc(db, FIRESTORE_COLLECTIONS.ANNOUNCEMENTS, announcementId)
+    
+    await updateDoc(announcementRef, {
+      ...updates,
+      updatedAt: serverTimestamp(),
+    })
+    
+    console.log('[firestore.ts] updateAnnouncement - 成功:', announcementId)
+  } catch (error: any) {
+    console.error('[firestore.ts] updateAnnouncement - エラー:', error)
+    if (error?.code === 'permission-denied') {
+      console.error('[firestore.ts] updateAnnouncement - Firestoreのセキュリティルールで書き込みが拒否されました。')
+    }
+    throw error
+  }
+}
+
+/**
+ * お知らせを削除
+ */
+export const deleteAnnouncement = async (announcementId: string): Promise<void> => {
+  try {
+    console.log('[firestore.ts] deleteAnnouncement - 開始:', announcementId)
+    
+    if (!db) {
+      console.error('[firestore.ts] deleteAnnouncement - Firestoreデータベースが初期化されていません')
+      throw new Error('Firestoreデータベースが初期化されていません')
+    }
+    
+    const announcementRef = doc(db, FIRESTORE_COLLECTIONS.ANNOUNCEMENTS, announcementId)
+    
+    await deleteDoc(announcementRef)
+    
+    console.log('[firestore.ts] deleteAnnouncement - 成功:', announcementId)
+  } catch (error: any) {
+    console.error('[firestore.ts] deleteAnnouncement - エラー:', error)
+    if (error?.code === 'permission-denied') {
+      console.error('[firestore.ts] deleteAnnouncement - Firestoreのセキュリティルールで削除が拒否されました。')
+    }
+    throw error
+  }
+}

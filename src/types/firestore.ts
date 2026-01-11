@@ -325,11 +325,15 @@ export interface SystemSettings {
 export interface Announcement {
   id: string
   title: string
-  message: string
+  content: string  // messageからcontentに変更（MyApps.tsxの形式に合わせる）
   type: 'info' | 'warning' | 'error' | 'success'
-  startDate: FirebaseFirestore.Timestamp
-  endDate?: FirebaseFirestore.Timestamp
-  isActive: boolean
+  date: Timestamp  // 公開日（表示用のdateフィールド）
+  startDate?: Timestamp  // 開始日（オプション）
+  endDate?: Timestamp  // 終了日（オプション）
+  isActive: boolean  // アクティブフラグ
+  isNew: boolean  // 新着フラグ（MyApps.tsxで使用）
+  createdAt: Timestamp
+  updatedAt: Timestamp
 }
 
 export interface Feedback {
@@ -360,6 +364,7 @@ export const FIRESTORE_COLLECTIONS = {
   TEMPLATES: 'templates',
   SYSTEM_SETTINGS: 'system_settings',
   FEEDBACK: 'feedback',
+  ANNOUNCEMENTS: 'announcements',
 } as const
 
 // ============================================================================

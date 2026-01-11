@@ -369,3 +369,4 @@ const applyTemplateDefaults = (templateId: string) => {
 - データは常にユーザーの手元に残る
 
 
+

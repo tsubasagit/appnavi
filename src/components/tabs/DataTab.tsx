@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { RefreshCw, Download, CheckCircle2, ExternalLink, ShieldCheck, FileSpreadsheet, Table as TableIcon, Plus, ChevronRight, Filter, Search, X, Database, Wrench, Save, Trash2 } from 'lucide-react'
-import { signInWithGoogle, auth } from '../../utils/firebase'
+import { signInWithGoogle, signInWithGoogleRedirect, auth } from '../../utils/firebase'
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth'
+import { useAuth } from '../../context/AuthContext'
 import { useApp } from '../../context/AppContext'
 import { appendToSheet, extractSpreadsheetId, readFromSheet, createSpreadsheet, getSpreadsheetTitle } from '../../features/sheets/api'
 import { getRequiredColumns, getSampleData } from '../../utils/templateColumns'
@@ -24,26 +25,47 @@ const DataTab = () => {
   const [isCreatingSheet, setIsCreatingSheet] = useState(false)
   const [deletingSourceId, setDeletingSourceId] = useState<string | null>(null)
   const { dataSources, apps, activeAppId, updateApp, setDataSources } = useApp()
+  const { currentUser, user: authUser } = useAuth()
   const app = apps.find(a => a.id === activeAppId)
   
   // テンプレートに必要なカラムを取得
   const requiredColumns = app?.template ? getRequiredColumns(app.template) : []
   const templateSampleData = app?.template ? getSampleData(app.template) : []
 
-  // 認証状態の監視
+  // 認証状態の監視（AppNaviのログイン状態とGoogle Sheets API用のアクセストークンを確認）
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user: FirebaseUser | null) => {
-      // 認証状態の変更を監視
-      if (user) {
-        // 認証済みの場合、接続状態を確認
-        const token = sessionStorage.getItem('googleAccessToken')
-        if (token) {
-          setIsConnected(true)
-        }
+    const checkAuthStatus = () => {
+      // AppNaviでGoogle認証でログインしている場合
+      const isAppNaviLoggedIn = currentUser || authUser
+      const hasGoogleToken = sessionStorage.getItem('googleAccessToken')
+      
+      if (isAppNaviLoggedIn && hasGoogleToken) {
+        // 既にログイン済みで、アクセストークンもある場合
+        setIsConnected(true)
+        console.log('DataTab - AppNaviのGoogle認証と連携済み:', {
+          email: currentUser?.email || authUser?.email,
+          hasToken: !!hasGoogleToken
+        })
+      } else if (isAppNaviLoggedIn && !hasGoogleToken) {
+        // AppNaviでログインしているが、Google Sheets API用のアクセストークンがない場合
+        setIsConnected(false)
+        console.log('DataTab - AppNaviでログイン済みですが、Google Sheets API用のアクセストークンが必要です')
+      } else {
+        // AppNaviでログインしていない場合
+        setIsConnected(false)
       }
+    }
+
+    // 初回チェック
+    checkAuthStatus()
+
+    // 認証状態の変更を監視
+    const unsubscribe = onAuthStateChanged(auth, (user: FirebaseUser | null) => {
+      checkAuthStatus()
     })
+    
     return () => unsubscribe()
-  }, [])
+  }, [currentUser, authUser])
 
   // データソースが選択されたときにデータを読み込む
   useEffect(() => {
@@ -93,29 +115,110 @@ const DataTab = () => {
   // データソースからデータを取得（現在は空）
   // 注意: テンプレートのサンプルデータは templateSampleData として定義されています
 
-  // Google認証処理
+  // Google認証処理（AppNaviのGoogle認証と連携）
   const handleGoogleAuth = async () => {
     try {
       setIsAuthenticating(true)
-      const authenticatedUser = await signInWithGoogle()
-      console.log('認証成功:', authenticatedUser)
+      console.log('DataTab - Google認証を開始')
       
-      // 認証成功後、少し待ってから接続状態を設定（AuthContextの状態更新を待つ）
-      await new Promise(resolve => setTimeout(resolve, 500))
+      // 既にAppNaviでログインしている場合の確認
+      const isAppNaviLoggedIn = currentUser || authUser
+      const existingToken = sessionStorage.getItem('googleAccessToken')
       
-      // アクセストークンが保存されているか確認
-      const token = sessionStorage.getItem('googleAccessToken')
-      if (token) {
+      console.log('DataTab - 認証状態確認:', {
+        isAppNaviLoggedIn,
+        hasToken: !!existingToken,
+        currentUserEmail: currentUser?.email || authUser?.email
+      })
+      
+      if (isAppNaviLoggedIn && existingToken) {
+        // 既にログイン済みで、アクセストークンもある場合
+        console.log('DataTab - 既にAppNaviのGoogle認証と連携済みです')
         setIsConnected(true)
-      } else {
-        console.warn('アクセストークンが保存されていません')
-        setIsConnected(true) // トークンがなくても接続状態にする（後で再認証可能）
+        setIsAuthenticating(false)
+        return
+      }
+      
+      // AppNaviでログインしているが、アクセストークンがない場合
+      if (isAppNaviLoggedIn && !existingToken) {
+        const confirmed = window.confirm(
+          `AppNaviでログイン中のGoogleアカウント（${currentUser?.email || authUser?.email}）で、Google Sheets APIへのアクセス権限を追加しますか？\n\n同じGoogleアカウントを使用するため、再度ログインする必要はありません。`
+        )
+        
+        if (!confirmed) {
+          console.log('DataTab - 認証がキャンセルされました')
+          setIsAuthenticating(false)
+          return
+        }
+      }
+      
+      console.log('DataTab - signInWithGoogleを呼び出し...')
+      
+      // まずポップアップ方式を試す
+      try {
+        const authenticatedUser = await signInWithGoogle()
+        console.log('DataTab - Google認証成功:', authenticatedUser?.email)
+        
+        // 認証成功後、少し待ってから接続状態を設定（AuthContextの状態更新を待つ）
+        await new Promise(resolve => setTimeout(resolve, 500))
+        
+        // アクセストークンが保存されているか確認
+        const token = sessionStorage.getItem('googleAccessToken')
+        console.log('DataTab - アクセストークン確認:', { hasToken: !!token })
+        
+        if (token) {
+          setIsConnected(true)
+          console.log('DataTab - Google Sheets API用のアクセストークンを取得しました')
+        } else {
+          console.warn('DataTab - アクセストークンが保存されていません')
+          setIsConnected(true) // トークンがなくても接続状態にする（後で再認証可能）
+        }
+      } catch (popupError: any) {
+        console.error('DataTab - ポップアップ認証エラー:', popupError)
+        
+        // ポップアップがブロックされた場合、リダイレクト方式にフォールバック
+        if (popupError?.code === 'auth/popup-blocked' || popupError?.code === 'auth/popup-closed-by-user') {
+          console.log('DataTab - ポップアップがブロックされました。リダイレクト方式に切り替えます...')
+          const confirmed = window.confirm(
+            'ポップアップがブロックされました。\n\nリダイレクト方式で認証を続けますか？\n（このページから移動しますが、認証後に戻ってきます）'
+          )
+          
+          if (confirmed) {
+            console.log('DataTab - リダイレクト方式で認証を開始...')
+            await signInWithGoogleRedirect()
+            // リダイレクトされるため、ここには到達しない
+            // ただし、リダイレクトが開始されたことを確認
+            console.log('DataTab - リダイレクトが開始されました')
+            return
+          } else {
+            console.log('DataTab - リダイレクト認証がキャンセルされました')
+            throw new Error('認証がキャンセルされました')
+          }
+        } else {
+          // その他のエラーは再スロー
+          console.error('DataTab - 認証エラー（再スロー）:', popupError)
+          throw popupError
+        }
       }
     } catch (error: any) {
-      console.error('認証エラー:', error)
+      console.error('DataTab - 認証エラー（最終）:', error)
       const errorMessage = error?.message || error?.code || '認証に失敗しました'
-      alert(`認証に失敗しました: ${errorMessage}`)
+      
+      // ユーザーフレンドリーなエラーメッセージ
+      let userMessage = '認証に失敗しました'
+      if (error?.code === 'auth/popup-blocked') {
+        userMessage = 'ポップアップがブロックされました。ブラウザの設定でポップアップを許可してください。'
+      } else if (error?.code === 'auth/popup-closed-by-user') {
+        userMessage = '認証ウィンドウが閉じられました。再度お試しください。'
+      } else if (error?.code === 'auth/cancelled-popup-request') {
+        userMessage = '認証がキャンセルされました。再度お試しください。'
+      } else if (errorMessage) {
+        userMessage = errorMessage
+      }
+      
+      alert(userMessage)
     } finally {
+      console.log('DataTab - 認証処理を終了（setIsAuthenticating(false)）')
       setIsAuthenticating(false)
     }
   }
@@ -573,29 +676,55 @@ const DataTab = () => {
             )}
           </div>
         ) : (
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm p-12 text-center">
-            <Database className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">データソースを選択</h3>
-            <p className="text-slate-600 dark:text-slate-400 mb-6">
-              左側のサイドバーからデータソースを選択するか、新しいデータソースを追加してください。
-            </p>
-            <button 
-              onClick={() => {
-                // モーダルを開く際に状態をリセット
-                setIsConnected(false)
-                setSpreadsheetId('')
-                setTestData('')
-                setSheetData([])
-                setSheetHeaders([])
-                setColumnMapping({})
-                setConnectionError('')
-                setIsAddDataModalOpen(true)
-              }}
-              className="btn-primary inline-flex items-center space-x-2"
-            >
-              <Plus size={16} />
-              <span>データソースを追加</span>
-            </button>
+          <div className="space-y-6">
+            {/* データソース未選択時のメッセージ */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm p-12 text-center">
+              <Database className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">データソースを選択</h3>
+              <p className="text-slate-600 dark:text-slate-400 mb-6">
+                左側のサイドバーからデータソースを選択するか、新しいデータソースを追加してください。
+              </p>
+              <button 
+                onClick={() => {
+                  // モーダルを開く際に状態をリセット
+                  setIsConnected(false)
+                  setSpreadsheetId('')
+                  setTestData('')
+                  setSheetData([])
+                  setSheetHeaders([])
+                  setColumnMapping({})
+                  setConnectionError('')
+                  setIsAddDataModalOpen(true)
+                }}
+                className="btn-primary inline-flex items-center space-x-2"
+              >
+                <Plus size={16} />
+                <span>データソースを追加</span>
+              </button>
+            </div>
+
+            {/* テンプレートのデータサンプルへのリンク */}
+            {app?.template && (
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm p-6">
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+                    テンプレートのデータサンプル
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                    このテンプレート（{app.template}）のデータサンプルを確認できます
+                  </p>
+                  <a
+                    href={`https://appnavi-asset.com/templates/${app.template}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center space-x-2 btn-primary"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    <span>データサンプルを見る</span>
+                  </a>
+                </div>
+              </div>
+            )}
           </div>
         )}
         </main>
@@ -647,27 +776,65 @@ const DataTab = () => {
                   {/* Google認証 */}
                   {!sessionStorage.getItem('googleAccessToken') ? (
                     <div className="space-y-4">
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <p className="text-sm text-blue-800 mb-3">
-                          まず、Googleアカウントでログインしてください。スプレッドシートへのアクセス権限が必要です。
-                        </p>
-                        <button
-                          onClick={handleGoogleAuth}
-                          disabled={isAuthenticating}
-                          className="w-full btn-primary flex items-center justify-center space-x-2 disabled:opacity-50"
-                        >
-                          {isAuthenticating ? (
-                            <>
-                              <RefreshCw className="w-4 h-4 animate-spin" />
-                              <span>認証中...</span>
-                            </>
-                          ) : (
-                            <>
-                              <FileSpreadsheet className="w-4 h-4" />
-                              <span>Googleアカウントでログイン</span>
-                            </>
-                          )}
-                        </button>
+                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                        {(currentUser || authUser) ? (
+                          <>
+                            <div className="flex items-start space-x-3 mb-3">
+                              <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+                              <div className="flex-1">
+                                <p className="text-sm font-semibold text-blue-900 dark:text-blue-200 mb-1">
+                                  AppNaviでログイン済み
+                                </p>
+                                <p className="text-xs text-blue-700 dark:text-blue-300">
+                                  ログイン中のGoogleアカウント: <span className="font-mono">{currentUser?.email || authUser?.email}</span>
+                                </p>
+                                <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                                  Google Sheets APIへのアクセス権限を追加するため、同じGoogleアカウントで認証を完了してください。
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              onClick={handleGoogleAuth}
+                              disabled={isAuthenticating}
+                              className="w-full btn-primary flex items-center justify-center space-x-2 disabled:opacity-50"
+                            >
+                              {isAuthenticating ? (
+                                <>
+                                  <RefreshCw className="w-4 h-4 animate-spin" />
+                                  <span>認証中...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <FileSpreadsheet className="w-4 h-4" />
+                                  <span>Google Sheets APIへのアクセスを許可</span>
+                                </>
+                              )}
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
+                              まず、Googleアカウントでログインしてください。スプレッドシートへのアクセス権限が必要です。
+                            </p>
+                            <button
+                              onClick={handleGoogleAuth}
+                              disabled={isAuthenticating}
+                              className="w-full btn-primary flex items-center justify-center space-x-2 disabled:opacity-50"
+                            >
+                              {isAuthenticating ? (
+                                <>
+                                  <RefreshCw className="w-4 h-4 animate-spin" />
+                                  <span>認証中...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <FileSpreadsheet className="w-4 h-4" />
+                                  <span>Googleアカウントでログイン</span>
+                                </>
+                              )}
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   ) : (

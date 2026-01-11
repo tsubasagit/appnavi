@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Save, Lightbulb, Target, BarChart3, Sparkles, Compass, Search, X, Settings, Upload, Download, Github, Loader2, AlertCircle } from 'lucide-react'
+import { Save, Lightbulb, Target, BarChart3, Sparkles, Compass, Search, X, Settings, Upload, Download, Github, Loader2, AlertCircle, Globe, UserCheck, Calendar, ClipboardList, RefreshCw } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { App } from '../../types'
 import { allTemplates, Template } from '../../utils/templates'
 import { fetchTemplates, installAsset, uploadAsset, AssetMetadata } from '../../utils/githubAsset'
+import { fetchTemplatesFromServer, TemplateServerTemplate } from '../../utils/templateServer'
 
 const PolicyTab = () => {
   const { apps, activeAppId, updateApp } = useApp()
@@ -17,6 +18,8 @@ const PolicyTab = () => {
   const [githubTemplates, setGithubTemplates] = useState<AssetMetadata[]>([])
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false)
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
+  const [serverTemplates, setServerTemplates] = useState<TemplateServerTemplate[]>([])
+  const [isLoadingServerTemplates, setIsLoadingServerTemplates] = useState(false)
 
   // デフォルトでCRMを選択
   useEffect(() => {
@@ -24,6 +27,24 @@ const PolicyTab = () => {
       updateApp(app.id, { template: 'crm' })
     }
   }, [app, updateApp])
+
+  // テンプレートサーバーからテンプレートを取得
+  useEffect(() => {
+    const loadServerTemplates = async () => {
+      setIsLoadingServerTemplates(true)
+      try {
+        const templates = await fetchTemplatesFromServer()
+        setServerTemplates(templates)
+      } catch (error) {
+        console.error('テンプレートサーバーからの取得エラー:', error)
+        // エラーが発生しても続行（ローカルテンプレートのみ表示）
+      } finally {
+        setIsLoadingServerTemplates(false)
+      }
+    }
+    
+    loadServerTemplates()
+  }, [])
   
   const [formData, setFormData] = useState({
     appName: '営業活動報告アプリ',
@@ -132,8 +153,38 @@ const PolicyTab = () => {
     }
   }
 
+  // テンプレートサーバーからのテンプレートをTemplate型に変換
+  const convertedServerTemplates: Template[] = serverTemplates.map(serverTemplate => {
+    // アイコンをマッピング（既存のテンプレートと同じアイコンを使用）
+    const iconMap: Record<string, any> = {
+      'crm': UserCheck,
+      'google-calendar-group': Calendar,
+      'daily-report': ClipboardList,
+      'auto-integration': RefreshCw,
+    }
+    
+    return {
+      id: serverTemplate.templateId,
+      name: serverTemplate.name,
+      description: serverTemplate.description,
+      icon: iconMap[serverTemplate.templateId] || Target,
+      color: serverTemplate.color,
+      category: serverTemplate.category,
+      preview: serverTemplate.features?.join('、') || serverTemplate.description,
+      author: serverTemplate.author,
+    }
+  })
+
+  // ローカルテンプレートとサーバーテンプレートを統合（重複を避ける）
+  const allAvailableTemplates = [
+    ...allTemplates,
+    ...convertedServerTemplates.filter(
+      serverTemplate => !allTemplates.some(local => local.id === serverTemplate.id)
+    ),
+  ]
+
   // 検索フィルタリング
-  const filteredTemplates = allTemplates?.filter(template => {
+  const filteredTemplates = allAvailableTemplates?.filter(template => {
     const query = searchQuery.toLowerCase()
     return (
       template.name.toLowerCase().includes(query) ||
@@ -166,6 +217,27 @@ const PolicyTab = () => {
               <h3 className="font-bold text-lg text-slate-700 dark:text-white">Step 1: Strategy - テンプレート選択</h3>
             </div>
             <div className="flex items-center space-x-2">
+              <button
+                onClick={async () => {
+                  setIsLoadingServerTemplates(true)
+                  try {
+                    const templates = await fetchTemplatesFromServer()
+                    setServerTemplates(templates)
+                    alert(`${templates.length}件のテンプレートをサーバーから取得しました。`)
+                  } catch (error) {
+                    alert('テンプレートサーバーからテンプレートを取得できませんでした。')
+                    console.error(error)
+                  } finally {
+                    setIsLoadingServerTemplates(false)
+                  }
+                }}
+                className="btn-secondary flex items-center space-x-2"
+                disabled={isLoadingServerTemplates}
+                title="テンプレートサーバーから最新のテンプレートを取得"
+              >
+                <Globe size={16} />
+                <span>{isLoadingServerTemplates ? '取得中...' : 'サーバーから取得'}</span>
+              </button>
               <button
                 onClick={async () => {
                   setIsLoadingTemplates(true)
@@ -224,12 +296,13 @@ const PolicyTab = () => {
               // templateIdとtemplateの両方をチェック
               const currentTemplateId = app?.templateId || app?.template
               const isSelected = currentTemplateId === template.id
+              const isFromServer = serverTemplates.some(st => st.templateId === template.id)
               const colorClasses: Record<string, string> = {
-                blue: 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100',
-                green: 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100',
-                purple: 'bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100',
-                orange: 'bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100',
-                slate: 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100',
+                blue: 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300',
+                green: 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100 dark:bg-green-900/20 dark:border-green-800 dark:text-green-300',
+                purple: 'bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 dark:bg-purple-900/20 dark:border-purple-800 dark:text-purple-300',
+                orange: 'bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 dark:bg-orange-900/20 dark:border-orange-800 dark:text-orange-300',
+                slate: 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 dark:bg-slate-900/20 dark:border-slate-800 dark:text-slate-300',
               }
               const selectedClasses = isSelected ? 'ring-2 ring-primary-500 ring-offset-2 border-primary-500' : ''
               
@@ -239,11 +312,19 @@ const PolicyTab = () => {
                   onClick={() => handleTemplateClick(template)}
                   className={`p-4 border-2 rounded-xl transition text-left relative ${colorClasses[template.color as keyof typeof colorClasses]} ${selectedClasses} hover:shadow-md`}
                 >
-                  {isSelected && (
-                    <div className="absolute top-2 right-2 bg-primary-600 text-white text-xs px-2 py-0.5 rounded-full font-bold">
-                      選択中
-                    </div>
-                  )}
+                  <div className="absolute top-2 right-2 flex items-center gap-1">
+                    {isSelected && (
+                      <div className="bg-primary-600 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                        選択中
+                      </div>
+                    )}
+                    {isFromServer && (
+                      <div className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                        <Globe size={10} />
+                        サーバー
+                      </div>
+                    )}
+                  </div>
                   <div className="flex items-center gap-3 mb-3">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
                       template.color === 'blue' ? 'bg-blue-600' :

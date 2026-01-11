@@ -175,7 +175,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   // 新規アプリを作成（v2.0: シングルパーパス方式）
   const createNewApp = async (templateId?: 'inventory' | 'daily-report' | 'crm' | 'reservation' | 'custom'): Promise<string> => {
+    console.log('AppContext - createNewApp 開始')
+    console.log('AppContext - authUser:', authUser)
+    console.log('AppContext - authUser?.id:', authUser?.id)
+    
     if (!authUser?.id) {
+      console.error('AppContext - ログインが必要です。authUser:', authUser)
       throw new Error('ログインが必要です')
     }
 
@@ -211,25 +216,60 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       },
     }
 
+    console.log('AppContext - アプリデータを作成:', newApp)
+    console.log('AppContext - ownerId:', authUser.id)
+
     // Firestoreに保存（アプリのApp型のデータをそのまま保存）
     try {
+      if (!db) {
+        throw new Error('Firestoreデータベースが初期化されていません')
+      }
+      
       const appRef = doc(db, FIRESTORE_COLLECTIONS.APPS, newAppId)
-      await setDoc(appRef, {
+      const appData = {
         title: newApp.name,
         ownerId: authUser.id,
         // アプリのApp型のデータをそのまま保存（追加フィールドとして）
         ...newApp,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
+      }
+      
+      console.log('AppContext - Firestoreに保存するデータ:', appData)
+      console.log('AppContext - Firestoreに保存中...')
+      
+      await setDoc(appRef, appData)
+      
+      console.log('AppContext - Firestoreへの保存が成功しました')
+    } catch (error: any) {
+      console.error('AppContext - アプリの作成エラー:', error)
+      console.error('AppContext - エラー詳細:', {
+        code: error?.code,
+        message: error?.message,
+        stack: error?.stack,
+        name: error?.name,
+        errorObject: error
       })
-    } catch (error) {
-      console.error('アプリの作成エラー:', error)
+      
+      // 権限エラーの場合、より詳細な情報を提供
+      if (error?.code === 'permission-denied' || error?.message?.includes('permission')) {
+        console.error('AppContext - Firestore権限エラー:', {
+          authUser: authUser,
+          ownerId: authUser?.id,
+          appId: newAppId,
+          error: error
+        })
+        throw new Error(`Firestore権限エラー: アプリの作成に必要な権限がありません。ログイン状態を確認してください。エラー: ${error.message}`)
+      }
+      
       throw error
     }
 
     // ローカルstateも更新
+    console.log('AppContext - ローカルstateを更新中...')
     setApps([...apps, newApp])
     setActiveAppId(newAppId)
+    console.log('AppContext - createNewApp 完了:', newAppId)
     return newAppId
   }
 

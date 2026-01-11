@@ -40,3 +40,4 @@ firebase firestore:import templates/ --project appnavi-add7e
 - `crm.json` - 顧客管理（CRM）テンプレート
 - `google-calendar-group.json` - Googleカレンダーのグループ化管理テンプレート
 
+

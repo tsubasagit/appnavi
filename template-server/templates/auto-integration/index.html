@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>自動連携テンプレート - AppNavi</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: #f8fafc;
+      color: #1a202c;
+      line-height: 1.6;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+    
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .header p {
+      font-size: 1.2rem;
+      opacity: 0.9;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    .section {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .section h2 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      color: #3b82f6;
+    }
+    
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+    
+    .feature-card {
+      padding: 1.5rem;
+      background: #f8fafc;
+      border-radius: 8px;
+      border-left: 4px solid #3b82f6;
+    }
+    
+    .feature-card h3 {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      color: #1a202c;
+    }
+    
+    .feature-card p {
+      color: #4a5568;
+      font-size: 0.9rem;
+    }
+    
+    .preview-image {
+      width: 100%;
+      border-radius: 8px;
+      margin-top: 1rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .cta-button {
+      display: inline-block;
+      background: #3b82f6;
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      margin-top: 1rem;
+      transition: background 0.2s;
+    }
+    
+    .cta-button:hover {
+      background: #2563eb;
+    }
+    
+    .back-link {
+      display: inline-block;
+      color: #3b82f6;
+      text-decoration: none;
+      margin-bottom: 2rem;
+      font-weight: 500;
+    }
+    
+    .back-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🔄 自動連携</h1>
+    <p>各種サービスとの自動連携とデータ同期</p>
+  </div>
+  
+  <div class="container">
+    <a href="/" class="back-link">← テンプレート一覧に戻る</a>
+    
+    <div class="section">
+      <h2>概要</h2>
+      <p>Googleカレンダー、Slack、Salesforceなど、各種サービスとの自動連携を管理するシステムです。連携の設定、同期状況の確認、エラー通知など、連携管理に必要な機能をすべて備えています。</p>
+    </div>
+    
+    <div class="section">
+      <h2>主な機能</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <h3>⚙️ 連携設定画面</h3>
+          <p>各種サービスの連携を簡単に設定。APIキーや認証情報を安全に管理します。</p>
+        </div>
+        <div class="feature-card">
+          <h3>📊 データ同期状況</h3>
+          <p>各連携の同期状況をリアルタイムで表示。成功・失敗を一目で確認できます。</p>
+        </div>
+        <div class="feature-card">
+          <h3>📝 連携ログ</h3>
+          <p>すべての同期ログを記録。日時、サービス、ステータス、メッセージを確認できます。</p>
+        </div>
+        <div class="feature-card">
+          <h3>🚨 エラー通知</h3>
+          <p>連携エラーが発生した場合、自動的に通知。迅速に対応できます。</p>
+        </div>
+        <div class="feature-card">
+          <h3>🔄 自動更新ダッシュボード</h3>
+          <p>アクティブな連携数、本日の同期数、エラー数などのKPIを表示します。</p>
+        </div>
+        <div class="feature-card">
+          <h3>📈 同期数の推移</h3>
+          <p>過去の同期数の推移をグラフで表示。連携の利用状況を分析できます。</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>推奨データ構造</h2>
+      <p>以下のようなデータ構造を推奨します：</p>
+      <ul style="margin-top: 1rem; padding-left: 2rem;">
+        <li><strong>連携名</strong>: 連携の名前（必須）</li>
+        <li><strong>サービス</strong>: 連携先のサービス名（必須）</li>
+        <li><strong>ステータス</strong>: 有効、無効、エラー</li>
+        <li><strong>最終同期日時</strong>: 最後に同期した日時</li>
+        <li><strong>エラー数</strong>: エラーが発生した回数</li>
+        <li><strong>設定</strong>: 連携の設定情報（JSON形式）</li>
+      </ul>
+    </div>
+    
+    <div class="section">
+      <h2>プレビュー</h2>
+      <img src="/templates/auto-integration/preview.png" alt="自動連携テンプレートのプレビュー" class="preview-image" onerror="this.style.display='none'">
+      <p style="margin-top: 1rem; color: #718096;">プレビュー画像は準備中です。</p>
+    </div>
+    
+    <div class="section" style="text-align: center;">
+      <h2>このテンプレートを使用する</h2>
+      <p>AppNaviでこのテンプレートを選択して、すぐにアプリを作成できます。</p>
+      <a href="https://tsubasagit.github.io/appnavi/" class="cta-button">AppNaviで開く</a>
+    </div>
+  </div>
+</body>
+</html>
+
+

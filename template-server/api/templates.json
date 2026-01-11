@@ -1,0 +1,85 @@
+{
+  "templates": [
+    {
+      "templateId": "crm",
+      "name": "顧客管理（CRM）",
+      "description": "顧客情報、商談管理、活動履歴を一元管理",
+      "category": "営業・マーケティング",
+      "color": "purple",
+      "previewImageUrl": "/templates/crm/preview.png",
+      "demoUrl": "/templates/crm/",
+      "version": "1.0.0",
+      "isPublic": true,
+      "tags": ["営業", "顧客管理", "商談", "CRM"],
+      "author": "AppTalentHub",
+      "features": [
+        "顧客一覧テーブル",
+        "商談パイプライン（カンバン）",
+        "活動履歴タイムライン",
+        "営業ダッシュボード（KPI表示）"
+      ]
+    },
+    {
+      "templateId": "google-calendar-group",
+      "name": "Googleカレンダーのグループ化",
+      "description": "複数のGoogleカレンダーを統合し、グループ別に管理・表示",
+      "category": "スケジュール管理",
+      "color": "orange",
+      "previewImageUrl": "/templates/google-calendar-group/preview.png",
+      "demoUrl": "/templates/google-calendar-group/",
+      "version": "1.0.0",
+      "isPublic": true,
+      "tags": ["カレンダー", "スケジュール", "Google", "グループ管理"],
+      "author": "AppTalentHub",
+      "features": [
+        "カレンダー統合表示",
+        "グループ別フィルター",
+        "イベント一覧",
+        "参加者管理",
+        "自動同期"
+      ]
+    },
+    {
+      "templateId": "daily-report",
+      "name": "日報チェック",
+      "description": "日々の業務活動の記録とチェック、自動連携",
+      "category": "業務管理",
+      "color": "green",
+      "previewImageUrl": "/templates/daily-report/preview.png",
+      "demoUrl": "/templates/daily-report/",
+      "version": "1.0.0",
+      "isPublic": true,
+      "tags": ["日報", "活動報告", "チェック", "業務管理"],
+      "author": "AppTalentHub",
+      "features": [
+        "日報入力フォーム",
+        "活動一覧テーブル",
+        "カレンダー表示",
+        "チェック状況ダッシュボード",
+        "自動承認フロー"
+      ]
+    },
+    {
+      "templateId": "auto-integration",
+      "name": "自動連携",
+      "description": "各種サービスとの自動連携とデータ同期",
+      "category": "連携・統合",
+      "color": "blue",
+      "previewImageUrl": "/templates/auto-integration/preview.png",
+      "demoUrl": "/templates/auto-integration/",
+      "version": "1.0.0",
+      "isPublic": true,
+      "tags": ["連携", "統合", "自動化", "データ同期"],
+      "author": "AppTalentHub",
+      "features": [
+        "連携設定画面",
+        "データ同期状況",
+        "連携ログ",
+        "エラー通知",
+        "自動更新ダッシュボード"
+      ]
+    }
+  ]
+}
+
+

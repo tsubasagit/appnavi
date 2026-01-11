@@ -96,10 +96,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         try {
           // Firestoreから既存のユーザーデータを取得
+          console.log('AuthContext - Firestoreからユーザーデータを取得中...', actualUser.uid)
           const firestoreUser = await getUser(actualUser.uid)
+          console.log('AuthContext - Firestoreユーザーデータ取得結果:', firestoreUser ? '存在' : '不存在')
           
           if (firestoreUser) {
             // Firestoreにデータが存在する場合、そのデータを使用
+            console.log('AuthContext - 既存のFirestoreユーザーデータを使用')
             setUser({
               id: actualUser.uid,
               name: firestoreUser.displayName || actualUser.displayName || actualUser.email?.split('@')[0] || 'ユーザー',
@@ -109,12 +112,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             })
           } else {
             // Firestoreにデータが存在しない場合、新規作成
-            await createUser(actualUser.uid, {
-              email: actualUser.email || '',
-              role: 'user',
-              displayName: actualUser.displayName || actualUser.email?.split('@')[0] || 'ユーザー',
-              avatar: actualUser.photoURL || undefined,
-            })
+            console.log('AuthContext - Firestoreにユーザーデータが存在しないため、新規作成します')
+            try {
+              await createUser(actualUser.uid, {
+                email: actualUser.email || '',
+                role: 'user',
+                displayName: actualUser.displayName || actualUser.email?.split('@')[0] || 'ユーザー',
+                avatar: actualUser.photoURL || undefined,
+              })
+              console.log('AuthContext - Firestoreユーザーデータの作成に成功しました')
+            } catch (createError: any) {
+              console.error('AuthContext - Firestoreユーザーデータの作成エラー:', createError)
+              console.error('AuthContext - エラー詳細:', {
+                code: createError?.code,
+                message: createError?.message,
+                stack: createError?.stack,
+              })
+              // ユーザー作成に失敗しても、Firebase認証の情報を使用して続行
+            }
             
             // アプリのUser型に変換
             setUser({
@@ -125,8 +140,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               role: 'user',
             })
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error('AuthContext - Firestoreユーザーデータの取得/作成エラー:', error)
+          console.error('AuthContext - エラー詳細:', {
+            code: error?.code,
+            message: error?.message,
+            stack: error?.stack,
+            name: error?.name,
+          })
           // エラーが発生しても、Firebase認証の情報を使用
           setUser({
             id: actualUser.uid,

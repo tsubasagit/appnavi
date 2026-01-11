@@ -1,0 +1,22 @@
+{
+  "name": "appnavi-template-server",
+  "version": "1.0.0",
+  "description": "AppNavi テンプレートサーバー",
+  "type": "module",
+  "scripts": {
+    "dev": "python -m http.server 8000",
+    "serve": "npx serve .",
+    "build": "echo 'No build step required for static site'",
+    "deploy": "echo 'Deploy using Firebase Hosting, Netlify, or Vercel'"
+  },
+  "keywords": [
+    "appnavi",
+    "templates",
+    "crm",
+    "calendar"
+  ],
+  "author": "AppTalentHub",
+  "license": "MIT"
+}
+
+
