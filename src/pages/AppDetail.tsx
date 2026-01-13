@@ -12,7 +12,7 @@ import PluginsTab from '../components/tabs/PluginsTab'
 import LogicTab from '../components/tabs/LogicTab'
 import EnvironmentSwitcher from '../components/EnvironmentSwitcher'
 import TutorialModal from '../components/TutorialModal'
-import { Compass, Database, PenTool, Code, Settings } from 'lucide-react'
+import { Compass, Database, PenTool, Code, Settings, AlertCircle } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 
 // テンプレート名を取得する関数
@@ -50,6 +50,12 @@ const AppDetail = () => {
 
   // アプリ情報を取得
   const app = apps.find(a => a.id === appId)
+  
+  // テンプレートが選択されているかどうかを確認
+  const hasTemplate = !!(app?.template || app?.templateId)
+  
+  // テンプレートが必要なタブ（デザインとデータ）
+  const templateRequiredTabs: Array<'design' | 'data'> = ['design', 'data']
 
   // 新規アプリ作成時または初回アクセス時にチュートリアルを表示（一度だけ、セッション単位）
   useEffect(() => {
@@ -144,18 +150,35 @@ const AppDetail = () => {
               {basicTabs.map((tab) => {
                 const Icon = tab.icon
                 const isActive = activeTab === tab.id
+                const isDisabled = templateRequiredTabs.includes(tab.id as 'design' | 'data') && !hasTemplate
+                
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex flex-col items-center justify-center w-16 h-16 rounded-xl transition-all ${
-                      isActive
+                    onClick={() => {
+                      if (isDisabled) {
+                        alert('テンプレートを選択してください。\n\nダッシュボードタブでテンプレートを選択してから、このタブに進んでください。')
+                        return
+                      }
+                      setActiveTab(tab.id)
+                    }}
+                    disabled={isDisabled}
+                    className={`flex flex-col items-center justify-center w-16 h-16 rounded-xl transition-all relative ${
+                      isDisabled
+                        ? 'opacity-40 cursor-not-allowed'
+                        : isActive
                         ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 shadow-sm'
                         : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-white'
                     }`}
+                    title={isDisabled ? 'テンプレートを選択してください' : tab.label}
                   >
                     <Icon size={24} className="mb-1" />
                     <span className="text-[10px] font-medium">{tab.label}</span>
+                    {isDisabled && (
+                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center">
+                        <AlertCircle size={10} className="text-white" />
+                      </div>
+                    )}
                   </button>
                 )
               })}
@@ -240,8 +263,58 @@ const AppDetail = () => {
         <main className="flex-1 overflow-auto bg-white dark:bg-black">
           {activeTab === 'dashboard' && <DashboardTab />}
           {activeTab === 'policy' && <PolicyTab />}
-          {activeTab === 'design' && <UITab />}
-          {activeTab === 'data' && <DataTab />}
+          {activeTab === 'design' && (
+            hasTemplate ? (
+              <UITab />
+            ) : (
+              <div className="flex items-center justify-center h-full p-8">
+                <div className="max-w-md text-center">
+                  <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <AlertCircle className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                    テンプレートを選択してください
+                  </h2>
+                  <p className="text-slate-600 dark:text-slate-400 mb-6">
+                    デザインタブを使用するには、まずダッシュボードタブでテンプレートを選択する必要があります。
+                  </p>
+                  <button
+                    onClick={() => setActiveTab('dashboard')}
+                    className="btn-primary inline-flex items-center space-x-2"
+                  >
+                    <LayoutDashboard size={16} />
+                    <span>ダッシュボードに戻る</span>
+                  </button>
+                </div>
+              </div>
+            )
+          )}
+          {activeTab === 'data' && (
+            hasTemplate ? (
+              <DataTab />
+            ) : (
+              <div className="flex items-center justify-center h-full p-8">
+                <div className="max-w-md text-center">
+                  <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <AlertCircle className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                    テンプレートを選択してください
+                  </h2>
+                  <p className="text-slate-600 dark:text-slate-400 mb-6">
+                    データタブを使用するには、まずダッシュボードタブでテンプレートを選択する必要があります。
+                  </p>
+                  <button
+                    onClick={() => setActiveTab('dashboard')}
+                    className="btn-primary inline-flex items-center space-x-2"
+                  >
+                    <LayoutDashboard size={16} />
+                    <span>ダッシュボードに戻る</span>
+                  </button>
+                </div>
+              </div>
+            )
+          )}
           {activeTab === 'graph' && <GraphTab />}
           {activeTab === 'settings' && <SettingsTab />}
           {activeTab === 'about' && <AboutTab />}

@@ -46,44 +46,6 @@ const SettingsTab = () => {
 
   return (
     <div className="p-6 md:p-8 max-w-4xl mx-auto">
-      {/* 表示設定 */}
-      <div className="card mb-6">
-        <div className="flex items-center space-x-2 mb-4">
-          <Settings className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">表示設定</h3>
-        </div>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">アプリの表示モードを設定します。</p>
-        
-        {/* ダークモード切り替え */}
-        <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              {isDarkMode ? (
-                <Moon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-              ) : (
-                <Sun className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-              )}
-              <div>
-                <p className="font-medium text-slate-900 dark:text-slate-100 mb-1">ダークモード</p>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  {isDarkMode ? 'ダークモードが有効です' : 'ライトモードが有効です'}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={toggleDarkMode}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                isDarkMode
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300'
-              }`}
-            >
-              {isDarkMode ? '無効にする' : '有効にする'}
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* 基本情報 */}
       <div className="card mb-6">
         <div className="flex items-center space-x-2 mb-4">
@@ -185,6 +147,44 @@ const SettingsTab = () => {
                 </button>
               </div>
             ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 表示設定 */}
+      <div className="card mb-6">
+        <div className="flex items-center space-x-2 mb-4">
+          <Settings className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">表示設定</h3>
+        </div>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">アプリの表示モードを設定します。</p>
+        
+        {/* ダークモード切り替え */}
+        <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              {isDarkMode ? (
+                <Moon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+              ) : (
+                <Sun className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+              )}
+              <div>
+                <p className="font-medium text-slate-900 dark:text-slate-100 mb-1">ダークモード</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  {isDarkMode ? 'ダークモードが有効です' : 'ライトモードが有効です'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={toggleDarkMode}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                isDarkMode
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300'
+              }`}
+            >
+              {isDarkMode ? '無効にする' : '有効にする'}
+            </button>
           </div>
         </div>
       </div>

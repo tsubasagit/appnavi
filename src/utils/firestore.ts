@@ -72,9 +72,12 @@ export const db = dbInstance!
 // 開発環境でブラウザコンソールからアクセス可能にする
 if (typeof window !== 'undefined' && import.meta.env.DEV) {
   try {
-    if (dbInstance) {
+    // dbInstanceが有効なFirestoreインスタンスかチェック
+    if (dbInstance && typeof dbInstance === 'object') {
       (window as any).__firestoreDb = dbInstance
-      (window as any).__firebaseApp = app
+      if (app && typeof app === 'object') {
+        (window as any).__firebaseApp = app
+      }
       // Firebase関数も公開
       ;(async () => {
         try {
@@ -82,15 +85,41 @@ if (typeof window !== 'undefined' && import.meta.env.DEV) {
           const authModule = await import('firebase/auth')
           ;(window as any).__firebaseFirestore = firestoreModule
           ;(window as any).__firebaseAuth = authModule
+          
+          // createTemplate関数も公開（関数が定義された後に公開）
+          // この時点ではまだ定義されていないため、後で更新する
+          setTimeout(() => {
+            try {
+              // モジュールから直接取得を試みる
+              import('/src/utils/firestore.ts').then(module => {
+                if (module.createTemplate) {
+                  ;(window as any).__firestoreModule = {
+                    createTemplate: module.createTemplate,
+                    getTemplate: module.getTemplate,
+                    getInstalledTemplates: module.getInstalledTemplates,
+                    isTemplateInstalled: module.isTemplateInstalled,
+                    installTemplateFromAssetSite: module.installTemplateFromAssetSite,
+                  }
+                  console.log('[firestore.ts] createTemplate関数をwindow.__firestoreModuleに公開しました')
+                }
+              }).catch(err => {
+                console.warn('[firestore.ts] createTemplate関数の公開エラー:', err)
+              })
+            } catch (error) {
+              console.warn('[firestore.ts] createTemplate関数の公開エラー:', error)
+            }
+          }, 1000) // 1秒後に実行（モジュールが完全に読み込まれるまで待つ）
         } catch (error) {
-          console.warn('Firebase関数の公開エラー:', error)
+          console.warn('[firestore.ts] Firebase関数の公開エラー:', error)
         }
       })()
+      console.log('[firestore.ts] Firestoreインスタンスをwindow.__firestoreDbに公開しました')
     } else {
-      console.warn('[firestore.ts] dbInstanceがnullのため、グローバル公開をスキップします')
+      console.warn('[firestore.ts] dbInstanceが無効なため、グローバル公開をスキップします。dbInstance:', dbInstance)
     }
-  } catch (error) {
-    console.warn('[firestore.ts] 開発環境でのFirebase公開エラー:', error)
+  } catch (error: any) {
+    console.warn('[firestore.ts] 開発環境でのFirebase公開エラー:', error?.message || error)
+    console.warn('[firestore.ts] エラーの詳細:', error)
   }
 }
 
@@ -422,6 +451,18 @@ export const deleteDataSource = async (appId: string, sourceId: string): Promise
   await deleteDoc(sourceRef)
 }
 
+export const updateDataSource = async (
+  appId: string,
+  sourceId: string,
+  updates: Partial<Omit<DataSource, 'createdAt' | 'updatedAt'>>
+): Promise<void> => {
+  const sourceRef = doc(db, getSubCollectionPath.dataSources(appId), sourceId)
+  await updateDoc(sourceRef, {
+    ...updates,
+    updatedAt: serverTimestamp(),
+  })
+}
+
 // ============================================================================
 // デプロイメント管理
 // ============================================================================
@@ -493,6 +534,12 @@ export const getTemplate = async (templateId: string): Promise<(Template & { id:
     if (templateDoc.exists()) {
       const templateData = { id: templateDoc.id, ...templateDoc.data() } as Template & { id: string }
       console.log(`テンプレート "${templateId}" を取得しました:`, templateData.name)
+      console.log(`[firestore.ts] テンプレート "${templateId}" のページ情報:`, {
+        hasUiStructure: !!templateData.uiStructure,
+        hasPages: !!templateData.uiStructure?.pages,
+        pagesCount: templateData.uiStructure?.pages?.length || 0,
+        pages: templateData.uiStructure?.pages?.map(p => ({ id: p.id, name: p.name }))
+      })
       return templateData
     } else {
       console.warn(`テンプレート "${templateId}" はFirestoreに存在しません。テンプレートを作成してください。`)
@@ -504,6 +551,195 @@ export const getTemplate = async (templateId: string): Promise<(Template & { id:
       console.error('Firestoreのセキュリティルールで読み込みが拒否されました。')
     }
     throw error
+  }
+}
+
+/**
+ * インストール済みテンプレート一覧を取得
+ * isPublic: true または isDefault: true のテンプレートを返す
+ */
+export const getInstalledTemplates = async (): Promise<(Template & { id: string })[]> => {
+  try {
+    const templatesRef = collection(db, FIRESTORE_COLLECTIONS.TEMPLATES)
+    // isPublic: true または isDefault: true のテンプレートを取得
+    // FirestoreのクエリではOR条件が直接使えないため、両方のクエリを実行してマージ
+    // orderByを削除してインデックスエラーを回避（必要に応じてメモリ上でソート）
+    const [publicQuery, defaultQuery] = await Promise.all([
+      getDocs(query(templatesRef, where('isPublic', '==', true))),
+      getDocs(query(templatesRef, where('isDefault', '==', true)))
+    ])
+    
+    // 重複を除去してマージ
+    const templateMap = new Map<string, Template & { id: string }>()
+    
+    publicQuery.docs.forEach(doc => {
+      templateMap.set(doc.id, { id: doc.id, ...doc.data() } as Template & { id: string })
+    })
+    
+    defaultQuery.docs.forEach(doc => {
+      templateMap.set(doc.id, { id: doc.id, ...doc.data() } as Template & { id: string })
+    })
+    
+    // メモリ上でソート（createdAtが存在する場合）
+    const templates = Array.from(templateMap.values())
+    templates.sort((a, b) => {
+      const dateA = a.createdAt?.toMillis?.() || (a.createdAt as any)?.seconds ? (a.createdAt as any).seconds * 1000 : 0
+      const dateB = b.createdAt?.toMillis?.() || (b.createdAt as any)?.seconds ? (b.createdAt as any).seconds * 1000 : 0
+      return dateB - dateA // 降順（新しい順）
+    })
+    
+    return templates
+  } catch (error: any) {
+    console.error('インストール済みテンプレートの取得エラー:', error)
+    if (error?.code === 'permission-denied') {
+      console.error('Firestoreのセキュリティルールで読み込みが拒否されました。')
+    }
+    // エラーが発生しても、デフォルトテンプレート（isDefault: true）は返す
+    // これにより、CRMとblank-pageは常に利用可能
+    return []
+  }
+}
+
+/**
+ * テンプレートがインストール済みかチェック
+ */
+export const isTemplateInstalled = async (templateId: string): Promise<boolean> => {
+  try {
+    const template = await getTemplate(templateId)
+    return template !== null
+  } catch (error) {
+    return false
+  }
+}
+
+/**
+ * Assetサイトからテンプレートをインストール
+ * @param assetTemplate Assetサイトのテンプレート情報
+ * @param details 詳細データ（schema, views, sampleData）
+ */
+export const installTemplateFromAssetSite = async (
+  assetTemplate: any,
+  details: {
+    schema?: any
+    views?: any
+    sampleData?: any
+  }
+): Promise<void> => {
+  try {
+    // カラーマッピング（AssetサイトのcolorをFirestoreのcolor形式に変換）
+    const colorMap: Record<string, string> = {
+      'purple': '#8b5cf6',
+      'orange': '#f97316',
+      'green': '#10b981',
+      'blue': '#3b82f6',
+      'slate': '#64748b',
+    }
+    const firestoreColor = colorMap[assetTemplate.color] || '#8b5cf6'
+
+    // views.jsonからuiStructureを構築
+    let uiStructure: any = {
+      theme: {
+        primaryColor: firestoreColor,
+      },
+      pages: [],
+    }
+
+    // views.jsonが存在する場合は、それを使用してuiStructureを構築
+    if (details.views) {
+      // views.jsonの構造に応じてuiStructureを構築
+      // ここでは基本的な構造を提供（実際のviews.jsonの構造に応じて調整が必要）
+      if (details.views.pages) {
+        uiStructure.pages = details.views.pages
+      }
+      if (details.views.theme) {
+        uiStructure.theme = { ...uiStructure.theme, ...details.views.theme }
+      }
+    } else {
+      // views.jsonがない場合は、デフォルトのページ構成を作成
+      uiStructure.pages = [
+        {
+          id: 'dashboard',
+          name: 'ダッシュボード',
+          path: '/',
+          layout: {
+            type: 'grid',
+            columns: 12,
+            gap: '1rem',
+          },
+          components: [],
+          order: 0,
+        },
+      ]
+    }
+
+    // schema.jsonからrecommendedSchemaを構築
+    let recommendedSchema: any = undefined
+    if (details.schema) {
+      recommendedSchema = details.schema
+    }
+
+    // Firestoreに保存するテンプレートデータを構築
+    const templateData: any = {
+      templateId: assetTemplate.templateId,
+      name: assetTemplate.name,
+      description: assetTemplate.description,
+      category: assetTemplate.category,
+      color: firestoreColor,
+      previewImageUrl: assetTemplate.previewImageUrl,
+      isPublic: true,
+      tags: assetTemplate.tags || [],
+      uiStructure: uiStructure,
+      version: assetTemplate.version || '1.0.0',
+      // 外部インストール関連フィールド
+      assetId: assetTemplate.templateId, // appnavi-asset.com上のID（どのテンプレートから作られたかを特定）
+      vendorId: assetTemplate.author || 'appnavi', // 開発元のベンダーID（authorがあれば使用、なければ'appnavi'）
+      isCustomized: false, // 新規インストール時はfalse（ユーザーが編集したらtrueに変更）
+    }
+
+    // recommendedSchemaが存在する場合のみ追加（undefinedの場合は追加しない）
+    if (recommendedSchema !== undefined) {
+      templateData.recommendedSchema = recommendedSchema
+    }
+
+    // undefinedフィールドを削除するヘルパー関数
+    const removeUndefinedFields = (obj: any): any => {
+      const cleaned: any = {}
+      for (const [key, value] of Object.entries(obj)) {
+        if (value !== undefined) {
+          if (typeof value === 'object' && value !== null && !Array.isArray(value) && !(value instanceof Date)) {
+            cleaned[key] = removeUndefinedFields(value)
+          } else {
+            cleaned[key] = value
+          }
+        }
+      }
+      return cleaned
+    }
+
+    // undefinedフィールドを削除
+    const cleanedTemplateData = removeUndefinedFields(templateData)
+
+    // 既存のテンプレートをチェック
+    const existingTemplate = await getTemplate(assetTemplate.templateId)
+    if (existingTemplate) {
+      // 既存の場合は更新
+      // isCustomizedは既存の値を保持（ユーザーが編集した場合はtrueのまま）
+      const updateData = {
+        ...cleanedTemplateData,
+        isCustomized: existingTemplate.isCustomized ?? false, // 既存の値を保持
+        updatedAt: serverTimestamp(),
+      }
+      const templateRef = doc(db, FIRESTORE_COLLECTIONS.TEMPLATES, assetTemplate.templateId)
+      await updateDoc(templateRef, updateData)
+      console.log(`テンプレート "${assetTemplate.templateId}" を更新しました`)
+    } else {
+      // 新規の場合は作成
+      await createTemplate(assetTemplate.templateId, cleanedTemplateData as Omit<Template, 'createdAt' | 'updatedAt'>)
+      console.log(`テンプレート "${assetTemplate.templateId}" をインストールしました`)
+    }
+  } catch (error: any) {
+    console.error(`テンプレート "${assetTemplate.templateId}" のインストールエラー:`, error)
+    throw new Error(`テンプレートのインストールに失敗しました: ${error?.message || '不明なエラー'}`)
   }
 }
 
@@ -564,24 +800,40 @@ export const getAnnouncements = async (): Promise<Announcement[]> => {
     
     const announcementsRef = collection(db, FIRESTORE_COLLECTIONS.ANNOUNCEMENTS)
     
-    // アクティブなお知らせのみを取得し、日付順でソート
+    // アクティブなお知らせのみを取得
+    // 注意: インデックスエラーを避けるため、whereクエリも削除してすべて取得し、メモリ上でフィルタリングします
+    // お知らせの数が少ない場合は、この方法で問題ありません
     const q = query(
       announcementsRef,
-      where('isActive', '==', true),
-      orderBy('date', 'desc'),
-      limit(50) // 最大50件まで取得
+      limit(100) // 最大100件まで取得（お知らせは通常少ないので十分）
     )
     
     const querySnapshot = await getDocs(q)
+    
     const announcements: Announcement[] = []
     
     querySnapshot.forEach((doc) => {
       const data = doc.data()
-      announcements.push({
+      const announcement = {
         id: doc.id,
         ...data,
-      } as Announcement)
+      } as Announcement
+      
+      // アクティブなお知らせのみをフィルタリング
+      if (announcement.isActive === true) {
+        announcements.push(announcement)
+      }
     })
+    
+    // 日付順でソート（新しい順）
+    if (announcements.length > 0) {
+      announcements.sort((a, b) => {
+        // dateフィールドがTimestamp型の場合
+        const dateA = a.date?.toMillis?.() || (a.date as any)?.seconds ? (a.date as any).seconds * 1000 : 0
+        const dateB = b.date?.toMillis?.() || (b.date as any)?.seconds ? (b.date as any).seconds * 1000 : 0
+        return dateB - dateA // 降順（新しい順）
+      })
+    }
     
     console.log('[firestore.ts] getAnnouncements - 成功:', announcements.length, '件')
     return announcements

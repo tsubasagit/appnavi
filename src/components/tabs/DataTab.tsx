@@ -6,7 +6,8 @@ import { useAuth } from '../../context/AuthContext'
 import { useApp } from '../../context/AppContext'
 import { appendToSheet, extractSpreadsheetId, readFromSheet, createSpreadsheet, getSpreadsheetTitle } from '../../features/sheets/api'
 import { getRequiredColumns, getSampleData } from '../../utils/templateColumns'
-import { createDataSource, getDataSources, deleteDataSource } from '../../utils/firestore'
+import { createDataSource, getDataSources, deleteDataSource, updateDataSource } from '../../utils/firestore'
+import { getAppDataSourceType, hasDataSourceType, getDataSourceTypeLabel } from '../../utils/dataSourceHelpers'
 
 const DataTab = () => {
   const [selectedSheet, setSelectedSheet] = useState<string | null>(null)
@@ -27,6 +28,10 @@ const DataTab = () => {
   const { dataSources, apps, activeAppId, updateApp, setDataSources } = useApp()
   const { currentUser, user: authUser } = useAuth()
   const app = apps.find(a => a.id === activeAppId)
+  
+  // アプリのデータソースタイプを取得（将来の拡張に対応）
+  const dataSourceType = getAppDataSourceType(app)
+  const hasDataSourceTypeSet = hasDataSourceType(app)
   
   // テンプレートに必要なカラムを取得
   const requiredColumns = app?.template ? getRequiredColumns(app.template) : []
@@ -92,6 +97,49 @@ const DataTab = () => {
       try {
         setIsLoadingPreview(true)
         const extractedId = extractSpreadsheetId(selectedDataSource.url)
+        
+        // スプレッドシートのタイトルを取得して、データソース名と比較
+        try {
+          const currentTitle = await getSpreadsheetTitle(extractedId)
+          // タイトルが変更されていたら、Firestoreのデータソース名を更新
+          if (currentTitle !== selectedDataSource.name && activeAppId) {
+            console.log('スプレッドシート名が変更されました。データソース名を更新します:', {
+              oldName: selectedDataSource.name,
+              newName: currentTitle
+            })
+            
+            // FirestoreからデータソースIDを取得
+            const firestoreDataSources = await getDataSources(activeAppId)
+            const firestoreDataSource = firestoreDataSources.find(
+              ds => ds.config.spreadsheetId === extractedId
+            )
+            
+            if (firestoreDataSource) {
+              // データソース名を更新
+              await updateDataSource(activeAppId, firestoreDataSource.id, {
+                name: currentTitle
+              })
+              
+              // データソースリストを更新
+              const updatedDataSources = await getDataSources(activeAppId)
+              const convertedDataSources = updatedDataSources.map(ds => ({
+                id: ds.id,
+                name: ds.name,
+                type: ds.type === 'google_sheet' ? 'google-sheets' : ds.type === 'excel' ? 'excel' : 'csv',
+                url: ds.config.fileUrl || (ds.config.spreadsheetId ? `https://docs.google.com/spreadsheets/d/${ds.config.spreadsheetId}` : undefined),
+                lastSynced: ds.updatedAt?.toDate?.()?.toISOString()
+              }))
+              
+              setDataSources(convertedDataSources)
+              
+              // 選択中のデータソース名も更新
+              setSelectedSheet(currentTitle)
+            }
+          }
+        } catch (titleError) {
+          console.warn('スプレッドシートタイトルの取得に失敗（データソース名の更新をスキップ）:', titleError)
+        }
+        
         // 最新のデータの10件分だけ取得（ヘッダー1行 + データ10行 = 合計11行）
         const data = await readFromSheet(extractedId, 'Sheet1!A1:Z11')
         
@@ -110,7 +158,7 @@ const DataTab = () => {
     }
 
     loadSelectedSheetData()
-  }, [selectedSheet, dataSources])
+  }, [selectedSheet, dataSources, activeAppId, setDataSources])
 
   // データソースからデータを取得（現在は空）
   // 注意: テンプレートのサンプルデータは templateSampleData として定義されています
@@ -224,8 +272,9 @@ const DataTab = () => {
   }
 
   // スプレッドシート接続処理
-  const handleConnectSpreadsheet = async () => {
-    if (!spreadsheetId.trim()) {
+  const handleConnectSpreadsheet = async (urlOrId?: string) => {
+    const targetId = urlOrId || spreadsheetId
+    if (!targetId.trim()) {
       alert('スプレッドシートIDまたはURLを入力してください')
       return
     }
@@ -234,7 +283,12 @@ const DataTab = () => {
       setIsConnecting(true)
       setIsLoadingPreview(true)
       setConnectionError('')
-      const extractedId = extractSpreadsheetId(spreadsheetId)
+      const extractedId = extractSpreadsheetId(targetId)
+      
+      // URLが渡された場合は、stateも更新
+      if (urlOrId) {
+        setSpreadsheetId(urlOrId)
+      }
       
       // 最新のデータの10件分だけ取得（ヘッダー1行 + データ10行 = 合計11行）
       const data = await readFromSheet(extractedId, 'Sheet1!A1:Z11')
@@ -253,14 +307,14 @@ const DataTab = () => {
           dataSource: {
             type: 'google-sheets',
             sheetId: extractedId,
-            url: spreadsheetId.includes('http') ? spreadsheetId : undefined
+            url: targetId.includes('http') ? targetId : undefined
           }
         })
 
         // Firestoreにデータソース情報を保存（次回ログイン時に表示されるように）
         try {
           const sourceId = `source-${Date.now()}`
-          const spreadsheetUrl = spreadsheetId.includes('http') ? spreadsheetId : `https://docs.google.com/spreadsheets/d/${extractedId}`
+          const spreadsheetUrl = targetId.includes('http') ? targetId : `https://docs.google.com/spreadsheets/d/${extractedId}`
           
           // スプレッドシートのタイトルを取得
           let spreadsheetTitle = '無題のスプレッドシート'
@@ -703,28 +757,6 @@ const DataTab = () => {
               </button>
             </div>
 
-            {/* テンプレートのデータサンプルへのリンク */}
-            {app?.template && (
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm p-6">
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                    テンプレートのデータサンプル
-                  </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                    このテンプレート（{app.template}）のデータサンプルを確認できます
-                  </p>
-                  <a
-                    href={`https://appnavi-asset.com/templates/${app.template}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center space-x-2 btn-primary"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    <span>データサンプルを見る</span>
-                  </a>
-                </div>
-              </div>
-            )}
           </div>
         )}
         </main>
@@ -861,13 +893,13 @@ const DataTab = () => {
                         </div>
                       )}
 
-                      {/* サンプルデータ表示 */}
+                      {/* サンプルデータ表示と作成ボタン */}
                       {app?.template && templateSampleData.length > 0 && (
                         <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4">
                           <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-2">
                             推奨サンプルデータ
                           </h3>
-                          <div className="border border-slate-300 dark:border-slate-700 rounded-lg overflow-hidden">
+                          <div className="border border-slate-300 dark:border-slate-700 rounded-lg overflow-hidden mb-3">
                             <div className="overflow-x-auto max-h-48">
                               <table className="border-collapse w-full text-xs">
                                 <thead className="bg-slate-100 dark:bg-slate-800">
@@ -911,23 +943,26 @@ const DataTab = () => {
                                 const templateName = app?.name || 'AppNaviアプリ'
                                 const result = await createSpreadsheet(`${templateName} - データ`, templateSampleData)
                                 
-                                // 作成されたスプレッドシートのURLを入力欄に設定
-                                setSpreadsheetId(result.spreadsheetUrl)
-                                setConnectionError('')
+                                console.log('サンプルスプレッドシートを作成しました:', result.spreadsheetUrl)
                                 
-                                alert(`サンプルスプレッドシートを作成しました。\n\nURL: ${result.spreadsheetUrl}\n\n「スプレッドシートに接続」ボタンをクリックして接続してください。`)
+                                // 接続処理を自動実行（URLを直接渡す）
+                                await handleConnectSpreadsheet(result.spreadsheetUrl)
                                 
                                 // 新しいタブでスプレッドシートを開く
                                 window.open(result.spreadsheetUrl, '_blank')
+                                
+                                // モーダルを閉じる（接続が成功した場合）
+                                setIsAddDataModalOpen(false)
                               } catch (error: any) {
                                 console.error('スプレッドシート作成エラー:', error)
                                 setConnectionError(error?.message || 'スプレッドシートの作成に失敗しました')
+                                // エラーが発生した場合はモーダルを開いたままにする
                               } finally {
                                 setIsCreatingSheet(false)
                               }
                             }}
-                            disabled={isCreatingSheet}
-                            className="mt-3 w-full btn-primary flex items-center justify-center space-x-2 disabled:opacity-50 text-sm"
+                            disabled={isCreatingSheet || !sessionStorage.getItem('googleAccessToken')}
+                            className="w-full btn-primary flex items-center justify-center space-x-2 disabled:opacity-50 text-sm"
                           >
                             {isCreatingSheet ? (
                               <>
@@ -937,7 +972,7 @@ const DataTab = () => {
                             ) : (
                               <>
                                 <Plus className="w-4 h-4" />
-                                <span>推奨サンプルスプレッドシートを新規作成</span>
+                                <span>サンプルスプレッドシートを作成</span>
                               </>
                             )}
                           </button>

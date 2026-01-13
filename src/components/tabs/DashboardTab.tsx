@@ -858,8 +858,26 @@ const DashboardTab = () => {
     
     // デフォルト（テンプレート未選択時）
     return (
-      <div className="space-y-6">
-        {/* テンプレート未選択時は何も表示しない */}
+      <div className="card">
+        <div className="text-center py-12">
+          <div className="w-20 h-20 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+            <AlertCircle className="w-10 h-10 text-yellow-600 dark:text-yellow-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
+            テンプレートを選択してください
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 mb-2 max-w-md mx-auto">
+            アプリを作成するには、まずテンプレートを選択する必要があります。
+          </p>
+          <p className="text-sm text-slate-500 dark:text-slate-500 mb-6 max-w-md mx-auto">
+            テンプレートを選択すると、デザインやデータタブに進むことができます。
+          </p>
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 max-w-md mx-auto">
+            <p className="text-sm text-blue-800 dark:text-blue-200">
+              <strong>次のステップ:</strong> 方針タブでテンプレートを選択してください。
+            </p>
+          </div>
+        </div>
       </div>
     )
   }

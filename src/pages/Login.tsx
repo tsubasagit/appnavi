@@ -19,6 +19,30 @@ const Login = () => {
       navigate('/apps', { replace: true })
     }
   }, [currentUser, user, authLoading, navigate])
+  
+  // 認証成功後のナビゲーション処理（userが設定されるまで待つ）
+  useEffect(() => {
+    // loadingがfalseで、認証は成功しているがuserがまだ設定されていない場合
+    // これは最初のログイン時など、Firestoreにユーザーデータを作成している最中の場合
+    if (!authLoading && currentUser && !user && !loading) {
+      console.log('Login.tsx - 認証成功、Firestoreへのユーザーデータ作成を待機中...')
+      // userが設定されるまで待つ（最大5秒）
+      const timeout = setTimeout(() => {
+        console.warn('Login.tsx - userの設定がタイムアウトしましたが、ナビゲーションを続行します')
+        if (currentUser) {
+          navigate('/apps', { replace: true })
+        }
+      }, 5000)
+      
+      return () => clearTimeout(timeout)
+    }
+    
+    // userが設定されたら、ダッシュボードに遷移
+    if (!authLoading && currentUser && user && !loading) {
+      console.log('Login.tsx - userが設定されました、ダッシュボードに遷移:', user.email)
+      navigate('/apps', { replace: true })
+    }
+  }, [currentUser, user, authLoading, loading, navigate])
 
   // リダイレクト後の認証結果を処理（URLパラメータからエラーがある場合）
   useEffect(() => {
@@ -128,49 +152,10 @@ const Login = () => {
       const user = await signInWithGoogle()
       console.log('signInWithGoogle成功:', user.email)
       
-      // 認証成功後、auth.currentUserを確認
-      if (auth.currentUser) {
-        console.log('auth.currentUser確認:', auth.currentUser.email)
-        // 少し待ってからナビゲーション（AuthContextの状態更新を待つ）
-        await new Promise(resolve => setTimeout(resolve, 500))
-        navigate('/apps', { replace: true })
-      } else {
-        // auth.currentUserがnullの場合、onAuthStateChangedを待つ
-        console.log('auth.currentUserがnull、onAuthStateChangedを待機...')
-        await new Promise<void>((resolve, reject) => {
-          let resolved = false
-          const timeout = setTimeout(() => {
-            if (!resolved) {
-              resolved = true
-              console.error('認証状態の更新がタイムアウトしました')
-              reject(new Error('認証状態の更新がタイムアウトしました'))
-            }
-          }, 5000)
-          
-          const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-            console.log('Login.tsx - onAuthStateChanged:', firebaseUser?.email || 'null')
-            if (firebaseUser && !resolved) {
-              resolved = true
-              clearTimeout(timeout)
-              unsubscribe()
-              resolve()
-            } else if (!firebaseUser && !resolved) {
-              // nullが返された場合でも、少し待ってから再確認
-              setTimeout(() => {
-                if (auth.currentUser && !resolved) {
-                  resolved = true
-                  clearTimeout(timeout)
-                  unsubscribe()
-                  resolve()
-                }
-              }, 1000)
-            }
-          })
-        })
-        
-        // 認証状態が更新されたら、ダッシュボードに遷移
-        navigate('/apps', { replace: true })
-      }
+      // 認証成功後、AuthContextの状態更新を待つ
+      // useEffectでuserが設定されるまで待つため、ここではナビゲーションしない
+      console.log('Login.tsx - 認証成功、AuthContextの状態更新を待機中...')
+      // useEffectがuserの設定を監視してナビゲーションを実行する
       
       // エラーが記録されていた場合、localStorageに保存
       if (errorLog.length > 0) {

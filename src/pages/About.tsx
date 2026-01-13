@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Github, Mail, FileText } from 'lucide-react'
+import { ArrowLeft, Github, Mail, FileText, ExternalLink } from 'lucide-react'
 
 const About = () => {
   return (
@@ -130,6 +130,15 @@ const About = () => {
           >
             <Github className="w-5 h-5 mr-2" />
             GitHubリポジトリ
+          </a>
+          <a
+            href="https://tsubasagit.github.io/AppNavi-asset/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center text-primary-600 hover:text-primary-700 transition"
+          >
+            <ExternalLink className="w-5 h-5 mr-2" />
+            テンプレートサイト
           </a>
           <a
             href="mailto:your-email@example.com"

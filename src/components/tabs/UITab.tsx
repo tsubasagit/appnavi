@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Monitor, Smartphone, Eye, Rocket, Plus, X, PenTool, ChevronDown, ChevronRight, BarChart3, Grid3x3, FileText, Type, Trash2, Maximize2, Search, Users, Briefcase, AlertCircle, TrendingUp, Calendar, Clock, Filter, MoreVertical, Edit, Phone, Mail, MapPin, User } from 'lucide-react'
+import { Monitor, Smartphone, Eye, Rocket, Plus, X, PenTool, ChevronDown, ChevronRight, BarChart3, Grid3x3, FileText, Type, Trash2, Maximize2, Search, Users, Briefcase, AlertCircle, TrendingUp, Calendar, Clock, Filter, MoreVertical, Edit, Phone, Mail, MapPin, User, Upload, Sparkles } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { ComponentConfig, Page, PageConfig, UIState, ComponentType } from '../../types'
 import { useSheetData } from '../../hooks/useSheetData'
@@ -47,6 +47,11 @@ const UITab = () => {
   const [componentPickerSlotIndex, setComponentPickerSlotIndex] = useState<number | null>(null)
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const [templateInfo, setTemplateInfo] = useState<{ name: string; description: string; previewImageUrl?: string; pages?: Array<{ name: string; path: string }> } | null>(null)
+  const [showTemplateInfo, setShowTemplateInfo] = useState(true) // 初回表示時にテンプレート情報を表示
+  const [isJsonImportModalOpen, setIsJsonImportModalOpen] = useState(false)
+  const [jsonImportText, setJsonImportText] = useState('')
+  const [jsonImportError, setJsonImportError] = useState<string | null>(null)
 
   // テンプレート変更時にUI構成を適用
   useEffect(() => {
@@ -56,10 +61,77 @@ const UITab = () => {
         return
       }
 
+      if (!activeAppId) {
+        console.log('UITab: アクティブなアプリIDがありません')
+        return
+      }
+
       try {
-        const { getTemplate } = await import('../../utils/firestore')
+        const { getTemplate, getPages } = await import('../../utils/firestore')
         const templateId = app.templateId || app.template
         console.log(`UITab: テンプレート "${templateId}" を読み込み中...`)
+        
+        // まずFirestoreから既存のページを取得（エラーは無視して続行）
+        try {
+          const existingPages = await getPages(activeAppId)
+          console.log('UITab: Firestoreから取得した既存ページ数:', existingPages.length)
+          
+          // Firestoreにページが存在する場合は、それを使用
+          if (existingPages.length > 0) {
+            const firestorePages: Page[] = existingPages.map(p => ({
+              id: p.id,
+              name: p.title,
+              path: `/${p.id}`,
+              template: p.id,
+            }))
+            
+            const firestorePageComponents: PageConfig = {}
+            existingPages.forEach(p => {
+              firestorePageComponents[p.id] = (p.components || []).map(comp => ({
+                id: comp.id,
+                type: comp.type as ComponentType,
+                props: comp.props || {},
+                dataSource: comp.dataSourceId,
+              }))
+            })
+            
+            setPages(firestorePages)
+            setPageComponents(firestorePageComponents)
+            
+            if (firestorePages.length > 0) {
+              setUIState(prev => ({ ...prev, activePageId: firestorePages[0].id }))
+            }
+            
+            // テンプレート情報も取得（プレビュー表示用）
+            if (templateId) {
+              try {
+                const templateData = await getTemplate(templateId)
+                if (templateData) {
+                  setTemplateInfo({
+                    name: templateData.name,
+                    description: templateData.description,
+                    previewImageUrl: templateData.previewImageUrl,
+                    pages: templateData.uiStructure?.pages?.map(p => ({ name: p.name, path: p.path })) || [],
+                  })
+                }
+              } catch (templateError) {
+                console.log('UITab: テンプレート情報の取得に失敗しました（続行）:', templateError)
+              }
+            }
+            
+            console.log('UITab: Firestoreからページを読み込みました:', firestorePages.length, 'ページ')
+            return
+          }
+        } catch (pagesError: any) {
+          console.log('UITab: Firestoreからページを取得できませんでした（テンプレートから読み込みます）:', pagesError?.message)
+          // エラーが発生しても、テンプレートから読み込む処理を続行
+        }
+        
+        // Firestoreにページがない場合は、テンプレートから読み込む
+        if (!templateId) {
+          console.warn('UITab: テンプレートIDが設定されていません')
+          return
+        }
         
         const templateData = await getTemplate(templateId)
         
@@ -85,6 +157,9 @@ const UITab = () => {
                   props: comp.props || {},
                   dataSource: comp.dataSourceId,
                 }))
+              } else {
+                // コンポーネントがない場合でも空配列を設定
+                newPageComponents[pageId] = []
               }
             })
             
@@ -97,6 +172,8 @@ const UITab = () => {
             }
             
             console.log('UITab: テンプレートのUI構成を適用しました:', templateData.name)
+            console.log('UITab: 作成されたページ数:', newPages.length)
+            console.log('UITab: ページ一覧:', newPages.map(p => ({ id: p.id, name: p.name })))
           } else {
             console.warn(`UITab: テンプレート "${templateId}" にページ構成がありません`)
           }
@@ -120,7 +197,7 @@ const UITab = () => {
     }
 
     applyTemplateUI()
-  }, [app?.templateId, app?.template])
+  }, [app?.templateId, app?.template, activeAppId])
 
   // データソースからスプレッドシートIDを取得
   const getSpreadsheetIdFromDataSource = (dataSourceId: string | undefined): string | null => {
@@ -652,6 +729,96 @@ const UITab = () => {
     )
   }
 
+  // カンバンコンポーネント（CRM用 - 商談管理）
+  const KanbanComponent = ({ component, isSelected, onSelect }: { component: ComponentConfig; isSelected: boolean; onSelect: () => void }) => {
+    const columns = component.props?.columns || [
+      { id: 'prospecting', name: '見込み', color: '#94a3b8' },
+      { id: 'qualification', name: '選定', color: '#3b82f6' },
+      { id: 'proposal', name: '提案', color: '#8b5cf6' },
+      { id: 'negotiation', name: '交渉', color: '#f59e0b' },
+      { id: 'closed', name: '成約', color: '#10b981' },
+    ]
+
+    return (
+      <div
+        className={`p-4 bg-white dark:bg-slate-900 rounded-lg border-2 border-purple-200 dark:border-purple-800 ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+        onClick={(e) => {
+          e.stopPropagation()
+          onSelect()
+        }}
+      >
+        <h3 className="font-bold mb-4 text-slate-900 dark:text-white">
+          {component.props?.title || '商談パイプライン'}
+        </h3>
+        <div className="flex gap-4 overflow-x-auto">
+          {columns.map((column: any) => (
+            <div
+              key={column.id}
+              className="flex-shrink-0 w-64 bg-slate-50 dark:bg-slate-800 rounded-lg p-3"
+              style={{ borderTop: `4px solid ${column.color}` }}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold text-slate-900 dark:text-white">{column.name}</h4>
+                <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded">
+                  0
+                </span>
+              </div>
+              <div className="space-y-2 min-h-[100px]">
+                <div className="text-sm text-slate-400 dark:text-slate-500 text-center py-4">
+                  カードがありません
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  // タイムラインコンポーネント（CRM用 - 活動履歴）
+  const TimelineComponent = ({ component, isSelected, onSelect }: { component: ComponentConfig; isSelected: boolean; onSelect: () => void }) => {
+    return (
+      <div
+        className={`p-4 bg-white dark:bg-slate-900 rounded-lg border-2 border-purple-200 dark:border-purple-800 ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+        onClick={(e) => {
+          e.stopPropagation()
+          onSelect()
+        }}
+      >
+        <h3 className="font-bold mb-4 text-slate-900 dark:text-white">
+          {component.props?.title || '活動履歴タイムライン'}
+        </h3>
+        <div className="space-y-4">
+          <div className="text-sm text-slate-400 dark:text-slate-500 text-center py-8">
+            活動履歴がありません
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // リストコンポーネント（CRM用 - 活動履歴）
+  const ListComponent = ({ component, isSelected, onSelect }: { component: ComponentConfig; isSelected: boolean; onSelect: () => void }) => {
+    return (
+      <div
+        className={`p-4 bg-white dark:bg-slate-900 rounded-lg border-2 border-purple-200 dark:border-purple-800 ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+        onClick={(e) => {
+          e.stopPropagation()
+          onSelect()
+        }}
+      >
+        <h3 className="font-bold mb-4 text-slate-900 dark:text-white">
+          {component.props?.title || 'リスト'}
+        </h3>
+        <div className="space-y-2">
+          <div className="text-sm text-slate-400 dark:text-slate-500 text-center py-8">
+            アイテムがありません
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // コンポーネントレンダリング（Safe Rendering）
   const renderComponent = (component: ComponentConfig) => {
     const isSelected = component.id === uiState.selectedComponentId
@@ -798,16 +965,91 @@ const UITab = () => {
       {/* Header Section */}
       <div className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 flex-shrink-0">
         <div className="max-w-7xl mx-auto">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center">
-              <PenTool className="mr-2 text-primary-600 dark:text-primary-400" size={24} /> Step 2: Design - テーマエンジン
-            </h2>
-            <p className="text-sm text-slate-600 dark:text-white mt-1">
-              デザインをカスタマイズして、アプリの見た目を調整します。
-            </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center">
+                <PenTool className="mr-2 text-primary-600 dark:text-primary-400" size={24} /> Step 2: Design - テーマエンジン
+              </h2>
+              <p className="text-sm text-slate-600 dark:text-white mt-1">
+                デザインをカスタマイズして、アプリの見た目を調整します。AIで生成したJSONテンプレートもインポートできます。
+              </p>
+            </div>
+            <button
+              onClick={() => setIsJsonImportModalOpen(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition shadow-sm"
+              title="AIで生成したJSONテンプレートをインポート"
+            >
+              <Sparkles size={18} />
+              <span>AI JSONをインポート</span>
+            </button>
           </div>
         </div>
       </div>
+      
+      {/* テンプレート情報バナー（初回表示時のみ） */}
+      {showTemplateInfo && templateInfo && pages.length > 0 && (
+        <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-b border-purple-200 dark:border-purple-800 p-4 flex-shrink-0">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start space-x-4 flex-1">
+                {templateInfo.previewImageUrl && (
+                  <div className="w-24 h-24 bg-white dark:bg-slate-800 rounded-lg border-2 border-purple-200 dark:border-purple-700 overflow-hidden shadow-sm flex-shrink-0">
+                    <img 
+                      src={templateInfo.previewImageUrl} 
+                      alt={templateInfo.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none'
+                      }}
+                    />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                      {templateInfo.name}
+                    </h3>
+                    <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-xs font-medium">
+                      テンプレート
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+                    {templateInfo.description}
+                  </p>
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-3">
+                    <p className="text-xs text-blue-800 dark:text-blue-200 font-medium mb-1">
+                      💡 自由編集モード
+                    </p>
+                    <p className="text-xs text-blue-700 dark:text-blue-300">
+                      このテンプレートは初期設定です。AIで生成したJSONをインポートしたり、コンポーネントを自由に追加・編集して、思い通りのUIを作成できます。
+                    </p>
+                  </div>
+                  {templateInfo.pages && templateInfo.pages.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      <span className="text-xs font-medium text-slate-700 dark:text-slate-300">作成されるページ:</span>
+                      {templateInfo.pages.map((page, index) => (
+                        <span
+                          key={index}
+                          className="px-2 py-1 bg-white dark:bg-slate-800 border border-purple-200 dark:border-purple-700 rounded text-xs text-slate-700 dark:text-slate-300"
+                        >
+                          {page.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => setShowTemplateInfo(false)}
+                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition flex-shrink-0"
+                title="閉じる"
+              >
+                <X size={20} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       <div className="flex flex-1 overflow-hidden">
         {/* Left Panel - Structure & Navigation */}
@@ -1315,6 +1557,198 @@ const UITab = () => {
                   <div className="font-medium text-slate-900">{label}</div>
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* JSONインポートモーダル */}
+      {isJsonImportModalOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={() => setIsJsonImportModalOpen(false)}
+        >
+          <div 
+            className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* モーダルヘッダー */}
+            <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 rounded-lg">
+                    <Sparkles className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">AI JSONテンプレートをインポート</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                      AIで生成したJSONテンプレートを貼り付けて、自由にUIを作成できます
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setIsJsonImportModalOpen(false)
+                    setJsonImportText('')
+                    setJsonImportError(null)
+                  }}
+                  className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+
+            {/* モーダルコンテンツ */}
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  JSONテンプレート（貼り付けまたはファイル選択）
+                </label>
+                <textarea
+                  value={jsonImportText}
+                  onChange={(e) => {
+                    setJsonImportText(e.target.value)
+                    setJsonImportError(null)
+                  }}
+                  placeholder='{"uiStructure": {"pages": [{"id": "page1", "name": "ページ1", "path": "/page1", "components": [...]}]}}'
+                  className="w-full h-64 p-4 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+                <div className="mt-2">
+                  <label className="inline-flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="file"
+                      accept=".json"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          const reader = new FileReader()
+                          reader.onload = (event) => {
+                            const content = event.target?.result as string
+                            setJsonImportText(content)
+                            setJsonImportError(null)
+                          }
+                          reader.readAsText(file)
+                        }
+                      }}
+                    />
+                    <span className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+                      <Upload size={16} className="inline mr-1" />
+                      ファイルから選択
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              {jsonImportError && (
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                  <p className="text-sm text-red-800 dark:text-red-200 font-medium">エラー</p>
+                  <p className="text-sm text-red-700 dark:text-red-300 mt-1">{jsonImportError}</p>
+                </div>
+              )}
+
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <p className="text-sm text-blue-800 dark:text-blue-200 font-medium mb-2">📋 JSON形式の例</p>
+                <pre className="text-xs text-blue-700 dark:text-blue-300 overflow-x-auto">
+{`{
+  "uiStructure": {
+    "pages": [
+      {
+        "id": "dashboard",
+        "name": "ダッシュボード",
+        "path": "/",
+        "layout": {"type": "grid", "columns": 12},
+        "components": [
+          {
+            "id": "heading1",
+            "type": "heading",
+            "position": {"x": 0, "y": 0, "width": 12},
+            "props": {"text": "ようこそ"}
+          }
+        ]
+      }
+    ]
+  }
+}`}
+                </pre>
+              </div>
+            </div>
+
+            {/* モーダルフッター */}
+            <div className="p-6 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setIsJsonImportModalOpen(false)
+                  setJsonImportText('')
+                  setJsonImportError(null)
+                }}
+                className="px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={async () => {
+                  if (!jsonImportText.trim()) {
+                    setJsonImportError('JSONテンプレートを入力してください')
+                    return
+                  }
+
+                  try {
+                    const jsonData = JSON.parse(jsonImportText)
+                    
+                    // JSON構造を検証
+                    if (!jsonData.uiStructure || !jsonData.uiStructure.pages) {
+                      setJsonImportError('JSONにuiStructure.pagesが含まれていません')
+                      return
+                    }
+
+                    // ページとコンポーネントを適用
+                    const newPages: Page[] = jsonData.uiStructure.pages.map((page: any, index: number) => ({
+                      id: page.id || `page_${index + 1}`,
+                      name: page.name || `ページ${index + 1}`,
+                      path: page.path || `/${page.id || `page_${index + 1}`}`,
+                      template: page.id || `page_${index + 1}`,
+                    }))
+
+                    const newPageComponents: PageConfig = {}
+                    jsonData.uiStructure.pages.forEach((page: any, pageIndex: number) => {
+                      const pageId = page.id || `page_${pageIndex + 1}`
+                      newPageComponents[pageId] = (page.components || []).map((comp: any) => ({
+                        id: comp.id || `c_${Date.now()}_${Math.random()}`,
+                        type: comp.type as ComponentType,
+                        props: comp.props || {},
+                        dataSource: comp.dataSourceId,
+                      }))
+                    })
+
+                    setPages(newPages)
+                    setPageComponents(newPageComponents)
+                    
+                    if (newPages.length > 0) {
+                      setUIState(prev => ({ ...prev, activePageId: newPages[0].id }))
+                    }
+
+                    // テンプレート情報を更新
+                    setTemplateInfo({
+                      name: jsonData.name || 'AI生成テンプレート',
+                      description: jsonData.description || 'AIで生成されたカスタムテンプレート',
+                      pages: newPages.map(p => ({ name: p.name, path: p.path })),
+                    })
+
+                    setIsJsonImportModalOpen(false)
+                    setJsonImportText('')
+                    setJsonImportError(null)
+                    
+                    alert(`AI JSONテンプレートをインポートしました！\n${newPages.length}個のページを作成しました。`)
+                  } catch (error: any) {
+                    setJsonImportError(`JSONの解析エラー: ${error.message}`)
+                  }
+                }}
+                className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition font-medium"
+              >
+                インポート
+              </button>
             </div>
           </div>
         </div>

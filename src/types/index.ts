@@ -1,3 +1,6 @@
+// データソースタイプのインポート
+import type { DataSourceType } from './dataSource'
+
 // アプリの型定義（v2.0: シングルパーパス方式）
 export interface App {
   id: string;
@@ -6,12 +9,24 @@ export interface App {
   icon?: string;
   template: 'crm' | 'google-calendar-group' | 'daily-report' | 'auto-integration' | 'custom' | null; // 目的特化型テンプレート（後方互換性のため保持）
   templateId?: string; // 現在選択されているテンプレートID（優先的に使用）
+  templateMetadata?: {
+    schemaUrl?: string; // テンプレートのスキーマURL
+    viewsUrl?: string; // テンプレートのビュー定義URL
+    sampleDataUrl?: string; // テンプレートのサンプルデータURL
+    version?: string; // テンプレートのバージョン
+    updatedAt?: string; // テンプレートの更新日時
+  };
   mission: string; // 「One App, One Mission」の目的
   dataSource: {
-    type: 'google-sheets' | 'excel' | 'csv' | 'postgresql';
+    type: DataSourceType; // データソースタイプ（将来の拡張に対応）
     url?: string;
     fileName?: string;
     sheetId?: string;
+    // 将来的に追加される可能性のあるフィールド
+    // firebaseProjectId?: string;
+    // supabaseUrl?: string;
+    // supabaseKey?: string;
+    // postgresqlConnectionString?: string;
   };
   status: 'published' | 'draft' | 'building'; // building: ビルド中
   buildProgress?: {
@@ -45,7 +60,7 @@ export interface UIConfig {
 export interface DataSource {
   id: string;
   name: string;
-  type: 'google-sheets' | 'excel' | 'csv';
+  type: DataSourceType; // データソースタイプ（将来の拡張に対応）
   url?: string;
   fileName?: string;
   lastSynced?: string;

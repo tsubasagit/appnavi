@@ -108,7 +108,7 @@ export interface DataSourceConfig {
 export interface Deployment {
   environment: 'dev' | 'prod'
   version: string
-  deployedAt: FirebaseFirestore.Timestamp
+  deployedAt: Timestamp
   deployedBy: string
   status: 'success' | 'failed' | 'pending'
   buildId?: string
@@ -138,7 +138,7 @@ export interface PluginVersion {
   changelog: string
   dependencies: Record<string, string>
   assetUrl: string
-  publishedAt: FirebaseFirestore.Timestamp
+  publishedAt: Timestamp
   publishedBy: string
 }
 
@@ -155,9 +155,14 @@ export interface Template {
   color: string                         // テーマカラー（例: '#8b5cf6'）
   
   // メタデータ
-  vendorId?: string                     // ベンダーID（システム提供の場合は空）
+  vendorId?: string                     // ベンダーID（開発元のベンダーID: 公式 or 外部エンジニア）
   isPublic: boolean                     // 公開フラグ（true: 全ユーザーが利用可能）
+  isDefault?: boolean                   // デフォルトフラグ（true: 全ユーザーが初期でインストール済み）
   tags: string[]                        // タグ（検索・フィルタ用）
+  
+  // 外部インストール関連（appnavi-asset.com からのインストールを前提としたフィールド）
+  assetId?: string                      // appnavi-asset.com 上のID（どのテンプレートから作られたかを特定し、更新を確認するため）
+  isCustomized?: boolean                // ユーザーが一度でも編集したか（アップデート時に上書き確認を出すため）
   
   // UI構成（テンプレート変更時に適用される）
   uiStructure: TemplateUIStructure      // UI構成定義
@@ -166,7 +171,7 @@ export interface Template {
   recommendedSchema?: RecommendedSchema  // 推奨データスキーマ（オプション）
   
   // 管理情報
-  version: string                        // テンプレートバージョン（例: '1.0.0'）
+  version: string                        // テンプレートバージョン（例: '1.0.0'）（アセット側の最新版と比較するため）
   createdAt: Timestamp
   updatedAt: Timestamp
 }
@@ -319,7 +324,7 @@ export interface SystemSettings {
   maintenanceMessage?: string
   announcements: Announcement[]
   featureFlags: Record<string, boolean>
-  updatedAt: FirebaseFirestore.Timestamp
+  updatedAt: Timestamp
 }
 
 export interface Announcement {
@@ -344,7 +349,7 @@ export interface Feedback {
   message: string
   userAgent?: string
   url?: string
-  createdAt: FirebaseFirestore.Timestamp
+  createdAt: Timestamp
   status: 'new' | 'in-progress' | 'resolved' | 'closed'
 }
 

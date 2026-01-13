@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Save, Lightbulb, Target, BarChart3, Sparkles, Compass, Search, X, Settings, Upload, Download, Github, Loader2, AlertCircle, Globe, UserCheck, Calendar, ClipboardList, RefreshCw } from 'lucide-react'
+import { Save, Lightbulb, Target, BarChart3, Sparkles, Compass, Search, X, Settings, Upload, Loader2, AlertCircle, Globe, UserCheck, Calendar, ClipboardList, RefreshCw, Github, Download, CheckCircle2 } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { App } from '../../types'
 import { allTemplates, Template } from '../../utils/templates'
-import { fetchTemplates, installAsset, uploadAsset, AssetMetadata } from '../../utils/githubAsset'
-import { fetchTemplatesFromServer, TemplateServerTemplate } from '../../utils/templateServer'
+import { uploadAsset } from '../../utils/githubAsset'
+import { fetchTemplatesFromAssetSite, AssetSiteTemplate } from '../../utils/assetSite'
 
 const PolicyTab = () => {
   const { apps, activeAppId, updateApp } = useApp()
@@ -13,37 +13,60 @@ const PolicyTab = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTemplateForModal, setSelectedTemplateForModal] = useState<Template | null>(null)
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false)
-  const [isInstallModalOpen, setIsInstallModalOpen] = useState(false)
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
-  const [githubTemplates, setGithubTemplates] = useState<AssetMetadata[]>([])
-  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false)
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
-  const [serverTemplates, setServerTemplates] = useState<TemplateServerTemplate[]>([])
-  const [isLoadingServerTemplates, setIsLoadingServerTemplates] = useState(false)
+  const [assetSiteTemplates, setAssetSiteTemplates] = useState<AssetSiteTemplate[]>([])
+  const [isLoadingAssetSiteTemplates, setIsLoadingAssetSiteTemplates] = useState(false)
+  const [installedTemplateIds, setInstalledTemplateIds] = useState<Set<string>>(new Set())
+  const [isInstallingTemplate, setIsInstallingTemplate] = useState<string | null>(null)
+  const [templatePages, setTemplatePages] = useState<string[]>([]) // テンプレートのページ一覧
 
-  // デフォルトでCRMを選択
-  useEffect(() => {
-    if (app && !app.template) {
-      updateApp(app.id, { template: 'crm' })
-    }
-  }, [app, updateApp])
 
-  // テンプレートサーバーからテンプレートを取得
+  // 外部サイトからテンプレートを取得（初回のみ自動読み込み）
   useEffect(() => {
-    const loadServerTemplates = async () => {
-      setIsLoadingServerTemplates(true)
+    const loadAssetSiteTemplates = async () => {
+      setIsLoadingAssetSiteTemplates(true)
       try {
-        const templates = await fetchTemplatesFromServer()
-        setServerTemplates(templates)
+        const templates = await fetchTemplatesFromAssetSite(false) // キャッシュを使用
+        setAssetSiteTemplates(templates)
       } catch (error) {
-        console.error('テンプレートサーバーからの取得エラー:', error)
+        console.error('外部サイトからのテンプレート取得エラー:', error)
         // エラーが発生しても続行（ローカルテンプレートのみ表示）
       } finally {
-        setIsLoadingServerTemplates(false)
+        setIsLoadingAssetSiteTemplates(false)
       }
     }
     
-    loadServerTemplates()
+    loadAssetSiteTemplates()
+  }, [])
+
+  // インストール済みテンプレートIDを取得
+  useEffect(() => {
+    const loadInstalledTemplates = async () => {
+      try {
+        const { getInstalledTemplates } = await import('../../utils/firestore')
+        const installed = await getInstalledTemplates()
+        const installedIds = new Set(installed.map(t => t.templateId))
+        
+        // isDefault: trueのテンプレート（CRMとblank-page）を確実にインストール済みとして追加
+        // これらは全ユーザーがデフォルトで利用可能
+        const defaultTemplateIds = ['crm', 'blank-page']
+        defaultTemplateIds.forEach(id => {
+          installedIds.add(id)
+        })
+        
+        setInstalledTemplateIds(installedIds)
+        console.log('[PolicyTab] インストール済みテンプレート:', Array.from(installedIds))
+        console.log('[PolicyTab] デフォルトテンプレート（isDefault: true）:', defaultTemplateIds)
+      } catch (error) {
+        console.error('インストール済みテンプレートの取得エラー:', error)
+        // エラーが発生しても、デフォルトテンプレートは確実にインストール済みとして扱う
+        const defaultTemplateIds = ['crm', 'blank-page']
+        setInstalledTemplateIds(new Set(defaultTemplateIds))
+      }
+    }
+    
+    loadInstalledTemplates()
   }, [])
   
   const [formData, setFormData] = useState({
@@ -86,7 +109,73 @@ const PolicyTab = () => {
     }
   }
 
-  const handleTemplateClick = (template: Template) => {
+  // テンプレートインストール処理
+  const handleInstallTemplate = async (assetTemplate: AssetSiteTemplate) => {
+    if (isInstallingTemplate) return
+    
+    setIsInstallingTemplate(assetTemplate.templateId)
+    try {
+      // 詳細データを取得
+      const { fetchTemplateDetails } = await import('../../utils/assetSite')
+      const details = await fetchTemplateDetails(assetTemplate)
+      
+      // Firestoreにインストール
+      const { installTemplateFromAssetSite } = await import('../../utils/firestore')
+      await installTemplateFromAssetSite(assetTemplate, details)
+      
+      // インストール済みリストを更新
+      setInstalledTemplateIds(prev => new Set([...prev, assetTemplate.templateId]))
+      
+      alert(`テンプレート「${assetTemplate.name}」をインストールしました。\n\nこれで、このテンプレートを選択して使用できます。`)
+    } catch (error: any) {
+      console.error('テンプレートインストールエラー:', error)
+      alert(`テンプレートのインストールに失敗しました: ${error?.message || '不明なエラー'}`)
+    } finally {
+      setIsInstallingTemplate(null)
+    }
+  }
+
+  // テンプレート詳細を表示（インストール不要）
+  const handleViewTemplateDetails = async (template: Template) => {
+    setSelectedTemplateForModal(template)
+    setIsTemplateModalOpen(true)
+    
+    // テンプレートのページ一覧を取得
+    try {
+      const { getTemplate } = await import('../../utils/firestore')
+      const templateData = await getTemplate(template.id)
+      
+      console.log('[PolicyTab] テンプレート詳細取得:', {
+        templateId: template.id,
+        templateData: templateData,
+        hasUiStructure: !!templateData?.uiStructure,
+        hasPages: !!templateData?.uiStructure?.pages,
+        pagesCount: templateData?.uiStructure?.pages?.length || 0,
+        pages: templateData?.uiStructure?.pages
+      })
+      
+      if (templateData && templateData.uiStructure && templateData.uiStructure.pages) {
+        const pageNames = templateData.uiStructure.pages.map(page => page.name)
+        setTemplatePages(pageNames)
+        console.log('[PolicyTab] テンプレートのページ一覧:', pageNames)
+      } else {
+        console.warn('[PolicyTab] テンプレートにページ情報がありません。Firestoreのテンプレートデータを確認してください。')
+        setTemplatePages([])
+      }
+    } catch (error: any) {
+      console.error('[PolicyTab] テンプレート詳細の取得エラー:', error)
+      setTemplatePages([])
+    }
+  }
+
+  // テンプレートを選択（インストール済みのみ）
+  const handleSelectTemplate = (template: Template) => {
+    // インストール済みテンプレートのみ選択可能
+    if (!installedTemplateIds.has(template.id)) {
+      alert('このテンプレートを使用するには、まずインストールが必要です。\n\nテンプレートカードの「インストール」ボタンをクリックしてください。')
+      return
+    }
+    
     setSelectedTemplateForModal(template)
     setIsTemplateModalOpen(true)
   }
@@ -106,11 +195,22 @@ const PolicyTab = () => {
       const templateId = selectedTemplateForModal.id
       const templateValue = templateId as App['template']
       
+      // 外部サイトから取得したテンプレートの詳細情報を取得
+      const assetTemplate = assetSiteTemplates.find(t => t.templateId === templateId)
+      const templateMetadata = assetTemplate ? {
+        schemaUrl: assetTemplate.schemaUrl,
+        viewsUrl: assetTemplate.viewsUrl,
+        sampleDataUrl: assetTemplate.sampleDataUrl,
+        version: assetTemplate.version,
+        updatedAt: assetTemplate.updatedAt,
+      } : undefined
+      
       try {
-        // テンプレートIDとtemplateフィールドを更新
+        // テンプレートIDとtemplateフィールド、メタデータを更新
         await updateApp(app.id, {
           templateId: templateId,
           template: templateValue,
+          templateMetadata: templateMetadata,
         })
         
         console.log('テンプレートIDを更新しました:', templateId)
@@ -124,12 +224,48 @@ const PolicyTab = () => {
             // テンプレートのUI構成を適用
             const uiStructure = templateData.uiStructure
             
-            // テーマ設定を適用
-            if (uiStructure.theme) {
-              await updateApp(app.id, {
-                theme: uiStructure.theme,
-              })
+            // ページ構成をFirestoreに保存
+            if (uiStructure.pages && uiStructure.pages.length > 0) {
+              const { createPage } = await import('../../utils/firestore')
+              
+              // 各ページをFirestoreに保存
+              for (const templatePage of uiStructure.pages) {
+                const pageId = templatePage.id || `page_${Date.now()}`
+                
+                // TemplatePage型からPage型に変換
+                // ComponentConfig型: { id, type, position, props, dataSourceId? }
+                const pageData = {
+                  title: templatePage.name,
+                  layout: templatePage.layout || { type: 'grid', columns: 12, gap: '1rem' },
+                  components: (templatePage.components || []).map(comp => ({
+                    id: comp.id,
+                    type: comp.type as string, // TemplateComponentTypeからstringに変換
+                    position: comp.position || { x: 0, y: 0, width: 12, height: 1 },
+                    props: comp.props || {},
+                    dataSourceId: comp.dataSourceId,
+                  })),
+                  order: templatePage.order || 0,
+                }
+                
+                try {
+                  await createPage(app.id, pageId, pageData)
+                  console.log(`ページ "${templatePage.name}" (${pageId}) を作成しました`)
+                } catch (pageError: any) {
+                  console.error(`ページ "${templatePage.name}" の作成エラー:`, pageError)
+                  // ページ作成エラーは続行（他のページは作成を試みる）
+                }
+              }
+              
+              console.log(`テンプレートの${uiStructure.pages.length}個のページを作成しました`)
             }
+            
+            // テーマ設定は現在のApp型ではサポートされていないため、コメントアウト
+            // 将来的にテーマ設定をサポートする場合は、App型にthemeフィールドを追加する必要があります
+            // if (uiStructure.theme) {
+            //   await updateApp(app.id, {
+            //     theme: uiStructure.theme,
+            //   })
+            // }
             
             console.log('テンプレートのUI構成を適用しました:', templateData.name)
           }
@@ -153,8 +289,8 @@ const PolicyTab = () => {
     }
   }
 
-  // テンプレートサーバーからのテンプレートをTemplate型に変換
-  const convertedServerTemplates: Template[] = serverTemplates.map(serverTemplate => {
+  // 外部サイトからのテンプレートをTemplate型に変換
+  const convertedAssetSiteTemplates: Template[] = assetSiteTemplates.map(assetTemplate => {
     // アイコンをマッピング（既存のテンプレートと同じアイコンを使用）
     const iconMap: Record<string, any> = {
       'crm': UserCheck,
@@ -164,23 +300,68 @@ const PolicyTab = () => {
     }
     
     return {
-      id: serverTemplate.templateId,
-      name: serverTemplate.name,
-      description: serverTemplate.description,
-      icon: iconMap[serverTemplate.templateId] || Target,
-      color: serverTemplate.color,
-      category: serverTemplate.category,
-      preview: serverTemplate.features?.join('、') || serverTemplate.description,
-      author: serverTemplate.author,
+      id: assetTemplate.templateId,
+      name: assetTemplate.name,
+      description: assetTemplate.description,
+      icon: iconMap[assetTemplate.templateId] || Target,
+      color: assetTemplate.color,
+      category: assetTemplate.category,
+      preview: assetTemplate.features?.join('、') || assetTemplate.description,
+      author: assetTemplate.author,
     }
   })
 
-  // ローカルテンプレートとサーバーテンプレートを統合（重複を避ける）
+  // すべてのテンプレートを統合（重複を避ける）
+  const filteredAssetTemplates = convertedAssetSiteTemplates.filter(
+    assetTemplate => !allTemplates.some(local => local.id === assetTemplate.id)
+  )
+
+  // デバッグ: ログ出力（useEffectではなく、直接実行）
+  if (assetSiteTemplates.length > 0) {
+    console.log('=== 外部サイトから取得したテンプレート ===')
+    console.log(`取得件数: ${assetSiteTemplates.length}件`)
+    assetSiteTemplates.forEach((template, index) => {
+      console.log(`${index + 1}. ID: ${template.templateId}, 名前: ${template.name}`)
+    })
+    
+    console.log('=== 変換後の外部サイトテンプレート ===')
+    console.log(`変換件数: ${convertedAssetSiteTemplates.length}件`)
+    convertedAssetSiteTemplates.forEach((template, index) => {
+      console.log(`${index + 1}. ID: ${template.id}, 名前: ${template.name}`)
+    })
+    
+    console.log('=== ローカルテンプレート ===')
+    console.log(`ローカル件数: ${allTemplates.length}件`)
+    allTemplates.forEach((template, index) => {
+      console.log(`${index + 1}. ID: ${template.id}, 名前: ${template.name}`)
+    })
+    
+    console.log('=== フィルタリング結果 ===')
+    console.log(`外部サイトテンプレート: ${convertedAssetSiteTemplates.length}件`)
+    console.log(`ローカルテンプレート: ${allTemplates.length}件`)
+    console.log(`重複除外後の外部サイトテンプレート: ${filteredAssetTemplates.length}件`)
+    console.log(`統合後の総テンプレート数: ${allTemplates.length + filteredAssetTemplates.length}件`)
+    
+    // 重複しているテンプレートIDを表示
+    const duplicateIds = convertedAssetSiteTemplates
+      .filter(assetTemplate => allTemplates.some(local => local.id === assetTemplate.id))
+      .map(t => t.id)
+    if (duplicateIds.length > 0) {
+      console.log(`重複しているテンプレートID: ${duplicateIds.join(', ')}`)
+    }
+    
+    // 新規のテンプレートIDを表示
+    const newTemplateIds = filteredAssetTemplates.map(t => t.id)
+    if (newTemplateIds.length > 0) {
+      console.log(`新規テンプレートID: ${newTemplateIds.join(', ')}`)
+    } else {
+      console.log('新規テンプレートなし（すべてローカルと重複）')
+    }
+  }
+
   const allAvailableTemplates = [
     ...allTemplates,
-    ...convertedServerTemplates.filter(
-      serverTemplate => !allTemplates.some(local => local.id === serverTemplate.id)
-    ),
+    ...filteredAssetTemplates,
   ]
 
   // 検索フィルタリング
@@ -219,53 +400,52 @@ const PolicyTab = () => {
             <div className="flex items-center space-x-2">
               <button
                 onClick={async () => {
-                  setIsLoadingServerTemplates(true)
+                  setIsLoadingAssetSiteTemplates(true)
                   try {
-                    const templates = await fetchTemplatesFromServer()
-                    setServerTemplates(templates)
-                    alert(`${templates.length}件のテンプレートをサーバーから取得しました。`)
-                  } catch (error) {
-                    alert('テンプレートサーバーからテンプレートを取得できませんでした。')
-                    console.error(error)
+                    // キャッシュをクリアしてから取得
+                    const { clearAssetSiteCache } = await import('../../utils/assetSite')
+                    clearAssetSiteCache()
+                    console.log('[PolicyTab] キャッシュをクリアしました')
+                    
+                    const templates = await fetchTemplatesFromAssetSite(true) // 強制更新
+                    setAssetSiteTemplates(templates)
+                    
+                    console.log('[PolicyTab] 取得結果:', {
+                      件数: templates.length,
+                      テンプレートID: templates.map(t => t.templateId)
+                    })
+                    
+                    if (templates.length > 0) {
+                      // バージョン情報を含めたメッセージ
+                      const templateList = templates.map(t => 
+                        `- ${t.name} (${t.templateId})${t.version ? ` v${t.version}` : ''}${t.updatedAt ? ` - 更新: ${new Date(t.updatedAt).toLocaleDateString('ja-JP')}` : ''}`
+                      ).join('\n')
+                      
+                      // 更新チェック
+                      const { checkTemplateUpdates } = await import('../../utils/assetSite')
+                      const hasUpdates = assetSiteTemplates.length > 0 && 
+                        checkTemplateUpdates(assetSiteTemplates, templates)
+                      
+                      const updateMessage = hasUpdates ? '\n\n⚠️ テンプレートの更新を検出しました。' : ''
+                      
+                      alert(`${templates.length}件のテンプレートを外部サイトから取得しました。${updateMessage}\n\n取得したテンプレート:\n${templateList}`)
+                    } else {
+                      alert('外部サイトからテンプレートを取得できませんでした。\n\n考えられる原因:\n- 外部サイト（https://tsubasagit.github.io/AppNavi-asset/）にアクセスできない\n- CORS設定の問題\n- ネットワークエラー\n\nキャッシュがあれば、次回はキャッシュから読み込みます。')
+                    }
+                  } catch (error: any) {
+                    const errorMessage = error?.message || '不明なエラー'
+                    alert(`外部サイトからテンプレートを取得できませんでした。\n\nエラー: ${errorMessage}\n\n考えられる原因:\n- 外部サイト（https://tsubasagit.github.io/AppNavi-asset/）にアクセスできない\n- CORS設定の問題\n- ネットワークエラー`)
+                    console.error('[PolicyTab] 外部サイトからのテンプレート取得エラー:', error)
                   } finally {
-                    setIsLoadingServerTemplates(false)
+                    setIsLoadingAssetSiteTemplates(false)
                   }
                 }}
                 className="btn-secondary flex items-center space-x-2"
-                disabled={isLoadingServerTemplates}
-                title="テンプレートサーバーから最新のテンプレートを取得"
+                disabled={isLoadingAssetSiteTemplates}
+                title="外部サイトから最新のテンプレートを取得"
               >
-                <Globe size={16} />
-                <span>{isLoadingServerTemplates ? '取得中...' : 'サーバーから取得'}</span>
-              </button>
-              <button
-                onClick={async () => {
-                  setIsLoadingTemplates(true)
-                  try {
-                    const templates = await fetchTemplates()
-                    setGithubTemplates(templates)
-                    setIsInstallModalOpen(true)
-                  } catch (error) {
-                    alert('GitHubからテンプレートを取得できませんでした。')
-                    console.error(error)
-                  } finally {
-                    setIsLoadingTemplates(false)
-                  }
-                }}
-                className="btn-secondary flex items-center space-x-2"
-                disabled={isLoadingTemplates}
-              >
-                <Download size={16} />
-                <span>新規インストール</span>
-              </button>
-              <button
-                onClick={() => setIsUploadModalOpen(true)}
-                className="btn-secondary flex items-center space-x-2 relative"
-                title="OSS版のみ"
-              >
-                <Upload size={16} />
-                <span>アップロード</span>
-                <span className="absolute -top-1 -right-1 bg-yellow-500 text-white text-[10px] px-1 rounded">OSS</span>
+                <RefreshCw size={16} className={isLoadingAssetSiteTemplates ? 'animate-spin' : ''} />
+                <span>{isLoadingAssetSiteTemplates ? '取得中...' : '外部サイトから更新'}</span>
               </button>
             </div>
           </div>
@@ -296,7 +476,6 @@ const PolicyTab = () => {
               // templateIdとtemplateの両方をチェック
               const currentTemplateId = app?.templateId || app?.template
               const isSelected = currentTemplateId === template.id
-              const isFromServer = serverTemplates.some(st => st.templateId === template.id)
               const colorClasses: Record<string, string> = {
                 blue: 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300',
                 green: 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100 dark:bg-green-900/20 dark:border-green-800 dark:text-green-300',
@@ -306,11 +485,14 @@ const PolicyTab = () => {
               }
               const selectedClasses = isSelected ? 'ring-2 ring-primary-500 ring-offset-2 border-primary-500' : ''
               
+              const isInstalled = installedTemplateIds.has(template.id)
+              const assetTemplate = assetSiteTemplates.find(t => t.templateId === template.id)
+              const isInstalling = isInstallingTemplate === template.id
+              
               return (
-                <button
+                <div
                   key={template.id}
-                  onClick={() => handleTemplateClick(template)}
-                  className={`p-4 border-2 rounded-xl transition text-left relative ${colorClasses[template.color as keyof typeof colorClasses]} ${selectedClasses} hover:shadow-md`}
+                  className={`p-4 border-2 rounded-xl transition text-left relative ${colorClasses[template.color as keyof typeof colorClasses]} ${selectedClasses} ${!isInstalled ? 'opacity-75' : ''}`}
                 >
                   <div className="absolute top-2 right-2 flex items-center gap-1">
                     {isSelected && (
@@ -318,10 +500,9 @@ const PolicyTab = () => {
                         選択中
                       </div>
                     )}
-                    {isFromServer && (
-                      <div className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
-                        <Globe size={10} />
-                        サーバー
+                    {isInstalled && (
+                      <div className="bg-green-600 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                        インストール済み
                       </div>
                     )}
                   </div>
@@ -341,7 +522,26 @@ const PolicyTab = () => {
                     </div>
                   </div>
                   <p className="text-xs opacity-80 mb-2">{template.description}</p>
-                  <p className="text-xs opacity-60 mb-3">作成者: {template.author}</p>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs opacity-60">作成者: {template.author}</p>
+                    {(() => {
+                      // 外部サイトから取得したテンプレートの場合はバージョン情報を表示
+                      const assetTemplate = assetSiteTemplates.find(t => t.templateId === template.id)
+                      if (assetTemplate?.version) {
+                        return (
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs opacity-60 font-semibold">v{assetTemplate.version}</span>
+                            {assetTemplate.updatedAt && (
+                              <span className="text-xs opacity-50">
+                                ({new Date(assetTemplate.updatedAt).toLocaleDateString('ja-JP')})
+                              </span>
+                            )}
+                          </div>
+                        )
+                      }
+                      return null
+                    })()}
+                  </div>
                   <div className="mt-3 pt-3 border-t border-current border-opacity-20">
                     <p className="text-xs font-semibold mb-2 opacity-90">プレビュー:</p>
                     <div className="w-full h-32 bg-white rounded-lg border border-current border-opacity-20 overflow-hidden shadow-sm p-2">
@@ -413,7 +613,21 @@ const PolicyTab = () => {
                       )}
                     </div>
                   </div>
-                </button>
+                  
+                  {/* 詳細を見るボタン（統一） */}
+                  <div className="mt-4 pt-3 border-t border-current border-opacity-20">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleViewTemplateDetails(template)
+                      }}
+                      className="w-full btn-secondary flex items-center justify-center space-x-2 py-2 text-sm"
+                    >
+                      <BarChart3 size={16} />
+                      <span>詳細を見る</span>
+                    </button>
+                  </div>
+                </div>
               )
             })}
           </div>
@@ -545,6 +759,7 @@ const PolicyTab = () => {
           onClick={() => {
             setIsTemplateModalOpen(false)
             setSelectedTemplateForModal(null)
+            setTemplatePages([]) // モーダルを閉じる際にページ一覧をクリア
           }}
         >
           <div 
@@ -575,6 +790,7 @@ const PolicyTab = () => {
                 onClick={() => {
                   setIsTemplateModalOpen(false)
                   setSelectedTemplateForModal(null)
+                  setTemplatePages([]) // モーダルを閉じる際にページ一覧をクリア
                 }}
                 className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 transition"
               >
@@ -589,6 +805,118 @@ const PolicyTab = () => {
                 <h3 className="font-bold text-slate-900 mb-2">説明</h3>
                 <p className="text-slate-600">{selectedTemplateForModal.description}</p>
               </div>
+
+              {/* 外部サイトからのテンプレート詳細情報 */}
+              {(() => {
+                const assetTemplate = assetSiteTemplates.find(t => t.templateId === selectedTemplateForModal.id)
+                if (assetTemplate) {
+                  return (
+                    <>
+                      {/* 機能一覧 */}
+                      {assetTemplate.features && assetTemplate.features.length > 0 && (
+                        <div>
+                          <h3 className="font-bold text-slate-900 mb-2">主な機能</h3>
+                          <ul className="list-disc list-inside space-y-1">
+                            {assetTemplate.features.map((feature, index) => (
+                              <li key={index} className="text-slate-600 text-sm">{feature}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* バージョン情報 */}
+                      <div>
+                        <h3 className="font-bold text-slate-900 mb-2">バージョン情報</h3>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-600">バージョン:</span>
+                            <span className="font-semibold">{assetTemplate.version || 'N/A'}</span>
+                          </div>
+                          {assetTemplate.updatedAt && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-slate-600">更新日時:</span>
+                              <span className="font-semibold">{new Date(assetTemplate.updatedAt).toLocaleDateString('ja-JP')}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* リンク */}
+                      <div>
+                        <h3 className="font-bold text-slate-900 mb-2">関連リンク</h3>
+                        <div className="space-y-2">
+                          {assetTemplate.demoUrl && (
+                            <a
+                              href={assetTemplate.demoUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center space-x-2 text-primary-600 hover:text-primary-700 text-sm"
+                            >
+                              <Globe size={16} />
+                              <span>デモを見る</span>
+                            </a>
+                          )}
+                          {assetTemplate.schemaUrl && (
+                            <a
+                              href={assetTemplate.schemaUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center space-x-2 text-primary-600 hover:text-primary-700 text-sm"
+                            >
+                              <BarChart3 size={16} />
+                              <span>スキーマ定義</span>
+                            </a>
+                          )}
+                          {assetTemplate.sampleDataUrl && (
+                            <a
+                              href={assetTemplate.sampleDataUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center space-x-2 text-primary-600 hover:text-primary-700 text-sm"
+                            >
+                              <ClipboardList size={16} />
+                              <span>サンプルデータ</span>
+                            </a>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* タグ */}
+                      {assetTemplate.tags && assetTemplate.tags.length > 0 && (
+                        <div>
+                          <h3 className="font-bold text-slate-900 mb-2">タグ</h3>
+                          <div className="flex flex-wrap gap-2">
+                            {assetTemplate.tags.map((tag, index) => (
+                              <span
+                                key={index}
+                                className="px-2 py-1 bg-slate-100 text-slate-700 rounded-full text-xs"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )
+                }
+                return null
+              })()}
+
+              {/* ページ一覧 */}
+              {templatePages.length > 0 && (
+                <div>
+                  <h3 className="font-bold text-slate-900 mb-2">作成されるページ</h3>
+                  <ul className="space-y-1">
+                    {templatePages.map((pageName, index) => (
+                      <li key={index} className="text-slate-600 text-sm flex items-center">
+                        <span className="w-2 h-2 bg-primary-500 rounded-full mr-2"></span>
+                        {pageName}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               {/* 作成者 */}
               <div>
@@ -684,100 +1012,78 @@ const PolicyTab = () => {
                   onClick={() => {
                     setIsTemplateModalOpen(false)
                     setSelectedTemplateForModal(null)
+                    setTemplatePages([])
                   }}
                   className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition"
                 >
                   キャンセル
                 </button>
-                <button
-                  onClick={handleTemplateSelect}
-                  className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-medium"
-                >
-                  このテンプレートに変更
-                </button>
+                {(() => {
+                  const assetTemplate = assetSiteTemplates.find(t => t.templateId === selectedTemplateForModal.id)
+                  const isInstalled = installedTemplateIds.has(selectedTemplateForModal.id)
+                  const isInstalling = isInstallingTemplate === selectedTemplateForModal.id
+                  
+                  if (!isInstalled && assetTemplate) {
+                    // 未インストールの場合：インストールボタンを表示
+                    return (
+                      <button
+                        onClick={async () => {
+                          setIsTemplateModalOpen(false)
+                          await handleInstallTemplate(assetTemplate)
+                          setSelectedTemplateForModal(null)
+                          setTemplatePages([])
+                        }}
+                        disabled={isInstalling}
+                        className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                      >
+                        {isInstalling ? (
+                          <>
+                            <Loader2 size={18} className="animate-spin" />
+                            <span>インストール中...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload size={18} />
+                            <span>インストール</span>
+                          </>
+                        )}
+                      </button>
+                    )
+                  } else if (isInstalled) {
+                    // インストール済みの場合：選択するボタンを表示
+                    return (
+                      <button
+                        onClick={() => {
+                          setIsTemplateModalOpen(false)
+                          setTemplatePages([])
+                          // 確認ダイアログを表示
+                          handleTemplateSelect()
+                        }}
+                        className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-medium flex items-center space-x-2"
+                      >
+                        <Target size={18} />
+                        <span>選択する</span>
+                      </button>
+                    )
+                  } else {
+                    // その他の場合（ローカルテンプレートなど）：選択するボタンを表示
+                    return (
+                      <button
+                        onClick={() => {
+                          setIsTemplateModalOpen(false)
+                          setTemplatePages([])
+                          // 確認ダイアログを表示
+                          handleTemplateSelect()
+                        }}
+                        className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-medium flex items-center space-x-2"
+                      >
+                        <Target size={18} />
+                        <span>選択する</span>
+                      </button>
+                    )
+                  }
+                })()}
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* インストールモーダル */}
-      {isInstallModalOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-          onClick={() => {
-            setIsInstallModalOpen(false)
-            setGithubTemplates([])
-          }}
-        >
-          <div 
-            className="bg-white rounded-xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-6 border-b border-slate-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <Github className="w-6 h-6 text-slate-700" />
-                  <h2 className="text-2xl font-bold text-slate-900">GitHubからテンプレートをインストール</h2>
-                </div>
-                <button
-                  onClick={() => {
-                    setIsInstallModalOpen(false)
-                    setGithubTemplates([])
-                  }}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 transition"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              <p className="text-sm text-slate-600 mt-2">
-                GitHubリポジトリ（tsubasagit/AppNavi-asset）から利用可能なテンプレートをインストールできます。
-              </p>
-            </div>
-            <div className="p-6">
-              {githubTemplates.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-slate-600">利用可能なテンプレートが見つかりませんでした。</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {githubTemplates.map((template) => (
-                    <div
-                      key={template.id}
-                      className="border border-slate-200 rounded-lg p-4 hover:shadow-md transition"
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h3 className="font-bold text-slate-900">{template.name}</h3>
-                          <p className="text-xs text-slate-500">v{template.version}</p>
-                        </div>
-                        <span className="px-2 py-1 bg-slate-100 rounded text-xs text-slate-600">
-                          {template.category}
-                        </span>
-                      </div>
-                      <p className="text-sm text-slate-600 mb-4 line-clamp-2">{template.description}</p>
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs text-slate-500">作成者: {template.author}</p>
-                        <button
-                          onClick={async () => {
-                            try {
-                              await installAsset(template)
-                              setIsInstallModalOpen(false)
-                              setGithubTemplates([])
-                            } catch (error) {
-                              alert('インストールに失敗しました。')
-                              console.error(error)
-                            }
-                          }}
-                          className="btn-primary text-xs px-3 py-1"
-                        >
-                          インストール
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
         </div>

@@ -205,7 +205,7 @@ service cloud.firestore {
     
     // お知らせは全員が読み込み可能、管理者のみ書き込み可能
     match /announcements/{announcementId} {
-      // 読み込み: 認証済みユーザーは全員が読み込み可能
+      // 読み込み: 認証済みユーザーは全員が読み込み可能、またはアクティブなお知らせは未認証でも読み込み可能
       // クエリの場合: 認証済みユーザーは全員が読み込み可能
       // ドキュメント取得の場合: 認証済みユーザーまたはアクティブなお知らせは全員が読み込み可能
       allow read: if 
@@ -215,6 +215,11 @@ service cloud.firestore {
       // 書き込み: 管理者のみ
       allow create, update, delete: if request.auth != null && 
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // お知らせコレクション全体のクエリを許可（認証済みユーザーは全員がクエリ可能）
+    match /announcements/{document=**} {
+      allow read: if request.auth != null;
     }
   }
 }
