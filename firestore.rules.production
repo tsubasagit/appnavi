@@ -24,38 +24,53 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // アプリはオーナーのみ書き込み可能、読み込みはオーナーまたは組織メンバーのみ
-    match /apps/{appId} {
-      // 読み込み: オーナーまたは組織メンバーのみ
-      // 注意: クエリを実行する際は、where('ownerId', '==', userId)の条件を満たす必要がある
-      allow read: if request.auth != null && (
-        resource.data.ownerId == request.auth.uid || // ownerIdでクエリする場合
-        canAccessApp(appId, request.auth.uid) // 個別ドキュメントアクセスの場合
-      );
-      
-      // 書き込み: オーナーのみ（新規作成時も含む）
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.ownerId;
-      allow update: if request.auth != null && resource.data.ownerId == request.auth.uid;
-      allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+    // アプリは新しいパス構造: users/{uid}/apps/{appId}
+    // パスベースで自動的にフィルタリングされるため、シンプルで安全
+    match /users/{userId}/apps/{appId} {
+      // 読み書き: 本人のみ（パスベースで自動的に保護される）
+      allow read, write: if request.auth != null && request.auth.uid == userId;
       
       match /pages/{pageId} {
-        // 親アプリの読み込み権限と同じ
-        allow read: if request.auth != null && canAccessApp(appId, request.auth.uid);
-        allow write: if request.auth != null && 
-          get(/databases/$(database)/documents/apps/$(appId)).data.ownerId == request.auth.uid;
+        // 親アプリの読み書き権限と同じ
+        allow read, write: if request.auth != null && request.auth.uid == userId;
       }
       
       match /dataSources/{sourceId} {
-        // 親アプリの読み込み権限と同じ
-        allow read: if request.auth != null && canAccessApp(appId, request.auth.uid);
-        allow write: if request.auth != null && 
+        // 親アプリの読み書き権限と同じ
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      match /deployments/{deployId} {
+        // 親アプリの読み書き権限と同じ
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      match /integrations/{integrationId} {
+        // 秘匿情報（SheetsのURLやトークンなど）はさらに厳格に管理
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+    
+    // 旧パス構造（apps/{appId}）は本番環境では削除推奨
+    // 移行期間中のみ残す
+    match /apps/{appId} {
+      allow read: if request.auth != null && (
+        resource.data.ownerId == request.auth.uid ||
+        canAccessApp(appId, request.auth.uid)
+      );
+      allow create, update, delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+      
+      match /pages/{pageId} {
+        allow read, write: if request.auth != null && canAccessApp(appId, request.auth.uid);
+      }
+      
+      match /dataSources/{sourceId} {
+        allow read, write: if request.auth != null && 
           get(/databases/$(database)/documents/apps/$(appId)).data.ownerId == request.auth.uid;
       }
       
       match /deployments/{deployId} {
-        // 親アプリの読み込み権限と同じ
-        allow read: if request.auth != null && canAccessApp(appId, request.auth.uid);
-        allow write: if request.auth != null && 
+        allow read, write: if request.auth != null && 
           get(/databases/$(database)/documents/apps/$(appId)).data.ownerId == request.auth.uid;
       }
     }

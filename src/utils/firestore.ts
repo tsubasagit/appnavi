@@ -90,21 +90,13 @@ if (typeof window !== 'undefined' && import.meta.env.DEV) {
           // この時点ではまだ定義されていないため、後で更新する
           setTimeout(() => {
             try {
-              // モジュールから直接取得を試みる
-              import('/src/utils/firestore.ts').then(module => {
+              // 開発環境のみ、グローバルに公開された関数を確認
+              if (import.meta.env.DEV && (window as any).__firestoreModule) {
+                const module = (window as any).__firestoreModule
                 if (module.createTemplate) {
-                  ;(window as any).__firestoreModule = {
-                    createTemplate: module.createTemplate,
-                    getTemplate: module.getTemplate,
-                    getInstalledTemplates: module.getInstalledTemplates,
-                    isTemplateInstalled: module.isTemplateInstalled,
-                    installTemplateFromAssetSite: module.installTemplateFromAssetSite,
-                  }
-                  console.log('[firestore.ts] createTemplate関数をwindow.__firestoreModuleに公開しました')
+                  console.log('[firestore.ts] createTemplate関数がwindow.__firestoreModuleに公開されています')
                 }
-              }).catch(err => {
-                console.warn('[firestore.ts] createTemplate関数の公開エラー:', err)
-              })
+              }
             } catch (error) {
               console.warn('[firestore.ts] createTemplate関数の公開エラー:', error)
             }
@@ -243,10 +235,11 @@ export const getUserOrganizations = async (userId: string): Promise<string[]> =>
 
 // ============================================================================
 // アプリケーション管理
+// 新しいパス構造: users/{uid}/apps/{appId}
 // ============================================================================
 
-export const createApp = async (appId: string, appData: Omit<App, 'createdAt' | 'updatedAt'>) => {
-  const appRef = doc(db, FIRESTORE_COLLECTIONS.APPS, appId)
+export const createApp = async (userId: string, appId: string, appData: Omit<App, 'createdAt' | 'updatedAt'>) => {
+  const appRef = doc(db, getSubCollectionPath.apps(userId), appId)
   await setDoc(appRef, {
     ...appData,
     createdAt: serverTimestamp(),
@@ -254,162 +247,65 @@ export const createApp = async (appId: string, appData: Omit<App, 'createdAt' | 
   })
 }
 
-export const getApp = async (appId: string): Promise<App | null> => {
-  const appRef = doc(db, FIRESTORE_COLLECTIONS.APPS, appId)
+export const getApp = async (userId: string, appId: string): Promise<App | null> => {
+  const appRef = doc(db, getSubCollectionPath.apps(userId), appId)
   const appSnap = await getDoc(appRef)
   return appSnap.exists() ? (appSnap.data() as App) : null
 }
 
-export const updateApp = async (appId: string, updates: Partial<App>) => {
-  const appRef = doc(db, FIRESTORE_COLLECTIONS.APPS, appId)
+export const updateApp = async (userId: string, appId: string, updates: Partial<App>) => {
+  const appRef = doc(db, getSubCollectionPath.apps(userId), appId)
   await updateDoc(appRef, {
     ...updates,
     updatedAt: serverTimestamp(),
   })
 }
 
-export const deleteApp = async (appId: string): Promise<void> => {
-  const appRef = doc(db, FIRESTORE_COLLECTIONS.APPS, appId)
+export const deleteApp = async (userId: string, appId: string): Promise<void> => {
+  const appRef = doc(db, getSubCollectionPath.apps(userId), appId)
   await deleteDoc(appRef)
 }
 
 /**
  * ユーザーがアクセス可能なアプリを取得
- * - オーナーのアプリ
- * - 組織メンバーとして参加しているアプリ
- * 
- * 注意: テストユーザー（'test-user-tsubasa'）でログインしている場合、
- * 実際のFirebase認証のUIDも検索対象に含めます。
+ * 新しいパス構造: users/{uid}/apps/{appId}
+ * パスベースで自動的にフィルタリングされるため、クエリは不要で安全
  */
-export const getUserApps = async (userId: string, userEmail?: string): Promise<(App & { id: string })[]> => {
-  const appsRef = collection(db, FIRESTORE_COLLECTIONS.APPS)
-  
-  // テストユーザーの場合、実際のFirebase認証のUIDも取得
-  let actualFirebaseUid: string | null = null
-  if (userId === 'test-user-tsubasa' && userEmail === 'tsubasa.test@apptalenthub.co.jp') {
-    try {
-      // Firestoreのusersコレクションから、このメールアドレスのユーザーを検索
-      const usersRef = collection(db, FIRESTORE_COLLECTIONS.USERS)
-      const userQuery = query(
-        usersRef,
-        where('email', '==', 'tsubasa.test@apptalenthub.co.jp')
-      )
-      const userSnapshot = await getDocs(userQuery)
-      if (!userSnapshot.empty) {
-        // 最初のユーザードキュメントのIDが実際のFirebase UID
-        actualFirebaseUid = userSnapshot.docs[0].id
-        console.log('テストユーザー: 実際のFirebase UIDを取得:', actualFirebaseUid)
-      }
-    } catch (error) {
-      console.error('テストユーザーのFirebase UID取得エラー（続行）:', error)
-      // エラーが発生しても続行
-    }
-  }
-  
-  // 1. オーナーのアプリを取得（テストユーザーのIDと実際のFirebase UIDの両方を検索）
-  let ownerApps: (App & { id: string })[] = []
-  const userIdsToSearch = actualFirebaseUid ? [userId, actualFirebaseUid] : [userId]
-  
-  for (const searchUserId of userIdsToSearch) {
-    try {
-      // ownerIdでクエリ
-      const ownerQuery = query(
-        appsRef,
-        where('ownerId', '==', searchUserId)
-      )
-      const ownerSnapshot = await getDocs(ownerQuery)
-      const apps = ownerSnapshot.docs.map(doc => ({ 
-        id: doc.id, 
-        ...doc.data() 
-      } as App & { id: string }))
-      ownerApps.push(...apps)
-    } catch (error) {
-      console.error(`オーナーアプリの取得エラー (userId: ${searchUserId}):`, error)
-      // エラーが発生しても続行
-    }
-  }
-  
-  // 重複を除去
-  ownerApps = ownerApps.reduce((acc, app) => {
-    if (!acc.find(a => a.id === app.id)) {
-      acc.push(app)
-    }
-    return acc
-  }, [] as (App & { id: string })[])
-  
-  console.log('ownerIdで取得したアプリ:', ownerApps.length)
-  
-  // ownerAppsが取得できた場合、メモリ上でソート
-  if (ownerApps.length > 0) {
-    ownerApps.sort((a, b) => {
-      const aTime = a.updatedAt?.toMillis?.() || (a.updatedAt as any)?.seconds * 1000 || 0
-      const bTime = b.updatedAt?.toMillis?.() || (b.updatedAt as any)?.seconds * 1000 || 0
-      return bTime - aTime
-    })
-  }
-  
-  // 2. ユーザーがメンバーとして参加している組織を取得（エラーが発生しても続行）
-  let userOrgIds: string[] = []
+export const getUserApps = async (userId: string, _userEmail?: string): Promise<(App & { id: string })[]> => {
   try {
-    userOrgIds = await getUserOrganizations(userId)
-    console.log('ユーザーの組織ID:', userOrgIds.length)
+    // 新しいパス構造: users/{uid}/apps
+    const appsRef = collection(db, getSubCollectionPath.apps(userId))
+    const querySnapshot = await getDocs(appsRef)
+    
+    const apps = querySnapshot.docs.map(doc => ({ 
+      id: doc.id, 
+      ...doc.data() 
+    } as App & { id: string }))
+    
+    // メモリ上でソート（更新日時の降順）
+    if (apps.length > 0) {
+      apps.sort((a, b) => {
+        const aTime = a.updatedAt?.toMillis?.() || (a.updatedAt as any)?.seconds * 1000 || 0
+        const bTime = b.updatedAt?.toMillis?.() || (b.updatedAt as any)?.seconds * 1000 || 0
+        return bTime - aTime
+      })
+    }
+    
+    console.log('getUserApps - 取得したアプリ数:', apps.length)
+    return apps
   } catch (error) {
-    console.error('組織の取得エラー（続行）:', error)
-    // エラーが発生しても、ownerAppsだけを返す
-    console.log('getUserApps - ownerAppsのみ返却:', ownerApps.length)
-    return ownerApps
+    console.error('getUserApps - エラー:', error)
+    // エラーが発生した場合は空配列を返す
+    return []
   }
-  
-  // 3. 組織に所属するアプリを取得（組織IDが設定されているアプリのみ）
-  const orgApps: (App & { id: string })[] = []
-  if (userOrgIds.length > 0) {
-    // Firestoreのクエリでは配列の複数条件が難しいため、各組織IDで個別にクエリ
-    for (const orgId of userOrgIds) {
-      try {
-        const orgQuery = query(
-          appsRef,
-          where('organizationId', '==', orgId)
-        )
-        const orgSnapshot = await getDocs(orgQuery)
-        const apps = orgSnapshot.docs.map(doc => ({ 
-          id: doc.id, 
-          ...doc.data() 
-        } as App & { id: string }))
-        orgApps.push(...apps)
-      } catch (error) {
-        console.error(`組織 ${orgId} のアプリ取得エラー（続行）:`, error)
-        // エラーが発生しても続行
-      }
-    }
-  }
-  
-  // 4. 重複を除去して結合（同じアプリがオーナーと組織の両方に含まれる可能性がある）
-  const allApps = [...ownerApps, ...orgApps]
-  const uniqueApps = allApps.reduce((acc, app) => {
-    if (!acc.find(a => a.id === app.id)) {
-      acc.push(app)
-    }
-    return acc
-  }, [] as (App & { id: string })[])
-  
-  // 5. updatedAtでソート（メモリ上で）
-  uniqueApps.sort((a, b) => {
-    const aTime = a.updatedAt?.toMillis?.() || (a.updatedAt as any)?.seconds * 1000 || 0
-    const bTime = b.updatedAt?.toMillis?.() || (b.updatedAt as any)?.seconds * 1000 || 0
-    return bTime - aTime
-  })
-  
-  console.log('getUserApps - 最終結果:', { ownerApps: ownerApps.length, orgApps: orgApps.length, total: uniqueApps.length })
-  
-  return uniqueApps
 }
 
 // ============================================================================
 // ページ管理
 // ============================================================================
 
-export const createPage = async (appId: string, pageId: string, pageData: Omit<Page, 'createdAt' | 'updatedAt'>) => {
-  const pageRef = doc(db, getSubCollectionPath.pages(appId), pageId)
+export const createPage = async (userId: string, appId: string, pageId: string, pageData: Omit<Page, 'createdAt' | 'updatedAt'>) => {
+  const pageRef = doc(db, getSubCollectionPath.pages(userId, appId), pageId)
   await setDoc(pageRef, {
     ...pageData,
     createdAt: serverTimestamp(),
@@ -417,8 +313,8 @@ export const createPage = async (appId: string, pageId: string, pageData: Omit<P
   })
 }
 
-export const getPages = async (appId: string): Promise<(Page & { id: string })[]> => {
-  const pagesRef = collection(db, getSubCollectionPath.pages(appId))
+export const getPages = async (userId: string, appId: string): Promise<(Page & { id: string })[]> => {
+  const pagesRef = collection(db, getSubCollectionPath.pages(userId, appId))
   const querySnapshot = await getDocs(pagesRef)
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Page & { id: string }))
 }
@@ -428,11 +324,12 @@ export const getPages = async (appId: string): Promise<(Page & { id: string })[]
 // ============================================================================
 
 export const createDataSource = async (
+  userId: string,
   appId: string, 
   sourceId: string, 
   dataSource: Omit<DataSource, 'createdAt' | 'updatedAt'>
 ) => {
-  const sourceRef = doc(db, getSubCollectionPath.dataSources(appId), sourceId)
+  const sourceRef = doc(db, getSubCollectionPath.dataSources(userId, appId), sourceId)
   await setDoc(sourceRef, {
     ...dataSource,
     createdAt: serverTimestamp(),
@@ -440,23 +337,24 @@ export const createDataSource = async (
   })
 }
 
-export const getDataSources = async (appId: string): Promise<(DataSource & { id: string })[]> => {
-  const sourcesRef = collection(db, getSubCollectionPath.dataSources(appId))
+export const getDataSources = async (userId: string, appId: string): Promise<(DataSource & { id: string })[]> => {
+  const sourcesRef = collection(db, getSubCollectionPath.dataSources(userId, appId))
   const querySnapshot = await getDocs(sourcesRef)
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as DataSource & { id: string }))
 }
 
-export const deleteDataSource = async (appId: string, sourceId: string): Promise<void> => {
-  const sourceRef = doc(db, getSubCollectionPath.dataSources(appId), sourceId)
+export const deleteDataSource = async (userId: string, appId: string, sourceId: string): Promise<void> => {
+  const sourceRef = doc(db, getSubCollectionPath.dataSources(userId, appId), sourceId)
   await deleteDoc(sourceRef)
 }
 
 export const updateDataSource = async (
+  userId: string,
   appId: string,
   sourceId: string,
   updates: Partial<Omit<DataSource, 'createdAt' | 'updatedAt'>>
 ): Promise<void> => {
-  const sourceRef = doc(db, getSubCollectionPath.dataSources(appId), sourceId)
+  const sourceRef = doc(db, getSubCollectionPath.dataSources(userId, appId), sourceId)
   await updateDoc(sourceRef, {
     ...updates,
     updatedAt: serverTimestamp(),
@@ -468,19 +366,20 @@ export const updateDataSource = async (
 // ============================================================================
 
 export const createDeployment = async (
+  userId: string,
   appId: string,
   deployId: string,
   deployment: Omit<Deployment, 'deployedAt'>
 ) => {
-  const deployRef = doc(db, getSubCollectionPath.deployments(appId), deployId)
+  const deployRef = doc(db, getSubCollectionPath.deployments(userId, appId), deployId)
   await setDoc(deployRef, {
     ...deployment,
     deployedAt: serverTimestamp(),
   })
 }
 
-export const getDeployments = async (appId: string): Promise<(Deployment & { id: string })[]> => {
-  const deploymentsRef = collection(db, getSubCollectionPath.deployments(appId))
+export const getDeployments = async (userId: string, appId: string): Promise<(Deployment & { id: string })[]> => {
+  const deploymentsRef = collection(db, getSubCollectionPath.deployments(userId, appId))
   const q = query(deploymentsRef, orderBy('deployedAt', 'desc'), limit(10))
   const querySnapshot = await getDocs(q)
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Deployment & { id: string }))

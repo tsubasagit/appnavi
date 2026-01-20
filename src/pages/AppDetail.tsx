@@ -45,7 +45,7 @@ const AppDetail = () => {
   const { appId } = useParams<{ appId: string }>()
   const navigate = useNavigate()
   const { apps, setActiveAppId, isVendorMode } = useApp()
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'policy' | 'data' | 'design' | 'graph' | 'settings' | 'about' | 'plugins' | 'logic'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'policy' | 'data' | 'design' | 'graph' | 'settings' | 'about' | 'plugins' | 'logic'>('policy')
   const [showTutorial, setShowTutorial] = useState(false)
 
   // アプリ情報を取得
@@ -99,7 +99,6 @@ const AppDetail = () => {
 
   // 基本タブ
   const basicTabs = [
-    { id: 'dashboard' as const, icon: LayoutDashboard, label: 'ダッシュボード' },
     { id: 'policy' as const, icon: Compass, label: '方針' },
     { id: 'design' as const, icon: PenTool, label: 'デザイン' },
     { id: 'data' as const, icon: Database, label: 'データ' },

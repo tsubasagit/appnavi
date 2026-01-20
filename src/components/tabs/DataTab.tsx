@@ -326,7 +326,10 @@ const DataTab = () => {
           
           const dataSourceName = spreadsheetTitle
           
-          await createDataSource(activeAppId, sourceId, {
+          if (!authUser?.id) {
+            throw new Error('ログインが必要です')
+          }
+          await createDataSource(authUser.id, activeAppId, sourceId, {
             type: 'google_sheet',
             name: dataSourceName,
             config: {
@@ -339,7 +342,10 @@ const DataTab = () => {
           // Firestoreから最新のデータソースを取得して更新
           // 少し待ってから取得することで、Firestoreへの書き込みが確実に反映される
           await new Promise(resolve => setTimeout(resolve, 300))
-          const firestoreDataSources = await getDataSources(activeAppId)
+          if (!authUser?.id) {
+            throw new Error('ログインが必要です')
+          }
+          const firestoreDataSources = await getDataSources(authUser.id, activeAppId)
           const convertedDataSources = firestoreDataSources.map(ds => ({
             id: ds.id,
             name: ds.name,
@@ -500,11 +506,11 @@ const DataTab = () => {
 
                     try {
                       setDeletingSourceId(ds.id)
-                      if (activeAppId) {
-                        await deleteDataSource(activeAppId, ds.id)
+                      if (activeAppId && authUser?.id) {
+                        await deleteDataSource(authUser.id, activeAppId, ds.id)
                         
                         // データソースリストを更新
-                        const firestoreDataSources = await getDataSources(activeAppId)
+                        const firestoreDataSources = await getDataSources(authUser.id, activeAppId)
                         const convertedDataSources = firestoreDataSources.map(ds => ({
                           id: ds.id,
                           name: ds.name,

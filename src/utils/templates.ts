@@ -2,7 +2,8 @@ import {
   ClipboardList, 
   UserCheck, 
   Calendar, 
-  RefreshCw
+  RefreshCw,
+  FileText
 } from 'lucide-react'
 
 // サンプルデータの型定義
@@ -33,8 +34,18 @@ export interface RequiredColumn {
   description: string;
 }
 
-// テンプレート定義（目的特化型）- 4つのテンプレートのみ
+// テンプレート定義（目的特化型）- 5つのテンプレート（blank-pageを最初に）
 export const allTemplates: Template[] = [
+  {
+    id: 'blank-page',
+    name: 'ブランクページ',
+    description: 'ゼロから自由に設計できる空のテンプレート',
+    icon: FileText,
+    color: 'slate',
+    category: '基本',
+    preview: '空のページから自由にコンポーネントを追加して設計',
+    author: 'AppTalentHub',
+  },
   {
     id: 'crm',
     name: '顧客管理',

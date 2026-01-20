@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { App, PolicyData, UIConfig, DataSource, User, Environment } from '../types'
 import { useAuth } from './AuthContext'
-import { getDataSources, getUserApps, deleteApp as deleteAppFromFirestore } from '../utils/firestore'
+import { getDataSources, getUserApps, deleteApp as deleteAppFromFirestore, createApp as createAppInFirestore, updateApp as updateAppInFirestore, getApp as getAppFromFirestore } from '../utils/firestore'
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../utils/firestore'
 import { FIRESTORE_COLLECTIONS } from '../types/firestore'
@@ -61,7 +61,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       if (authUser?.id) {
         try {
           console.log('AppContext - アプリを読み込み中... userId:', authUser.id, 'email:', authUser.email)
-          const firestoreApps = await getUserApps(authUser.id, authUser.email)
+          // 新しいパス構造: users/{uid}/apps/{appId}
+          const firestoreApps = await getUserApps(authUser.id)
           console.log('AppContext - Firestoreから取得したアプリ:', firestoreApps)
           
           // FirestoreのApp型をアプリのApp型に変換
@@ -131,7 +132,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const loadDataSources = async () => {
       if (activeAppId && authUser?.id) {
         try {
-          const firestoreDataSources = await getDataSources(activeAppId)
+          const firestoreDataSources = await getDataSources(authUser.id, activeAppId)
           // FirestoreのDataSource型をアプリのDataSource型に変換
           const convertedDataSources: DataSource[] = firestoreDataSources.map(ds => ({
             id: ds.id,
@@ -225,20 +226,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         throw new Error('Firestoreデータベースが初期化されていません')
       }
       
-      const appRef = doc(db, FIRESTORE_COLLECTIONS.APPS, newAppId)
+      // 新しいパス構造: users/{uid}/apps/{appId}
       const appData = {
         title: newApp.name,
         ownerId: authUser.id,
         // アプリのApp型のデータをそのまま保存（追加フィールドとして）
         ...newApp,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
       }
       
       console.log('AppContext - Firestoreに保存するデータ:', appData)
-      console.log('AppContext - Firestoreに保存中...')
+      console.log('AppContext - Firestoreに保存中... (新パス構造: users/{uid}/apps/{appId})')
       
-      await setDoc(appRef, appData)
+      await createAppInFirestore(authUser.id, newAppId, appData)
       
       console.log('AppContext - Firestoreへの保存が成功しました')
     } catch (error: any) {
@@ -289,10 +288,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     })
     setApps(updatedApps)
 
-    // Firestoreにも保存
+    // Firestoreにも保存（新パス構造: users/{uid}/apps/{appId}）
     if (authUser?.id) {
       try {
-        const appRef = doc(db, FIRESTORE_COLLECTIONS.APPS, appId)
         const appToUpdate = updatedApps.find(a => a.id === appId)
         if (appToUpdate) {
           // FirestoreにはtemplateIdとtemplateの両方を保存（後方互換性のため）
@@ -300,13 +298,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             title: appToUpdate.name,
             ownerId: authUser.id,
             ...appToUpdate,
-            updatedAt: serverTimestamp(),
           }
           // templateIdが設定されている場合、Firestoreにも保存
           if (appToUpdate.templateId) {
             firestoreData.templateId = appToUpdate.templateId
           }
-          await setDoc(appRef, firestoreData, { merge: true })
+          await updateAppInFirestore(authUser.id, appId, firestoreData)
         }
       } catch (error) {
         console.error('アプリの更新エラー:', error)
@@ -318,8 +315,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   // アプリを削除
   const deleteApp = async (appId: string) => {
     try {
-      // Firestoreから削除
-      await deleteAppFromFirestore(appId)
+      // Firestoreから削除（新パス構造: users/{uid}/apps/{appId}）
+      if (!authUser?.id) {
+        throw new Error('ログインが必要です')
+      }
+      await deleteAppFromFirestore(authUser.id, appId)
       
       // ローカルstateからも削除
       setApps(apps.filter(app => app.id !== appId))

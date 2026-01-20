@@ -77,7 +77,7 @@ export interface User {
 }
 
 // デザイン・構成画面の型定義
-export type ComponentType = 'heading' | 'kpi_grid' | 'table' | 'chart' | 'grid' | 'search' | 'form' | 'kanban' | 'calendar' | 'list' | 'card' | 'stats' | 'action_bar'
+export type ComponentType = 'heading' | 'kpi_grid' | 'kpi_card' | 'table' | 'chart' | 'grid' | 'search' | 'form' | 'kanban' | 'calendar' | 'list' | 'card' | 'stats' | 'action_bar' | 'timeline' | 'attachment'
 
 export interface ComponentConfig {
   id: string;

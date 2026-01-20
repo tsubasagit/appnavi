@@ -377,9 +377,12 @@ export const FIRESTORE_COLLECTIONS = {
 // ============================================================================
 
 export const getSubCollectionPath = {
-  pages: (appId: string) => `${FIRESTORE_COLLECTIONS.APPS}/${appId}/${FIRESTORE_COLLECTIONS.PAGES}`,
-  dataSources: (appId: string) => `${FIRESTORE_COLLECTIONS.APPS}/${appId}/${FIRESTORE_COLLECTIONS.DATA_SOURCES}`,
-  deployments: (appId: string) => `${FIRESTORE_COLLECTIONS.APPS}/${appId}/${FIRESTORE_COLLECTIONS.DEPLOYMENTS}`,
+  // 新しいパス構造: users/{uid}/apps/{appId}/...
+  apps: (userId: string) => `${FIRESTORE_COLLECTIONS.USERS}/${userId}/${FIRESTORE_COLLECTIONS.APPS}`,
+  pages: (userId: string, appId: string) => `${FIRESTORE_COLLECTIONS.USERS}/${userId}/${FIRESTORE_COLLECTIONS.APPS}/${appId}/${FIRESTORE_COLLECTIONS.PAGES}`,
+  dataSources: (userId: string, appId: string) => `${FIRESTORE_COLLECTIONS.USERS}/${userId}/${FIRESTORE_COLLECTIONS.APPS}/${appId}/${FIRESTORE_COLLECTIONS.DATA_SOURCES}`,
+  deployments: (userId: string, appId: string) => `${FIRESTORE_COLLECTIONS.USERS}/${userId}/${FIRESTORE_COLLECTIONS.APPS}/${appId}/${FIRESTORE_COLLECTIONS.DEPLOYMENTS}`,
+  integrations: (userId: string, appId: string) => `${FIRESTORE_COLLECTIONS.USERS}/${userId}/${FIRESTORE_COLLECTIONS.APPS}/${appId}/integrations`,
   pluginVersions: (pluginId: string) => `${FIRESTORE_COLLECTIONS.PLUGINS}/${pluginId}/${FIRESTORE_COLLECTIONS.PLUGIN_VERSIONS}`,
 } as const
 

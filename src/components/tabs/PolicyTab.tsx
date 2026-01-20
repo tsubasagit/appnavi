@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Save, Lightbulb, Target, BarChart3, Sparkles, Compass, Search, X, Settings, Upload, Loader2, AlertCircle, Globe, UserCheck, Calendar, ClipboardList, RefreshCw, Github, Download, CheckCircle2 } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
+import { useAuth } from '../../context/AuthContext'
 import { App } from '../../types'
 import { allTemplates, Template } from '../../utils/templates'
 import { uploadAsset } from '../../utils/githubAsset'
@@ -8,6 +9,7 @@ import { fetchTemplatesFromAssetSite, AssetSiteTemplate } from '../../utils/asse
 
 const PolicyTab = () => {
   const { apps, activeAppId, updateApp } = useApp()
+  const { user: authUser } = useAuth()
   const app = apps.find(a => a.id === activeAppId)
   
   const [searchQuery, setSearchQuery] = useState('')
@@ -248,7 +250,10 @@ const PolicyTab = () => {
                 }
                 
                 try {
-                  await createPage(app.id, pageId, pageData)
+                  if (!authUser?.id) {
+                    throw new Error('ログインが必要です')
+                  }
+                  await createPage(authUser.id, app.id, pageId, pageData)
                   console.log(`ページ "${templatePage.name}" (${pageId}) を作成しました`)
                 } catch (pageError: any) {
                   console.error(`ページ "${templatePage.name}" の作成エラー:`, pageError)
@@ -359,8 +364,12 @@ const PolicyTab = () => {
     }
   }
 
+  // blank-pageを最初に、その他をその後に配置
+  const blankPageTemplate = allTemplates.find(t => t.id === 'blank-page')
+  const otherTemplates = allTemplates.filter(t => t.id !== 'blank-page')
   const allAvailableTemplates = [
-    ...allTemplates,
+    ...(blankPageTemplate ? [blankPageTemplate] : []),
+    ...otherTemplates,
     ...filteredAssetTemplates,
   ]
 
